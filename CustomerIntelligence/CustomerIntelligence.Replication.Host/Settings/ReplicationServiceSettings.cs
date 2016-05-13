@@ -18,7 +18,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host.Settings
     {
         private readonly IntSetting _replicationBatchSize = ConfigFileSetting.Int.Required("ReplicationBatchSize");
         private readonly IntSetting _sqlCommandTimeout = ConfigFileSetting.Int.Required("SqlCommandTimeout");
-        
+
         public ReplicationServiceSettings()
         {
             var connectionStringSettings = new ConnectionStringSettingsAspect(
@@ -61,17 +61,12 @@ namespace NuClear.CustomerIntelligence.Replication.Host.Settings
                    .Use(new ServiceBusReceiverSettingsAspect(connectionStringSettings.GetConnectionString(ServiceBusConnectionStringIdentity.Instance)))
                    .Use<CorporateBusSettingsAspect>()
                    .Use<LogstashSettingsAspect>()
-                   .Use<IdentityServiceClientSettingsAspect>();
+                   .Use<IdentityServiceClientSettingsAspect>()
+                   .Use<SquirrelSettings>();
         }
 
-        public int ReplicationBatchSize
-        {
-            get { return _replicationBatchSize.Value; }
-        }
+        public int ReplicationBatchSize => _replicationBatchSize.Value;
 
-        public int SqlCommandTimeout
-        {
-            get { return _sqlCommandTimeout.Value; }
-        }
+        public int SqlCommandTimeout => _sqlCommandTimeout.Value;
     }
 }

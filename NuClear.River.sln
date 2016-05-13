@@ -124,6 +124,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packaging", "Packaging", "{
 EndProject
 Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "Hosting.Common", "Hosting\Packaging\Hosting.Common\Hosting.Common.nuproj", "{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packaging", "Packaging", "{E6AB06A9-9C8A-44C9-9177-39EBEB50D1D6}"
+EndProject
+Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "CustomerIntelligence.Replication.Host", "CustomerIntelligence\Packaging\CustomerIntelligence.Replication.Host\CustomerIntelligence.Replication.Host.nuproj", "{A35CA378-D171-45BC-9C38-B3FB2D4121D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -238,6 +242,10 @@ Global
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A35CA378-D171-45BC-9C38-B3FB2D4121D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A35CA378-D171-45BC-9C38-B3FB2D4121D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A35CA378-D171-45BC-9C38-B3FB2D4121D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A35CA378-D171-45BC-9C38-B3FB2D4121D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -281,6 +289,8 @@ Global
 		{D5ED5FAC-CBFC-4264-BF15-02689BEC6B36} = {4CBF48D0-F42C-4560-AEA1-FA06FB1283D9}
 		{03AB41C0-6F80-4A6F-98A0-6500DFF86453} = {D02635A2-FB92-4A8F-A479-9266C708B57E}
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681} = {03AB41C0-6F80-4A6F-98A0-6500DFF86453}
+		{E6AB06A9-9C8A-44C9-9177-39EBEB50D1D6} = {C80A3A09-DFCA-4FDE-8835-39F047FFA4BB}
+		{A35CA378-D171-45BC-9C38-B3FB2D4121D6} = {E6AB06A9-9C8A-44C9-9177-39EBEB50D1D6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8;packages\EnterpriseLibrary.TransientFaultHandling.ServiceBus.6.0.1304.0\lib\NET45

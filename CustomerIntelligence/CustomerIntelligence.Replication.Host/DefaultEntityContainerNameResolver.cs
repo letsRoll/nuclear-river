@@ -3,7 +3,7 @@
 using NuClear.OperationsProcessing.Transports.SQLStore.Final;
 using NuClear.Storage.Core;
 
-namespace NuClear.CustomerIntelligence.Replication.Host.Settings
+namespace NuClear.CustomerIntelligence.Replication.Host
 {
     public class DefaultEntityContainerNameResolver : IEntityContainerNameResolver
     {

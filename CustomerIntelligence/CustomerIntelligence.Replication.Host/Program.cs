@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
+using System.Threading.Tasks;
 
 using Microsoft.Practices.Unity;
 
@@ -18,6 +19,8 @@ using NuClear.Tracing.Environment;
 using NuClear.Tracing.Log4Net;
 using NuClear.Tracing.Log4Net.Config;
 
+using Squirrel;
+
 namespace NuClear.CustomerIntelligence.Replication.Host
 {
     internal static class Program
@@ -31,11 +34,20 @@ namespace NuClear.CustomerIntelligence.Replication.Host
             }
 
             var settingsContainer = new ReplicationServiceSettings();
+            var squirrelSettings = settingsContainer.AsSettings<ISquirrelSettings>();
             var environmentSettings = settingsContainer.AsSettings<IEnvironmentSettings>();
             var connectionStringSettings = settingsContainer.AsSettings<IConnectionStringSettings>();
 
+            Task.Run(() =>
+                         {
+                             using (var updateManager = new UpdateManager(squirrelSettings.ApplicationReleasesPath))
+                             {
+                                 updateManager.UpdateApp().Wait();
+                             }
+                         });
+
             var tracerContextEntryProviders =
-                    new ITracerContextEntryProvider[] 
+                    new ITracerContextEntryProvider[]
                     {
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.Environment, environmentSettings.EnvironmentName),
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPoint, environmentSettings.EntryPointName),

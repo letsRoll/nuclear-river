@@ -47,7 +47,6 @@ Task QueueBuild-Packages {
 	QueueBuild-BulkTool
 	QueueBuild-OData
 	QueueBuild-TaskService
-	QueueBuild-HostsUpdates
 
 	Invoke-MSBuildQueue
 }
@@ -70,7 +69,8 @@ Task Validate-PullRequest -depends Run-UnitTests, Run-DataTests
 
 Task Build-Packages -depends `
 Build-ConvertUseCasesService, `
-QueueBuild-Packages
+QueueBuild-Packages, `
+Build-HostsUpdates
 
 Task Deploy-Packages -depends `
 Update-Schemas, `

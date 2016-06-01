@@ -14,6 +14,7 @@ Include 'convertusecases.ps1'
 Include 'updateschemas.ps1'
 Include 'bulktool.ps1'
 Include 'datatest.ps1'
+Include 'publishupdates.ps1'
 
 # OData
 function QueueBuild-OData {
@@ -46,6 +47,7 @@ Task QueueBuild-Packages {
 	QueueBuild-BulkTool
 	QueueBuild-OData
 	QueueBuild-TaskService
+	QueueBuild-HostsUpdates
 
 	Invoke-MSBuildQueue
 }
@@ -74,4 +76,5 @@ Task Deploy-Packages -depends `
 Update-Schemas, `
 Run-BulkTool, `
 Create-Topics, `
-QueueDeploy-Packages
+QueueDeploy-Packages, `
+Run-PublishUpdates

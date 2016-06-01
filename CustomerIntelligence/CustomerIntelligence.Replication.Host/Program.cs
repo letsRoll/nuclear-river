@@ -38,11 +38,11 @@ namespace NuClear.CustomerIntelligence.Replication.Host
             var environmentSettings = settingsContainer.AsSettings<IEnvironmentSettings>();
             var connectionStringSettings = settingsContainer.AsSettings<IConnectionStringSettings>();
 
-            Task.Run(() =>
+            Task.Run(async () =>
                          {
                              using (var updateManager = new UpdateManager(squirrelSettings.ApplicationReleasesPath))
                              {
-                                 updateManager.UpdateApp().Wait();
+                                 await updateManager.UpdateApp();
                              }
                          });
 
@@ -96,10 +96,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host
             }
             finally
             {
-                if (container != null)
-                {
-                    container.Dispose();
-                }
+                container?.Dispose();
             }
         }
 

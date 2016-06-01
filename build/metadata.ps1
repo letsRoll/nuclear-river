@@ -125,6 +125,14 @@ function Parse-EnvironmentMetadata ($Properties) {
         $environmentMetadata += Get-BulkToolMetadata '' $context
     }
 
+	$hostsToUpdate = $Properties['HostsToUpdate']
+	if ($hostsToUpdate){
+		if ($hostsToUpdate -isnot [array]){
+			$hostsToUpdate = $hostsToUpdate.Split(@(','), 'RemoveEmptyEntries')
+		}
+		$environmentMetadata += @{ 'HostsToUpdate' = $hostsToUpdate }
+	}
+
 	return $environmentMetadata
 }
 

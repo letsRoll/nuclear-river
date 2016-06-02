@@ -2,7 +2,7 @@
 #Requires –Version 3.0
 
 if ($TaskList.Count -eq 0){
-	$TaskList = @('Build-Packages', 'Run-PublishUpdates', 'Run-InstallHosts')
+	$TaskList = @('Build-Packages')
 }
 
 if ($Properties.Count -eq 0){
@@ -11,8 +11,8 @@ if ($Properties.Count -eq 0){
 		'CustomerIntelligence.Querying.Host'
 		'CustomerIntelligence.Replication.Host'
 	)
-	$Properties.HostsToUpdate = 'CustomerIntelligence.Replication.Host'
-	$Properties.HostsToInstall = 'CustomerIntelligence.Replication.Host'
+	#$Properties.HostsToUpdate = 'CustomerIntelligence.Replication.Host'
+	#$Properties.HostsToInstall = 'CustomerIntelligence.Replication.Host'
 	#$Properties.UseCaseRoute = 'ERM'
 	#$Properties.UpdateSchemas = 'CustomerIntelligence'
 }

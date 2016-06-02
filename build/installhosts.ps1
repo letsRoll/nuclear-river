@@ -9,6 +9,7 @@ Import-Module "$BuildToolsRoot\modules\winrm.psm1" -DisableNameChecking
 
 Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 	$hostsToInstall = $Metadata['HostsToInstall']
+	$commonMetadata = $Metadata.Common
 	foreach ($host in $hostsToInstall.GetEnumerator()){
 		$entryPointMetadata = $Metadata[$host]
 		foreach($targetHost in $entryPointMetadata.TargetHosts){

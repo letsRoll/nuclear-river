@@ -14,7 +14,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 		foreach($targetHost in $entryPointMetadata.TargetHosts){
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {
-				$setupDir = Join-Path $commonMetadata.Dir.Temp 'Setup' $host
+				$setupDir = Join-Path (Join-Path $commonMetadata.Dir.Temp 'Setup') $host
 				$unused = New-Item $setupDir -ItemType Directory
 
 				$webClient = New-Object System.Net.WebClient

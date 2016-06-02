@@ -15,7 +15,12 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 		foreach($targetHost in $entryPointMetadata.TargetHosts){
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {
-				$setupDir = Join-Path (Join-Path $using:commonMetadata.Dir.Temp 'Setup') $using:host
+				Set-StrictMode -Version Latest
+				$ErrorActionPreference = 'Stop'
+				#Requires –Version 3.0
+				#------------------------------
+				
+				$setupDir = Join-Path $env:TEMP $using:host
 				$unused = New-Item $setupDir -ItemType Directory
 
 				$webClient = New-Object System.Net.WebClient
@@ -24,6 +29,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				#TODO: Specify environment index
 				$webClient.DownloadFile('http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe', $setupDir)
 				
+				$emptyPassword = New-Object System.Security.SecureString
 				$credential = New-Object System.Management.Automation.PSCredential('NT AUTHORITY\NETWORK SERVICE', $emptyPassword)
 				Start-Process -FilePath (Join-Path $setupDir 'Setup.exe') -Credential $credential
 			}

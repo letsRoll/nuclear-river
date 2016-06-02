@@ -15,6 +15,7 @@ Include 'updateschemas.ps1'
 Include 'bulktool.ps1'
 Include 'datatest.ps1'
 Include 'publishupdates.ps1'
+Include 'installhosts.ps1'
 
 # OData
 function QueueBuild-OData {
@@ -77,4 +78,5 @@ Update-Schemas, `
 Run-BulkTool, `
 Create-Topics, `
 QueueDeploy-Packages, `
-Run-PublishUpdates
+Run-PublishUpdates, `
+Run-InstallHosts

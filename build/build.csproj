@@ -33,6 +33,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="installhosts.ps1" />
     <None Include="publishupdates.ps1" />
     <None Include="bulktool.ps1" />
     <None Include="convertusecases.ps1" />

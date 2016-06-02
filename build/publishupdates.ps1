@@ -58,7 +58,7 @@ Task Run-PublishUpdates -Precondition { $Metadata['HostsToUpdate'] } {
 		$squirrel = Join-Path (Join-Path  $squirrelPackageInfo.VersionedDir 'tools') 'Squirrel.exe'
 
 		#TODO: Specify environment index
-		$publishPath = '\\uk-erm-test01\c$\inetpub\updates.test.erm.2gis.ru\Test.21'
+		$publishPath = Join-Path '\\uk-erm-test01\c$\inetpub\updates.test.erm.2gis.ru\Test.21' $host
 		
 		Write-Host 'Invoke Squirrel --releasify for' $nupkgPath ', release directory' $publishPath
 		& $squirrel --releasify $nupkgPath.FullName -releaseDir $publishPath --no-msi | Write-Host

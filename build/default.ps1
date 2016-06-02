@@ -55,7 +55,7 @@ Task QueueDeploy-Packages {
 
 	QueueDeploy-ConvertUseCasesService
 	QueueDeploy-OData
-	QueueDeploy-TaskService
+	#QueueDeploy-TaskService
 
 	Invoke-DeployQueue
 }

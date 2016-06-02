@@ -11,7 +11,7 @@ if ($Properties.Count -eq 0){
 		'CustomerIntelligence.Querying.Host'
 		'CustomerIntelligence.Replication.Host'
 	)
-	$Properties.HostsToUpdate = 'CustomerIntelligence.Replication.Host'
+	#$Properties.HostsToUpdate = 'CustomerIntelligence.Replication.Host'
 	#$Properties.UseCaseRoute = 'ERM'
 	#$Properties.UpdateSchemas = 'CustomerIntelligence'
 }

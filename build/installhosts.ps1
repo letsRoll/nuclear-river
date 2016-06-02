@@ -23,11 +23,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				$setupDir = Join-Path $env:TEMP $using:host
 				$unused = New-Item $setupDir -ItemType Directory
 
-				$webClient = New-Object System.Net.WebClient
-				$webClient.UseDefaultCredentials = $true
-				$webClient.Proxy.Credentials = $webClient.Credentials
+				$setupExe = (Join-Path $setupDir 'Setup.exe')
 				#TODO: Specify environment index
-				$webClient.DownloadFile('http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe', $setupDir)
+				Invoke-WebRequest 'http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe' -OutFile $setupExe
 				
 				$emptyPassword = New-Object System.Security.SecureString
 				$credential = New-Object System.Management.Automation.PSCredential('NT AUTHORITY\NETWORK SERVICE', $emptyPassword)

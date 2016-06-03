@@ -60,7 +60,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$setupUrl = 'http://updates.test.erm.2gis.ru/Test.21/' + $host + '/Setup.exe'
 			
 			Write-Host 'Dowloading setup.exe from' $setupUrl
-			Invoke-WebRequest $setupUrl -OutFile $setupExe | Write-Host
+			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
 			
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'

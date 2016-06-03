@@ -42,6 +42,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host
                          {
                              using (var updateManager = new UpdateManager(squirrelSettings.UpdateServerUrl))
                              {
+                                 SquirrelAwareApp.HandleEvents(v => { }, v => { }, v => { }, v => { }, () => { });
                                  await updateManager.UpdateApp();
                              }
                          });

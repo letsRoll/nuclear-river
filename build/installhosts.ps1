@@ -63,7 +63,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
-			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -e -cf $setupExe | Write-Host
+			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -d -cf $setupExe | Write-Host
 			
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {

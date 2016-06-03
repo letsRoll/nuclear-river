@@ -21,12 +21,12 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 			$setupExe = (Join-Path $setupDir 'Setup.exe')
 			#TODO: Specify environment index
-			Invoke-WebRequest 'http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe' -OutFile $setupExe
+			Invoke-WebRequest 'http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe' -OutFile $setupExe| Write-Host
 			
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
-			& $psExec ('\\' + $targetHost) -u 'NT AUTHORITY\NETWORK SERVICE' -f -c $setupExe | Write-Host
+			& $psExec -accepteula ('\\' + $targetHost) -u 'NT AUTHORITY\NETWORK SERVICE' -f -c $setupExe | Write-Host
 		}
 	}
 }

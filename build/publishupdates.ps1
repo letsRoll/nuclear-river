@@ -25,7 +25,7 @@ Task Build-HostsUpdates -Precondition { $Metadata['HostsToUpdate'] } {
     <dependencies />
   </metadata>
   <files>
-    <file src="*.*" target="lib\net461\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
+    <file src="*.*" target="lib\net461\" />
   </files>
 </package>
 "@

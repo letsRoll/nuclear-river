@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 #Requires –Version 3.0
 #------------------------------
 
+Import-Module "$BuildToolsRoot\modules\deploy.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\entrypoint.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\nuget.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\winservice.psm1" -DisableNameChecking
@@ -62,7 +63,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
-			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Write-Host
+			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -e -cf $setupExe | Write-Host
 			
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {

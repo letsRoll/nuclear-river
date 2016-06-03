@@ -12,11 +12,12 @@ Task Build-HostsUpdates -Precondition { $Metadata['HostsToUpdate'] } {
 		$commonMetadata = $Metadata.Common
 
 		$version = $commonMetadata.Version.NuGetVersion
+		$packageId = $host.Replace(".", "")
 		$nuspec = @"
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>$host</id>
+    <id>$packageId</id>
     <version>$version</version>
     <title>$host</title>
     <authors>2GIS</authors>
@@ -32,7 +33,9 @@ Task Build-HostsUpdates -Precondition { $Metadata['HostsToUpdate'] } {
 		Set-Content $nuspecPath $nuspec
 		
 		$nupkgDir = Join-Path $commonMetadata.Dir.Temp $host
-		$unused = New-Item $nupkgDir -ItemType Directory
+		if(!(Test-Path $nupkgDir)){
+			mkdir "$nupkgDir"
+		}
 		
 		Invoke-NuGet @(
 			'pack'

@@ -6,7 +6,8 @@
     "2GIS.NuClear.AdvancedSearch.Tools.ConvertTrackedUseCases": "0.1.11",
     "2GIS.NuClear.BuildTools": "0.2.64",
     "2GIS.NuClear.DataTest": "0.17.0-linq2db",
-    "squirrel.windows": "1.4.0"
+    "squirrel.windows": "1.4.0",
+    "PsExec.exe": "2.11.0"
   },
   "runtimes": {
     "win": { }

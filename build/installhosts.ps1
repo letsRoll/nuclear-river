@@ -13,24 +13,20 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 	foreach ($host in $hostsToInstall.GetEnumerator()){
 		$entryPointMetadata = $Metadata[$host]
 		foreach($targetHost in $entryPointMetadata.TargetHosts){
-			$session = Get-CachedSession $targetHost
-			Invoke-Command $session {
-				Set-StrictMode -Version Latest
-				$ErrorActionPreference = 'Stop'
-				#Requires –Version 3.0
-				#------------------------------
-				
-				$setupDir = Join-Path $env:TEMP $using:host
-				$unused = New-Item $setupDir -ItemType Directory
-
-				$setupExe = (Join-Path $setupDir 'Setup.exe')
-				#TODO: Specify environment index
-				Invoke-WebRequest 'http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe' -OutFile $setupExe
-				
-				$emptyPassword = New-Object System.Security.SecureString
-				$credential = New-Object System.Management.Automation.PSCredential('NT AUTHORITY\NETWORK SERVICE', $emptyPassword)
-				Start-Process -FilePath (Join-Path $setupDir 'Setup.exe') -Credential $credential
+			
+			$setupDir = Join-Path $commonMetadata.Dir.Temp $host
+			if(!(Test-Path $setupDir)){
+				mkdir "$setupDir"
 			}
+
+			$setupExe = (Join-Path $setupDir 'Setup.exe')
+			#TODO: Specify environment index
+			Invoke-WebRequest 'http://updates.test.erm.2gis.ru/Test.21/CustomerIntelligence.Replication.Host/Setup.exe' -OutFile $setupExe
+			
+			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
+			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
+			
+			& $psExec ('\\' + $targetHost) -u 'NT AUTHORITY\NETWORK SERVICE' -f -c $setupExe | Write-Host
 		}
 	}
 }

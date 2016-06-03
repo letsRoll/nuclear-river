@@ -5,13 +5,13 @@ namespace NuClear.CustomerIntelligence.Replication.Host.Settings
 {
     public interface ISquirrelSettings : ISettings
     {
-        string ApplicationReleasesPath { get; }
+        string UpdateServerUrl { get; }
     }
 
     public class SquirrelSettings : ISquirrelSettings, ISettingsAspect
     {
-        private readonly StringSetting _applicationInstallationPath = ConfigFileSetting.String.Required("ApplicationReleasesPath");
+        private readonly StringSetting _updateServerUrl = ConfigFileSetting.String.Required("UpdateServerUrl");
 
-        public string ApplicationReleasesPath => _applicationInstallationPath.Value;
+        public string UpdateServerUrl => _updateServerUrl.Value;
     }
 }

@@ -40,7 +40,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host
 
             Task.Run(async () =>
                          {
-                             using (var updateManager = new UpdateManager(squirrelSettings.ApplicationReleasesPath))
+                             using (var updateManager = new UpdateManager(squirrelSettings.UpdateServerUrl))
                              {
                                  await updateManager.UpdateApp();
                              }

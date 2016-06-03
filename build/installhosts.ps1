@@ -58,13 +58,17 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$setupExe = (Join-Path $setupDir 'Setup.exe')
 			#TODO: Specify environment index
 			$setupUrl = 'http://updates.test.erm.2gis.ru/Test.21/' + $host + '/Setup.exe'
+			
+			Write-Host 'Dowloading setup.exe from' $setupUrl
 			Invoke-WebRequest $setupUrl -OutFile $setupExe | Write-Host
 			
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
+			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
 			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -d -cf $setupExe | Write-Host
 			
+			Write-Host 'Installing windows service for host' $host
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {
 				

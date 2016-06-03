@@ -68,13 +68,13 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
 			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -d -cf $setupExe | Write-Host
 			
+			Load-WinServiceModule $($using:host)
+			Take-WinServiceOffline $($using:host)
+
 			Write-Host 'Installing windows service for host' $host
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {
-				
-				Load-WinServiceModule $($using:host)
-				Take-WinServiceOffline $($using:host)
-			
+							
 				Delete-WindowsService $using:serviceNames.Name
 				$packageId = $($using:host).Replace(".", "")
 				$servicePath = Get-ChildItem "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$packageId" -Filter '*.exe'

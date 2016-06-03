@@ -66,7 +66,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
 			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
-			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -d -cf $setupExe | Write-Host
+			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Write-Host
 			
 			Load-WinServiceModule $($using:host)
 			Take-WinServiceOffline $($using:host)

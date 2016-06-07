@@ -350,12 +350,6 @@
     <Compile Include="Jobs\DebugTestJob.cs" />
     <Compile Include="Jobs\ProcessingJob.cs" />
     <Compile Include="Factories\Messaging\Processor\PrimaryProcessorResolveStrategy.cs" />
-    <Compile Include="ReplicationService.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="ReplicationService.Designer.cs">
-      <DependentUpon>ReplicationService.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\CorporateBusSettingsAspect.cs" />
@@ -386,6 +380,10 @@
     <ProjectReference Include="..\..\Hosting\Hosting.Common\Hosting.Common.csproj">
       <Project>{d4238d0c-3315-4449-b1ae-80f716d58d04}</Project>
       <Name>Hosting.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Hosting\Hosting.Interactive\Hosting.Interactive.csproj">
+      <Project>{ddb16412-7535-49f3-8390-d74dae462f89}</Project>
+      <Name>Hosting.Interactive</Name>
     </ProjectReference>
     <ProjectReference Include="..\CustomerIntelligence.Replication\CustomerIntelligence.Replication.csproj">
       <Project>{b0a258d5-7387-4fb2-ba18-b51550da3f0b}</Project>

@@ -124,6 +124,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packaging", "Packaging", "{
 EndProject
 Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "Hosting.Common", "Hosting\Packaging\Hosting.Common\Hosting.Common.nuproj", "{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hosting.Interactive", "Hosting\Hosting.Interactive\Hosting.Interactive.csproj", "{DDB16412-7535-49F3-8390-D74DAE462F89}"
+EndProject
+Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "Hosting.Interactive", "Hosting\Packaging\Hosting.Interactive\Hosting.Interactive.nuproj", "{F858B6E1-1ABA-49F3-8A62-E3564D739D2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -238,6 +242,14 @@ Global
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDB16412-7535-49F3-8390-D74DAE462F89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDB16412-7535-49F3-8390-D74DAE462F89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDB16412-7535-49F3-8390-D74DAE462F89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDB16412-7535-49F3-8390-D74DAE462F89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F858B6E1-1ABA-49F3-8A62-E3564D739D2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F858B6E1-1ABA-49F3-8A62-E3564D739D2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F858B6E1-1ABA-49F3-8A62-E3564D739D2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F858B6E1-1ABA-49F3-8A62-E3564D739D2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -281,6 +293,8 @@ Global
 		{D5ED5FAC-CBFC-4264-BF15-02689BEC6B36} = {4CBF48D0-F42C-4560-AEA1-FA06FB1283D9}
 		{03AB41C0-6F80-4A6F-98A0-6500DFF86453} = {D02635A2-FB92-4A8F-A479-9266C708B57E}
 		{A1DFBECB-957B-4B79-9C20-1AA9FDAB3681} = {03AB41C0-6F80-4A6F-98A0-6500DFF86453}
+		{DDB16412-7535-49F3-8390-D74DAE462F89} = {D02635A2-FB92-4A8F-A479-9266C708B57E}
+		{F858B6E1-1ABA-49F3-8A62-E3564D739D2D} = {03AB41C0-6F80-4A6F-98A0-6500DFF86453}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8;packages\EnterpriseLibrary.TransientFaultHandling.ServiceBus.6.0.1304.0\lib\NET45

@@ -4,8 +4,6 @@ using Nancy.Hosting.Self;
 
 using NuClear.Jobs.Schedulers;
 
-using Squirrel;
-
 using Topshelf;
 
 namespace NuClear.River.Hosting.Interactive
@@ -19,13 +17,11 @@ namespace NuClear.River.Hosting.Interactive
         {
             _parameters = parameters;
             _schedulerManager = schedulerManager;
-
-            SquirrelAwareApp.HandleEvents(v => { }, v => { }, v => { }, v => { }, () => { });
         }
 
         public void ConfigureAndRun()
         {
-            var host = HostFactory.New(
+            HostFactory.Run(
                 config =>
                     {
                         NancyHost nancyHost = null;
@@ -60,9 +56,29 @@ namespace NuClear.River.Hosting.Interactive
                         config.SetServiceName(_parameters.HostName);
                         config.SetDisplayName(_parameters.HostDisplayName);
                         config.EnableShutdown();
-                    });
 
-            host.Run();
+                        config.AddCommandLineSwitch("squirrel", _ => { });
+                        config.AddCommandLineDefinition("firstrun",
+                                                        _ =>
+                                                            {
+                                                                config.ApplyCommandLine("install");
+                                                                config.ApplyCommandLine("start");
+                                                            });
+                        config.AddCommandLineDefinition("updated",
+                                                        _ =>
+                                                        {
+                                                            config.ApplyCommandLine("install");
+                                                            config.ApplyCommandLine("start");
+                                                        });
+                        config.AddCommandLineDefinition("obsolete",
+                                                        _ =>
+                                                        {
+                                                            config.ApplyCommandLine("stop");
+                                                            config.ApplyCommandLine("uninstall");
+                                                        });
+                        config.AddCommandLineDefinition("install", _ => { Environment.Exit(0); });
+                        config.AddCommandLineDefinition("uninstall", _ => { Environment.Exit(0); });
+                    });
         }
     }
 }

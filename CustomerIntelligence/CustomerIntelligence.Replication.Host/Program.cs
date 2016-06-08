@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 using Microsoft.Practices.Unity;
 
@@ -24,12 +21,6 @@ namespace NuClear.CustomerIntelligence.Replication.Host
     {
         private static void Main(string[] args)
         {
-            var isDebuggerMode = IsDebuggerMode(args);
-            if (isDebuggerMode && !Debugger.IsAttached)
-            {
-                Debugger.Launch();
-            }
-
             var settingsContainer = new ReplicationServiceSettings();
             var environmentSettings = settingsContainer.AsSettings<IEnvironmentSettings>();
             var squirrelSettings = settingsContainer.AsSettings<ISquirrelSettings>();
@@ -67,11 +58,6 @@ namespace NuClear.CustomerIntelligence.Replication.Host
             {
                 container?.Dispose();
             }
-        }
-
-        private static bool IsDebuggerMode(IEnumerable<string> args)
-        {
-            return args.Any(x => x.LastIndexOf("debug", StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }

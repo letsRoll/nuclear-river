@@ -60,9 +60,24 @@ namespace NuClear.River.Hosting.Interactive
                         config.EnableShutdown();
 
                         config.AddCommandLineSwitch("squirrel", _ => { });
-                        config.AddCommandLineDefinition("firstrun", _ => config.ApplyCommandLine("install start"));
-                        config.AddCommandLineDefinition("updated", _ => config.ApplyCommandLine("install start"));
-                        config.AddCommandLineDefinition("obsolete", _ => config.ApplyCommandLine("stop uninstall"));
+                        config.AddCommandLineDefinition("firstrun",
+                                                        _ =>
+                                                            {
+                                                                Breadcrumb.StorePathAsCurrent(_parameters.HostName);
+                                                                Environment.Exit(0);
+                                                            });
+                        config.AddCommandLineDefinition("updated",
+                                                        _ =>
+                                                            {
+                                                                Breadcrumb.StorePathAsCurrent(_parameters.HostName);
+                                                                Environment.Exit(0);
+                                                            });
+                        config.AddCommandLineDefinition("obsolete",
+                                                        _ =>
+                                                            {
+                                                                Breadcrumb.StorePathAsPrevious(_parameters.HostName);
+                                                                Environment.Exit(0);
+                                                            });
                         config.AddCommandLineDefinition("install", _ => Environment.Exit(0));
                         config.AddCommandLineDefinition("uninstall", _ => Environment.Exit(0));
                     });

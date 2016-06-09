@@ -16,14 +16,14 @@ namespace NuClear.River.Hosting.Interactive
 
             Get[$"/{hostName}/version"] = _ => Response.AsJson(updateManager.CurrentlyInstalledVersion()?.ToString());
 
-            Get["/checkForUpdates", true] =
+            Get[$"/{hostName}/checkForUpdates", true] =
                 async (_, cancellationToken) =>
                           {
                               var updateInfo = await updateManager.CheckForUpdate();
                               return Response.AsJson(updateInfo);
                           };
 
-            Post["/releases/download", true] =
+            Post[$"/{hostName}/releases/download", true] =
                 async (parameters, cancellationToken) =>
                           {
                               var releasesToApply = parameters.releasesToApply;
@@ -40,7 +40,7 @@ namespace NuClear.River.Hosting.Interactive
                               return HttpStatusCode.OK;
                           };
 
-            Post["/releases/apply", true] =
+            Post[$"/{hostName}/releases/apply", true] =
                 async (parameters, cancellationToken) =>
                           {
                               var updateInfo = parameters.updateInfo;
@@ -56,14 +56,14 @@ namespace NuClear.River.Hosting.Interactive
                               return HttpStatusCode.OK;
                           };
 
-            Post["/update", true] =
+            Post[$"/{hostName}/update", true] =
                 async (_, cancellationToken) =>
                           {
                               await updateManager.UpdateApp();
                               return HttpStatusCode.OK;
                           };
 
-            Post["/stop"] =
+            Post[$"/{hostName}/stop"] =
                 _ =>
                 {
                     Task.Run(() => hostControl.Stop());

@@ -33,11 +33,11 @@ namespace NuClear.River.Hosting.Interactive
                                     service.WhenStarted(
                                         (manager, hostControl) =>
                                             {
-                                                nancyHost = new NancyHost(
-                                                    new Uri($"http://localhost:5000/{_parameters.HostName}"),
-                                                    new Bootstrapper(new InteractiveModule(_parameters.UpdateServerUrl, hostControl)));
-
                                                 manager.Start();
+
+                                                nancyHost = new NancyHost(
+                                                    new Uri($"http://localhost:5000"),
+                                                    new Bootstrapper(new InteractiveModule(_parameters.UpdateServerUrl, _parameters.HostName, hostControl)));
                                                 nancyHost.Start();
 
                                                 return true;

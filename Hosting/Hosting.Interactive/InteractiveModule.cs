@@ -10,11 +10,11 @@ namespace NuClear.River.Hosting.Interactive
 {
     internal sealed class InteractiveModule : NancyModule
     {
-        public InteractiveModule(string updateServerUrl, HostControl hostControl)
+        public InteractiveModule(string updateServerUrl, string hostName, HostControl hostControl)
         {
             var updateManager = new UpdateManager(updateServerUrl);
 
-            Get["/version"] = _ => Response.AsJson(updateManager.CurrentlyInstalledVersion()?.ToString());
+            Get[$"/{hostName}/version"] = _ => Response.AsJson(updateManager.CurrentlyInstalledVersion()?.ToString());
 
             Get["/checkForUpdates", true] =
                 async (_, cancellationToken) =>

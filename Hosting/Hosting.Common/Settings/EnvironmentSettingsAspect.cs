@@ -15,7 +15,7 @@ namespace NuClear.River.Hosting.Common.Settings
         }
 
         public string EnvironmentName => _environmentName.Value;
-        public string HostName => _hostDisplayName.Value;
+        public string HostName => _hostName.Value;
         public string HostDisplayName => _hostDisplayName.Value;
     }
 }

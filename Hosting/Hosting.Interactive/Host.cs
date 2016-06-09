@@ -34,7 +34,7 @@ namespace NuClear.River.Hosting.Interactive
                                         (manager, hostControl) =>
                                             {
                                                 nancyHost = new NancyHost(
-                                                    new Uri("http://localhost:5000"),
+                                                    new Uri($"http://localhost:5000/{_parameters.HostName}"),
                                                     new Bootstrapper(new InteractiveModule(_parameters.UpdateServerUrl, hostControl)));
 
                                                 manager.Start();
@@ -58,26 +58,11 @@ namespace NuClear.River.Hosting.Interactive
                         config.EnableShutdown();
 
                         config.AddCommandLineSwitch("squirrel", _ => { });
-                        config.AddCommandLineDefinition("firstrun",
-                                                        _ =>
-                                                            {
-                                                                config.ApplyCommandLine("install");
-                                                                config.ApplyCommandLine("start");
-                                                            });
-                        config.AddCommandLineDefinition("updated",
-                                                        _ =>
-                                                        {
-                                                            config.ApplyCommandLine("install");
-                                                            config.ApplyCommandLine("start");
-                                                        });
-                        config.AddCommandLineDefinition("obsolete",
-                                                        _ =>
-                                                        {
-                                                            config.ApplyCommandLine("stop");
-                                                            config.ApplyCommandLine("uninstall");
-                                                        });
-                        config.AddCommandLineDefinition("install", _ => { Environment.Exit(0); });
-                        config.AddCommandLineDefinition("uninstall", _ => { Environment.Exit(0); });
+                        config.AddCommandLineDefinition("firstrun", _ => config.ApplyCommandLine("install start"));
+                        config.AddCommandLineDefinition("updated", _ => config.ApplyCommandLine("install start"));
+                        config.AddCommandLineDefinition("obsolete", _ => config.ApplyCommandLine("stop uninstall"));
+                        config.AddCommandLineDefinition("install", _ => Environment.Exit(0));
+                        config.AddCommandLineDefinition("uninstall", _ => Environment.Exit(0));
                     });
         }
     }

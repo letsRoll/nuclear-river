@@ -55,11 +55,12 @@ namespace NuClear.River.Hosting.Interactive
 
                         config.SetServiceName(_parameters.HostName);
                         config.SetDisplayName(_parameters.HostDisplayName);
+
+                        config.RunAsNetworkService();
                         config.EnableShutdown();
 
                         config.AddCommandLineSwitch("squirrel", _ => { });
-                        config.AddCommandLineDefinition("firstrun", _ => config.ApplyCommandLine("install"));
-                        //config.AddCommandLineDefinition("firstrun", _ => config.ApplyCommandLine("install start"));
+                        config.AddCommandLineDefinition("firstrun", _ => config.ApplyCommandLine("install start"));
                         config.AddCommandLineDefinition("updated", _ => config.ApplyCommandLine("install start"));
                         config.AddCommandLineDefinition("obsolete", _ => config.ApplyCommandLine("stop uninstall"));
                         config.AddCommandLineDefinition("install", _ => Environment.Exit(0));

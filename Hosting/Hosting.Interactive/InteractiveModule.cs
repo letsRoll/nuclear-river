@@ -56,13 +56,6 @@ namespace NuClear.River.Hosting.Interactive
                               return HttpStatusCode.OK;
                           };
 
-            Post[$"/{hostName}/update", true] =
-                async (_, cancellationToken) =>
-                          {
-                              await updateManager.UpdateApp();
-                              return HttpStatusCode.OK;
-                          };
-
             Post[$"/{hostName}/stop"] =
                 _ =>
                 {

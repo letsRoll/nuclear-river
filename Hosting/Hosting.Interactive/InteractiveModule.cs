@@ -12,6 +12,8 @@ namespace NuClear.River.Hosting.Interactive
     {
         public InteractiveModule(string updateServerUrl, string hostName, HostControl hostControl)
         {
+            StaticConfiguration.DisableErrorTraces = false;
+
             var updateManager = new UpdateManager(updateServerUrl);
 
             Get[$"/{hostName}/version"] = _ => Response.AsJson(updateManager.CurrentlyInstalledVersion()?.ToString());
@@ -26,7 +28,7 @@ namespace NuClear.River.Hosting.Interactive
             Post[$"/{hostName}/releases/download", true] =
                 async (parameters, cancellationToken) =>
                           {
-                              var releasesToApply = parameters.releasesToApply;
+                              var releasesToApply = parameters?.releasesToApply;
                               if (releasesToApply != null)
                               {
                                   await updateManager.DownloadReleases(releasesToApply);
@@ -43,7 +45,7 @@ namespace NuClear.River.Hosting.Interactive
             Post[$"/{hostName}/releases/apply", true] =
                 async (parameters, cancellationToken) =>
                           {
-                              var updateInfo = parameters.updateInfo;
+                              var updateInfo = parameters?.updateInfo;
                               if (updateInfo != null)
                               {
                                   await updateManager.ApplyReleases(updateInfo);
@@ -55,6 +57,13 @@ namespace NuClear.River.Hosting.Interactive
 
                               return HttpStatusCode.OK;
                           };
+
+            Post[$"/{hostName}/update", true] =
+                async (_, cancellationToken) =>
+                {
+                    await updateManager.UpdateApp();
+                    return HttpStatusCode.OK;
+                };
 
             Post[$"/{hostName}/stop"] =
                 _ =>

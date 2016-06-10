@@ -63,21 +63,16 @@ namespace NuClear.River.Hosting.Interactive
                         config.AddCommandLineDefinition("firstrun",
                                                         _ =>
                                                             {
-                                                                Breadcrumb.StorePathAsCurrent(_parameters.HostName);
+                                                                Breadcrumb.OnFirstRun(_parameters.HostName);
                                                                 Environment.Exit(0);
                                                             });
                         config.AddCommandLineDefinition("updated",
                                                         _ =>
                                                             {
-                                                                Breadcrumb.StorePathAsCurrent(_parameters.HostName);
+                                                                Breadcrumb.OnUpdated(_parameters.HostName);
                                                                 Environment.Exit(0);
                                                             });
-                        config.AddCommandLineDefinition("obsolete",
-                                                        _ =>
-                                                            {
-                                                                Breadcrumb.StorePathAsPrevious(_parameters.HostName);
-                                                                Environment.Exit(0);
-                                                            });
+                        config.AddCommandLineDefinition("obsolete", _ => Environment.Exit(0));
                         config.AddCommandLineDefinition("install", _ => Environment.Exit(0));
                         config.AddCommandLineDefinition("uninstall", _ => Environment.Exit(0));
                     });

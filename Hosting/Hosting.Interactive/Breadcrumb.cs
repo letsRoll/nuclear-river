@@ -8,21 +8,42 @@ namespace NuClear.River.Hosting.Interactive
     {
         private const string CurrentFileName = ".current";
         private const string PreviousFileName = ".previous";
+        private const string NextFileName = ".next";
 
         private static readonly string HomeDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "River.Hosting");
 
-        public static void StorePathAsCurrent(string hostName)
+        public static void OnFirstRun(string hostName)
         {
-            StoreEntryAssemblyPath(hostName, CurrentFileName);
+            var hostDirectory = EnsurePathExists(hostName);
+            StoreEntryAssemblyPath(hostDirectory, CurrentFileName);
         }
 
-        public static void StorePathAsPrevious(string hostName)
+        public static void OnUpdated(string hostName)
         {
-            StoreEntryAssemblyPath(hostName, PreviousFileName);
+            var hostDirectory = EnsurePathExists(hostName);
+            StoreEntryAssemblyPath(hostDirectory, NextFileName);
+
+            var previousFile = Path.Combine(hostDirectory, PreviousFileName);
+            if (File.Exists(previousFile))
+            {
+                File.Delete(previousFile);
+            }
+
+            var currentFile = Path.Combine(hostDirectory, CurrentFileName);
+            var nextFile = Path.Combine(hostDirectory, NextFileName);
+
+            File.Move(currentFile, previousFile);
+            File.Move(nextFile, currentFile);
         }
 
-        private static void StoreEntryAssemblyPath(string hostName, string fileName)
+        private static void StoreEntryAssemblyPath(string hostDirectory, string fileName)
+        {
+            var filePath = Path.Combine(hostDirectory, fileName);
+            File.WriteAllText(filePath, Assembly.GetEntryAssembly().Location);
+        }
+
+        private static string EnsurePathExists(string hostName)
         {
             if (!Directory.Exists(HomeDirectory))
             {
@@ -35,8 +56,7 @@ namespace NuClear.River.Hosting.Interactive
                 Directory.CreateDirectory(hostDirectory);
             }
 
-            var filePath = Path.Combine(hostDirectory, fileName);
-            File.WriteAllText(filePath, Assembly.GetEntryAssembly().Location);
+            return hostDirectory;
         }
     }
 }

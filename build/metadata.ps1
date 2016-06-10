@@ -137,6 +137,14 @@ function Parse-EnvironmentMetadata ($Properties) {
 		$environmentMetadata += Get-UpdateSchemasMetadata $updateSchemas $context
 	}
 
+	$publishUpdatesForHosts = $Properties['PublishUpdatesForHosts']
+	if ($publishUpdatesForHosts){
+		if ($publishUpdatesForHosts -isnot [array]){
+			$publishUpdatesForHosts = $publishUpdatesForHosts.Split(@(','), 'RemoveEmptyEntries')
+		}
+		$environmentMetadata += @{ 'PublishUpdatesForHosts' = $publishUpdatesForHosts }
+	}
+
 	$hostsToInstall = $Properties['HostsToInstall']
 	if ($hostsToInstall){
 		if ($hostsToInstall -isnot [array]){

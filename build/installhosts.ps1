@@ -6,10 +6,59 @@ $ErrorActionPreference = 'Stop'
 Import-Module "$BuildToolsRoot\modules\deploy.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\entrypoint.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\nuget.psm1" -DisableNameChecking
-Import-Module "$BuildToolsRoot\modules\winservice.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\winrm.psm1" -DisableNameChecking
 
-#WARNING: this is copypaste from deploy.psm1
+Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
+	$hosts = $Metadata['HostsToInstall']
+	$commonMetadata = $Metadata.Common
+	foreach ($host in $hosts.GetEnumerator()){
+
+		$entryPointMetadata = $Metadata[$host]
+		$serviceNames = Get-WinServiceNames $entryPointMetadata
+		$packageId = $host.Replace(".", "")
+		
+		foreach($targetHost in $entryPointMetadata.TargetHosts){
+			
+			$setupDir = Join-Path $commonMetadata.Dir.Temp $host
+ 			if(!(Test-Path $setupDir)){
+				mkdir "$setupDir"
+			}
+
+			$setupExe = (Join-Path $setupDir 'Setup.exe')
+			#TODO: Specify environment index
+			$setupUrl = 'http://updates.test.erm.2gis.ru/Test.21/' + $host + '/Setup.exe'
+			
+			Write-Host 'Dowloading setup.exe from' $setupUrl
+			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
+			
+			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
+			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
+			
+			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
+			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Write-Host
+
+			$session = Get-CachedSession $targetHost
+			Invoke-Command $session {
+		
+				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
+				$updateExePath = Join-Path $servicePath "Update.exe"
+				$serviceExePath = Get-ChildItem (Get-ChildItem "$servicePath" | where { $_.PSIsContainer } | select -First 1) -Filter '*.exe'
+
+				& $updateExePath --processStart $serviceExePath.Name --process-start-args "uninstall -servicename `"$using:serviceNames.VersionedName`""
+				if ($LastExitCode -ne 0) {
+					throw "Command failed with exit code $LastExitCode"
+				}
+
+				& $updateExePath --processStart $serviceExePath.Name --process-start-args "install -servicename `"$using:serviceNames.VersionedName`" -displayname `"$using:serviceNames.VersionedDisplayName`" start"
+				if ($LastExitCode -ne 0) {
+					throw "Command failed with exit code $LastExitCode"
+				}
+			}
+		}
+	}
+}
+
+#WARNING: copypasted from deploy.psm1
 function Get-WinServiceNames ($entryPointMetadata) {
 
 	$commonMetadata = $Metadata.Common
@@ -38,35 +87,5 @@ function Get-WinServiceNames ($entryPointMetadata) {
 
 		'DisplayName' = $displayName
 		'VersionedDisplayName' = $versionedDisplayName
-	}
-}
-
-Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
-	$hostsToInstall = $Metadata['HostsToInstall']
-	$commonMetadata = $Metadata.Common
-	foreach ($host in $hostsToInstall.GetEnumerator()){
-		$entryPointMetadata = $Metadata[$host]
-		$serviceNames = Get-WinServiceNames $entryPointMetadata
-
-		foreach($targetHost in $entryPointMetadata.TargetHosts){
-			
-			$setupDir = Join-Path $commonMetadata.Dir.Temp $host
- 			if(!(Test-Path $setupDir)){
-				mkdir "$setupDir"
-			}
-
-			$setupExe = (Join-Path $setupDir 'Setup.exe')
-			#TODO: Specify environment index
-			$setupUrl = 'http://updates.test.erm.2gis.ru/Test.21/' + $host + '/Setup.exe'
-			
-			Write-Host 'Dowloading setup.exe from' $setupUrl
-			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
-			
-			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
-			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
-			
-			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
-			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Write-Host
-		}
 	}
 }

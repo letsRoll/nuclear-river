@@ -7,7 +7,6 @@ using NuClear.CustomerIntelligence.Replication.Host.Settings;
 using NuClear.Jobs.Schedulers;
 using NuClear.River.Hosting.Common.Identities.Connections;
 using NuClear.River.Hosting.Common.Settings;
-using NuClear.River.Hosting.Interactive;
 using NuClear.Settings.API;
 using NuClear.Storage.API.ConnectionStrings;
 using NuClear.Tracing.API;
@@ -50,8 +49,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host
                 container = Bootstrapper.ConfigureUnity(settingsContainer, tracer, tracerContextManager);
                 var scheduleManager = container.Resolve<ISchedulerManager>();
 
-                var hostParameters = new HostParameters(environmentSettings.HostName, environmentSettings.HostDisplayName, squirrelSettings.UpdateServerUrl);
-                var host = new River.Hosting.Interactive.Host(hostParameters, scheduleManager);
+                var host = new River.Hosting.Interactive.Host(squirrelSettings.UpdateServerUrl, scheduleManager);
                 host.ConfigureAndRun();
             }
             finally

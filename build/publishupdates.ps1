@@ -6,9 +6,9 @@ $ErrorActionPreference = 'Stop'
 Import-Module "$BuildToolsRoot\modules\entrypoint.psm1" -DisableNameChecking
 Import-Module "$BuildToolsRoot\modules\nuget.psm1" -DisableNameChecking
 
-Task Build-HostsUpdates -Precondition { $Metadata['HostsToUpdate'] } {
-	$hostsToUpdate = $Metadata['HostsToUpdate']
-	foreach ($host in $hostsToUpdate.GetEnumerator()){
+Task Build-HostsUpdates -Precondition { $Metadata['PublishUpdatesForHosts'] } {
+	$hosts = $Metadata['PublishUpdatesForHosts']
+	foreach ($host in $hosts.GetEnumerator()){
 		$commonMetadata = $Metadata.Common
 
 		$version = $commonMetadata.Version.NuGetVersion
@@ -50,9 +50,9 @@ Task Build-HostsUpdates -Precondition { $Metadata['HostsToUpdate'] } {
 	}
 }
 
-Task Run-PublishUpdates -Precondition { $Metadata['HostsToUpdate'] } {
-	$hostsToUpdate = $Metadata['HostsToUpdate']
-	foreach ($host in $hostsToUpdate.GetEnumerator()){
+Task Run-PublishUpdates -Precondition { $Metadata['PublishUpdatesForHosts'] } {
+	$hosts = $Metadata['PublishUpdatesForHosts']
+	foreach ($host in $hosts.GetEnumerator()){
 		$artifactName = Get-Artifacts 'NuGet'
 
 		$nupkgPath = Get-ChildItem $artifactName -Filter '*.nupkg'
@@ -69,5 +69,69 @@ Task Run-PublishUpdates -Precondition { $Metadata['HostsToUpdate'] } {
 		if ($LastExitCode -ne 0) {
 			throw "Command failed with exit code $LastExitCode"
 		}
+	}
+}
+
+Task Run-UpdateHosts -Precondition { $Metadata['HostsToUpdate'] } {
+	
+	$hosts = $Metadata['HostsToUpdate']
+	foreach ($host in $hosts.GetEnumerator()){
+
+		$entryPointMetadata = $Metadata[$host]
+		$serviceNames = Get-WinServiceNames $entryPointMetadata
+		$packageId = $host.Replace(".", "")
+
+		foreach($targetHost in $entryPointMetadata.TargetHosts){
+
+			$session = Get-CachedSession $targetHost
+			Invoke-Command $session {
+		
+				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
+				$updateExePath = Join-Path $servicePath "Update.exe"
+				$serviceExePath = Get-ChildItem (Get-ChildItem "$servicePath" | where { $_.PSIsContainer } | select -First 1) -Filter '*.exe'
+
+				& $updateExePath --processStart $serviceExePath.Name --process-start-args "uninstall -servicename `"$using:serviceNames.VersionedName`""
+				if ($LastExitCode -ne 0) {
+					throw "Command failed with exit code $LastExitCode"
+				}
+
+				& $updateExePath --processStart $serviceExePath.Name --process-start-args "install -servicename `"$using:serviceNames.VersionedName`" -displayname `"$using:serviceNames.VersionedDisplayName`" start"
+				if ($LastExitCode -ne 0) {
+					throw "Command failed with exit code $LastExitCode"
+				}
+			}
+		}
+	}
+}
+
+#WARNING: copypasted from deploy.psm1
+function Get-WinServiceNames ($entryPointMetadata) {
+
+	$commonMetadata = $Metadata.Common
+	$semanticVersion = $commonMetadata.Version.SemanticVersion
+
+	$serviceName = $entryPointMetadata.ServiceName
+	$serviceDisplayName = $entryPointMetadata.ServiceDisplayName
+
+
+	if ($commonMetadata['EnvironmentName']){
+		$environmentName = $commonMetadata.EnvironmentName
+
+		$name = "$serviceName-$environmentName"
+		$displayName = "$serviceDisplayName ($environmentName)"
+	} else {
+		$name = $serviceName
+		$displayName = $serviceDisplayName
+	}
+
+	$versionedName = "$name-$semanticVersion"
+	$versionedDisplayName = "$displayName ($semanticVersion)"
+
+	return @{
+		'Name' = $name
+		'VersionedName' = $versionedName
+
+		'DisplayName' = $displayName
+		'VersionedDisplayName' = $versionedDisplayName
 	}
 }

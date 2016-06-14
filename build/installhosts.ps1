@@ -44,7 +44,6 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				$appPath = Get-ChildItem $servicePath | where { $_.PSIsContainer } | select -First 1
 				$serviceExePath = Get-ChildItem $appPath.FullName -Filter '*.exe'
 				$updateExePath = Join-Path $servicePath 'Update.exe'
-				#$updateExePath = Join-Path (Join-Path $servicePath '../Temp') 'EchoArgs.exe'
 
 				$processStartArg = @(
 					'--processStart'
@@ -56,7 +55,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					'uninstall -servicename \"' + $using:serviceNames.Name + '\"'
 				)
 
-				& $updateExePath  $uninstallArgs
+				& $updateExePath  $uninstallArgs | Write-Host
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}
@@ -66,7 +65,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					'install -servicename \"' + $using:serviceNames.Name + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
 				)
 
-				& $updateExePath $installArgs
+				& $updateExePath $installArgs | Write-Host
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}

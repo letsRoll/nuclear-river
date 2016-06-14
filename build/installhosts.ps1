@@ -41,17 +41,19 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			Invoke-Command $session {
 		
 				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
-				$updateExePath = Join-Path $servicePath "Update.exe"
-				$serviceExePath = Get-ChildItem (Get-ChildItem "$servicePath" | where { $_.PSIsContainer } | select -First 1) -Filter '*.exe'
+				$appPath = Get-ChildItem $servicePath | where { $_.PSIsContainer } | select -First 1
+				$serviceExePath = Get-ChildItem $appPath.FullName -Filter '*.exe'
+				$updateExePath = Join-Path $servicePath 'Update.exe'
+				#$updateExePath = Join-Path (Join-Path $servicePath '../Temp') 'EchoArgs.exe'
 
 				$processStartArg = @(
 					'--processStart'
 					$serviceExePath.Name
 				)
 
-				$uninstallArgs = $processStartArg += @(
+				$uninstallArgs = $processStartArg + @(
 					'--process-start-args'
-					'uninstall -servicename "' + $using:serviceNames.VersionedName + '"'
+					'uninstall -servicename \"' + $using:serviceNames.VersionedName + '\"'
 				)
 
 				& $updateExePath  $uninstallArgs
@@ -59,9 +61,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					throw "Command failed with exit code $LastExitCode"
 				}
 
-				$installArgs = $processStartArg += @(
+				$installArgs = $processStartArg + @(
 					'--process-start-args'
-					'install -servicename "' + $using:serviceNames.VersionedName + '" -displayname "' + $using:serviceNames.VersionedDisplayName + '" start'
+					'install -servicename \"' + $using:serviceNames.VersionedName + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
 				)
 
 				& $updateExePath $installArgs

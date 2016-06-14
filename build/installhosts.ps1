@@ -53,7 +53,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 				$uninstallArgs = $processStartArg + @(
 					'--process-start-args'
-					'uninstall -servicename \"' + $using:serviceNames.VersionedName + '\"'
+					'uninstall -servicename \"' + $using:serviceNames.Name + '\"'
 				)
 
 				& $updateExePath  $uninstallArgs
@@ -63,7 +63,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 				$installArgs = $processStartArg + @(
 					'--process-start-args'
-					'install -servicename \"' + $using:serviceNames.VersionedName + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
+					'install -servicename \"' + $using:serviceNames.Name + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
 				)
 
 				& $updateExePath $installArgs

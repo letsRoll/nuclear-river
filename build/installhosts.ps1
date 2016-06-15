@@ -39,7 +39,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 			$session = Get-CachedSession $targetHost
 			 Invoke-Command $session {
-		
+				
+				Write-Host '1'
+
 				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
 				$appPath = Get-ChildItem $servicePath | where { $_.PSIsContainer } | select -First 1
 				$serviceExePath = Get-ChildItem $appPath.FullName -Filter '*.exe'
@@ -55,10 +57,14 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					'uninstall -servicename \"' + $using:serviceNames.Name + '\"'
 				)
 
+				Write-Host '2'
+
 				& $updateExePath  $uninstallArgs
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}
+
+				Write-Host '3'
 
 				$installArgs = $processStartArg + @(
 					'--process-start-args'
@@ -69,6 +75,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}
+
+				Write-Host '4'
+				
 			}
 		}
 	}

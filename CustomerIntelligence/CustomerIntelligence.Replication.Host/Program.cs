@@ -43,6 +43,8 @@ namespace NuClear.CustomerIntelligence.Replication.Host
                                              .Logstash(new Uri(connectionStringSettings.GetConnectionString(LoggingConnectionStringIdentity.Instance)))
                                              .Build;
 
+            tracer.Info($"Host started with args: {string.Join(",", args)}");
+
             IUnityContainer container = null;
             try
             {

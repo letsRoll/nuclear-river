@@ -60,7 +60,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				Write-Host '2'
 				Write-Host $uninstallArgs
 
-				& $updateExePath  $uninstallArgs
+			    & $updateExePath
+
+				#& $updateExePath  $uninstallArgs
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}
@@ -72,7 +74,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					'install -servicename \"' + $using:serviceNames.Name + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
 				)
 
-				& $updateExePath $installArgs
+				#& $updateExePath $installArgs
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}

@@ -59,13 +59,11 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 				Write-Host '2'
 				Write-Host $uninstallArgs
+				Write-Host $updateExePath
 
 			    & $updateExePath
 
 				#& $updateExePath  $uninstallArgs
-				if ($LastExitCode -ne 0) {
-					throw "Command failed with exit code $LastExitCode"
-				}
 
 				Write-Host '3'
 
@@ -75,12 +73,8 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				)
 
 				#& $updateExePath $installArgs
-				if ($LastExitCode -ne 0) {
-					throw "Command failed with exit code $LastExitCode"
-				}
 
 				Write-Host '4'
-				
 			}
 		}
 	}

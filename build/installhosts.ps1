@@ -35,7 +35,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
 			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
-			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Write-Host
+			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Out-Host
 
 			$session = Get-CachedSession $targetHost
 			Invoke-Command $session {
@@ -55,7 +55,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					'uninstall -servicename \"' + $using:serviceNames.Name + '\"'
 				)
 
-				& $updateExePath  $uninstallArgs | Write-Host
+				& $updateExePath  $uninstallArgs | Out-Host
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}
@@ -65,7 +65,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 					'install -servicename \"' + $using:serviceNames.Name + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
 				)
 
-				& $updateExePath $installArgs | Write-Host
+				& $updateExePath $installArgs | Out-Host
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}

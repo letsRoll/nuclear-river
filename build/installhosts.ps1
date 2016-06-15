@@ -29,50 +29,40 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			$setupUrl = 'http://updates.test.erm.2gis.ru/Test.21/' + $host + '/Setup.exe'
 			
 			Write-Host 'Dowloading setup.exe from' $setupUrl
-			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
+			#(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
 			
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
 			Write-Host 'Executing' $setupExe 'remotely with PsExec on path' $psExec
-			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe
+
+			$targetHostPath = '\\' + $targetHost
+			& $psExec $targetHostPath -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe
 
 			$session = Get-CachedSession $targetHost
-			 Invoke-Command $session {
-				
-				Write-Host '1'
+			$result = Invoke-Command $session {
 
 				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
 				$appPath = Get-ChildItem $servicePath | where { $_.PSIsContainer } | select -First 1
 				$serviceExePath = Get-ChildItem $appPath.FullName -Filter '*.exe'
 				$updateExePath = Join-Path $servicePath 'Update.exe'
 
-				$processStartArg = @(
-					'--processStart'
-					$serviceExePath.Name
-				)
-
-				$uninstallArgs = $processStartArg + @(
-					'--process-start-args'
-					'"uninstall -servicename \"' + $using:serviceNames.Name + '\""'
-				)
-
-				Write-Host '2'
-				Write-Host $uninstallArgs
-
-			    & $updateExePath  $uninstallArgs | Out-Host
-
-				Write-Host '3'
-
-				$installArgs = $processStartArg + @(
-					'--process-start-args'
-					'install -servicename \"' + $using:serviceNames.Name + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
-				)
-
-				#& $updateExePath $installArgs
-
-				Write-Host '4'
+				return @{
+					'UpdateExePath' = $updateExePath
+					'ServiceExeName' = $serviceExePath.Name
+				}
 			}
+
+			$uninstallArgs = 'uninstall -servicename \"' + $serviceNames.Name + '\"'
+			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $uninstallArgs
+			Start-Sleep -Seconds 5
+
+			$installArgs = 'install -servicename \"' + $serviceNames.Name + '\" -displayname \"' + $serviceNames.VersionedDisplayName + '\"'
+			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $installArgs
+			Start-Sleep -Seconds 10
+			
+			$startArgs = 'start -servicename \"' + $serviceNames.Name + '\"'
+			& $psExec $targetHostPath -accepteula $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $startArgs
 		}
 	}
 }

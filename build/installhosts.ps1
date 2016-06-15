@@ -59,11 +59,8 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 				Write-Host '2'
 				Write-Host $uninstallArgs
-				Write-Host $updateExePath
 
-			    & $updateExePath | Out-Host
-
-				#& $updateExePath  $uninstallArgs
+			    & $updateExePath  $uninstallArgs | Out-Host
 
 				Write-Host '3'
 

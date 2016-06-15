@@ -72,7 +72,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			} -AsJob
 
 			Wait-Job $job
-			Receive-Job $job | Out-Host
+			$output = Receive-Job $job 
+
+			$output
 		}
 	}
 }

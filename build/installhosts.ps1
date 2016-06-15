@@ -54,7 +54,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 				$uninstallArgs = $processStartArg + @(
 					'--process-start-args'
-					'uninstall -servicename \"' + $using:serviceNames.Name + '\"'
+					'"uninstall -servicename \"' + $using:serviceNames.Name + '\""'
 				)
 
 				Write-Host '2'

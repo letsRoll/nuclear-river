@@ -67,6 +67,7 @@ namespace NuClear.River.Hosting.Interactive
                         config.SetDisplayName(hostName);
 
                         config.RunAsNetworkService();
+                        config.UseLog4Net();
                         config.EnableShutdown();
 
                         config.AddCommandLineSwitch("squirrel", _ => { });

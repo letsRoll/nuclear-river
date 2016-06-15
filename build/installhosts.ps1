@@ -58,6 +58,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				)
 
 				Write-Host '2'
+				Write-Host $uninstallArgs
 
 				& $updateExePath  $uninstallArgs
 				if ($LastExitCode -ne 0) {

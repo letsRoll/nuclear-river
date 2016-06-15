@@ -38,7 +38,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			& $psExec ('\\' + $targetHost) -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe | Out-Host
 
 			$session = Get-CachedSession $targetHost
-			 $job = Invoke-Command $session {
+			 Invoke-Command $session {
 		
 				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
 				$appPath = Get-ChildItem $servicePath | where { $_.PSIsContainer } | select -First 1
@@ -69,12 +69,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				if ($LastExitCode -ne 0) {
 					throw "Command failed with exit code $LastExitCode"
 				}
-			} -AsJob
 
-			Wait-Job $job
-			$output = Receive-Job $job 
-
-			$output
+				& ping
+			}
 		}
 	}
 }

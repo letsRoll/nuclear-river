@@ -36,11 +36,11 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
 			
 			$stopUrl = "http://$($targetHost):5000/$($serviceNames.Name)/stop"
-			Write-Host "Stopping service if it has been installed and is running, URL: $stopUrl"			
+			Write-Host "Stopping service $($serviceNames.VersionedDisplayName) if it has been installed before and is running, calling URL: $stopUrl"			
 			try{
 				Invoke-WebRequest -Uri $stopUrl -Method POST
 			}
-			catch [Exception]{
+			catch{
 				$_.Exception.Response
 			}
 

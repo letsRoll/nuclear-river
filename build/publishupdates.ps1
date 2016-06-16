@@ -100,6 +100,17 @@ Task Run-UpdateHosts -Precondition { $Metadata['HostsToUpdate'] } {
 				}
 			}
 
+			$updateUrl = "http://$($targetHost):5000/$($serviceNames.Name)/update"
+			Write-Host "Initiating updates downloading and applying on service $($serviceNames.VersionedDisplayName), calling URL: $updateUrl"			
+			try{
+				Invoke-WebRequest -Uri $updateUrl -Method POST
+			}
+			catch{
+				$_.Exception.Response
+			}
+
+			Start-Sleep -Seconds 15
+
 			$targetHostPath = "\\$targetHost"
 
 			$uninstallArgs = "uninstall -servicename \`"$($serviceNames.Name)\`""

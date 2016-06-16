@@ -39,7 +39,6 @@ namespace NuClear.CustomerIntelligence.Replication.Host
             var tracer = Log4NetTracerBuilder.Use
                                              .DefaultXmlConfig
                                              .Console
-                                             .File("out.txt")
                                              .Logstash(new Uri(connectionStringSettings.GetConnectionString(LoggingConnectionStringIdentity.Instance)))
                                              .Build;
 

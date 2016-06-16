@@ -39,6 +39,8 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			Write-Host "Stopping service if it has been installed and is running, URL: $stopUrl"			
 			Invoke-WebRequest -Uri $stopUrl -Method POST
 
+			Start-Sleep -Seconds 5
+
 			$targetHostPath = "\\$targetHost"
 
 			Write-Host "Executing $setupExe on $targetHostPath with $psExec"

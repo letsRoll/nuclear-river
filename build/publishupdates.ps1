@@ -73,8 +73,11 @@ Task Run-PublishUpdates -Precondition { $Metadata['PublishUpdatesForHosts'] } {
 }
 
 Task Run-UpdateHosts -Precondition { $Metadata['HostsToUpdate'] } {
-	
 	$hosts = $Metadata['HostsToUpdate']
+
+	$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
+	$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
+
 	foreach ($host in $hosts.GetEnumerator()){
 
 		$entryPointMetadata = $Metadata[$host]
@@ -84,38 +87,30 @@ Task Run-UpdateHosts -Precondition { $Metadata['HostsToUpdate'] } {
 		foreach($targetHost in $entryPointMetadata.TargetHosts){
 
 			$session = Get-CachedSession $targetHost
-			Invoke-Command $session {
-		
+			$result = Invoke-Command $session {
+
 				$servicePath = "${Env:WinDir}\ServiceProfiles\NetworkService\AppData\Local\$using:packageId"
 				$appPath = Get-ChildItem $servicePath | where { $_.PSIsContainer } | select -First 1
 				$serviceExePath = Get-ChildItem $appPath.FullName -Filter '*.exe'
 				$updateExePath = Join-Path $servicePath 'Update.exe'
 
-				$processStartArg = @(
-					'--processStart'
-					$serviceExePath.Name
-				)
-
-				$uninstallArgs = $processStartArg + @(
-					'--process-start-args'
-					'uninstall -servicename \"' + $using:serviceNames.Name + '\"'
-				)
-
-				& $updateExePath  $uninstallArgs | Write-Host
-				if ($LastExitCode -ne 0) {
-					throw "Command failed with exit code $LastExitCode"
-				}
-
-				$installArgs = $processStartArg + @(
-					'--process-start-args'
-					'install -servicename \"' + $using:serviceNames.Name + '\" -displayname \"' + $using:serviceNames.VersionedDisplayName + '\" start'
-				)
-
-				#& $updateExePath $installArgs | Write-Host
-				if ($LastExitCode -ne 0) {
-					throw "Command failed with exit code $LastExitCode"
+				return @{
+					'UpdateExePath' = $updateExePath
+					'ServiceExeName' = $serviceExePath.Name
 				}
 			}
+
+			$targetHostPath = "\\$targetHost"
+
+			$uninstallArgs = "uninstall -servicename \`"$($serviceNames.Name)\`""
+			Write-Host "Executing $($result.UpdateExePath) on $targetHostPath with $psExec, arguments: $uninstallArgs"
+			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $uninstallArgs
+
+			Start-Sleep -Seconds 5
+
+			$installArgs = "install -servicename \`"$($serviceNames.Name)\`" -displayname \`"$($serviceNames.VersionedDisplayName)\`" start"
+			Write-Host "Executing $($result.UpdateExePath) on $targetHostPath with $psExec, arguments: $installArgs"
+			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $installArgs
 		}
 	}
 }

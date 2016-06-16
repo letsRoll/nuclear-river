@@ -11,6 +11,10 @@ Import-Module "$BuildToolsRoot\modules\winrm.psm1" -DisableNameChecking
 Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 	$hosts = $Metadata['HostsToInstall']
 	$commonMetadata = $Metadata.Common
+	
+	$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
+	$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
+
 	foreach ($host in $hosts.GetEnumerator()){
 
 		$entryPointMetadata = $Metadata[$host]
@@ -31,12 +35,9 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			Write-Host "Dowloading setup.exe from $setupUrl"
 			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
 			
-			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
-			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
+			$targetHostPath = "\\$targetHost"
 			
 			Write-Host "Executing $setupExe remotely with $psExec"
-
-			$targetHostPath = "\\$targetHost"
 			& $psExec $targetHostPath -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe
 
 			$session = Get-CachedSession $targetHost
@@ -54,13 +55,13 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			}
 
 			$uninstallArgs = "uninstall -servicename \`"$($serviceNames.Name)\`""
-			Write-Host "Executing $($result.UpdateExePath) remotely with $psExec, arguments: $uninstallArgs"
+			Write-Host "Executing $($result.UpdateExePath) on $targetHostPath with $psExec, arguments: $uninstallArgs"
 			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $uninstallArgs
 
 			Start-Sleep -Seconds 5
 
 			$installArgs = "install -servicename \`"$($serviceNames.Name)\`" -displayname \`"$($serviceNames.VersionedDisplayName)\`" start"
-			Write-Host "Executing $($result.UpdateExePath) remotely with $psExec, arguments: $installArgs"
+			Write-Host "Executing $($result.UpdateExePath) on $targetHostPath with $psExec, arguments: $installArgs"
 			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $installArgs
 		}
 	}

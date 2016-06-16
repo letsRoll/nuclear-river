@@ -59,7 +59,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 
 			Start-Sleep -Seconds 5
 
-			$installArgs = "install -servicename `"$($serviceNames.Name)`" -displayname \"$($serviceNames.VersionedDisplayName)\" start"
+			$installArgs = "install -servicename `"$($serviceNames.Name)`" -displayname `"$($serviceNames.VersionedDisplayName)`" start"
 			Write-Host "Executing $($result.UpdateExePath) remotely with $psExec, arguments: $installArgs"
 			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $installArgs
 		}

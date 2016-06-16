@@ -24,19 +24,19 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				mkdir "$setupDir"
 			}
 
-			$setupExe = (Join-Path $setupDir 'Setup.exe')
+			$setupExe = Join-Path $setupDir 'Setup.exe'
 			#TODO: Specify environment index
-			$setupUrl = 'http://updates.test.erm.2gis.ru/Test.21/' + $host + '/Setup.exe'
+			$setupUrl = "http://updates.test.erm.2gis.ru/Test.21/$host/Setup.exe"
 			
-			Write-Host 'Dowloading setup.exe from' $setupUrl
+			Write-Host "Dowloading setup.exe from $setupUrl"
 			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
 			
 			$psExecPackageInfo = Get-PackageInfo 'psexec.exe'
 			$psExec = Join-Path $psExecPackageInfo.VersionedDir 'psexec.exe'
 			
-			Write-Host 'Executing ' + $setupExe + ' remotely with ' + $psExec
+			Write-Host "Executing $setupExe remotely with $psExec"
 
-			$targetHostPath = '\\' + $targetHost
+			$targetHostPath = "\\$targetHost"
 			& $psExec $targetHostPath -accepteula -u 'NT AUTHORITY\NETWORK SERVICE' -cf $setupExe
 
 			$session = Get-CachedSession $targetHost
@@ -53,19 +53,15 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 				}
 			}
 
-			$uninstallArgs = 'uninstall -servicename \"' + $serviceNames.Name + '\"'
-			Write-Host 'Executing ' + $result.UpdateExePath + ' remotely with ' + $psExec + ', arguments: ' + $uninstallArgs
+			$uninstallArgs = "uninstall -servicename \"$($serviceNames.Name)\""
+			Write-Host "Executing $($result.UpdateExePath) remotely with $psExec, arguments: $uninstallArgs"
 			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $uninstallArgs
+
 			Start-Sleep -Seconds 5
 
-			$installArgs = 'install -servicename \"' + $serviceNames.Name + '\" -displayname \"' + $serviceNames.VersionedDisplayName + '\"'
-			Write-Host 'Executing ' + $result.UpdateExePath + ' remotely with ' + $psExec + ', arguments: ' + $installArgs
+			$installArgs = "install -servicename \"$($serviceNames.Name)\" -displayname \"$($serviceNames.VersionedDisplayName)\" start"
+			Write-Host "Executing $($result.UpdateExePath) remotely with $psExec, arguments: $installArgs"
 			& $psExec $targetHostPath -accepteula -h $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $installArgs
-			Start-Sleep -Seconds 10
-			
-			$startArgs = 'start -servicename \"' + $serviceNames.Name + '\"'
-			Write-Host 'Executing ' + $result.UpdateExePath + ' remotely with ' + $psExec + ', arguments: ' + $startArgs
-			& $psExec $targetHostPath -accepteula $result.UpdateExePath --processStart $result.ServiceExeName --process-start-args $startArgs
 		}
 	}
 }

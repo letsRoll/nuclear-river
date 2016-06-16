@@ -79,4 +79,5 @@ Run-BulkTool, `
 Create-Topics, `
 QueueDeploy-Packages, `
 Run-PublishUpdates, `
-Run-InstallHosts
+Run-InstallHosts,
+Run-UpdateHosts

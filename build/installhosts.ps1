@@ -35,7 +35,7 @@ Task Run-InstallHosts -Precondition { $Metadata['HostsToInstall'] } {
 			Write-Host "Dowloading setup.exe from $setupUrl"
 			(New-Object System.Net.WebClient).DownloadFile($setupUrl, $setupExe)
 			
-			$stopUrl = "http://$targetHost:5000/$($serviceNames.Name)/stop"
+			$stopUrl = "http://$($targetHost):5000/$($serviceNames.Name)/stop"
 			Write-Host "Stopping service if it has been installed and is running, URL: $stopUrl"			
 			Invoke-WebRequest -Uri $stopUrl -Method POST
 

@@ -3,23 +3,51 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Transactions;
 
 using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Smo;
 
+using NuClear.StateInitialization.Core.Settings;
+
 namespace NuClear.StateInitialization.Core.Storage
 {
-    public static class ViewRemover
+    public class ViewRemover
     {
-        public static IDisposable TemporaryRemoveViews(string connectionString)
+        private static readonly TransactionOptions TransactionOptions =
+            new TransactionOptions
+                {
+                    IsolationLevel = IsolationLevel.Serializable,
+                    Timeout = TimeSpan.Zero
+                };
+
+        private readonly IViewManagementSettings _viewManagementSettings;
+
+        public ViewRemover(IViewManagementSettings viewManagementSettings)
         {
+            _viewManagementSettings = viewManagementSettings;
+        }
+
+        public IDisposable TemporaryRemoveViews(string connectionString)
+        {
+            if (!_viewManagementSettings.TemporaryDropViews)
+            {
+                return new NullDisposable();
+            }
+
             var database = GetDatabase(connectionString);
             var existingViews = database.Views.Cast<View>().Where(v => !v.IsSystemObject).ToArray();
             var viewsToRestore = new List<StringCollection>();
-            foreach (var existingView in existingViews)
+
+            using (var transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions))
             {
-                viewsToRestore.Add(existingView.Script());
-                existingView.Drop();
+                foreach (var existingView in existingViews)
+                {
+                    viewsToRestore.Add(existingView.Script());
+                    existingView.Drop();
+                }
+
+                transation.Complete();
             }
 
             return new ViewContainer(connectionString, viewsToRestore);
@@ -32,6 +60,13 @@ namespace NuClear.StateInitialization.Core.Storage
 
             var connectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
             return server.Databases[connectionStringBuilder.InitialCatalog];
+        }
+
+        public class NullDisposable : IDisposable
+        {
+            public void Dispose()
+            {
+            }
         }
 
         private class ViewContainer : IDisposable

@@ -11,6 +11,7 @@ using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.StateInitialization.Core.Commands;
 using NuClear.StateInitialization.Core.Factories;
+using NuClear.StateInitialization.Core.Settings;
 using NuClear.StateInitialization.Core.Storage;
 using NuClear.Storage.API.ConnectionStrings;
 
@@ -33,21 +34,25 @@ namespace NuClear.StateInitialization.Core
             {
                 var commandStopwatch = Stopwatch.StartNew();
 
-                using (ViewRemover.TemporaryRemoveViews(GetConnectionString(command.TargetStorageDescriptor)))
-                using (var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(
-                    _dataObjectTypesProviderFactory.Create(command),
-                    () => CreateDataConnection(command.SourceStorageDescriptor),
-                    () => CreateDataConnection(command.TargetStorageDescriptor)))
+                var viewRemover = new ViewRemover(new ViewManagementAspect());
+                using (viewRemover.TemporaryRemoveViews(GetConnectionString(command.TargetStorageDescriptor)))
                 {
-                    Parallel.ForEach(actorsFactory.Create(),
-                                     actor =>
-                                         {
-                                             var sw = Stopwatch.StartNew();
-                                             actor.ExecuteCommands(new[] { command });
-                                             sw.Stop();
+                    using (var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(
+                        _dataObjectTypesProviderFactory.Create(command),
+                        () => CreateDataConnection(command.SourceStorageDescriptor),
+                        () => CreateDataConnection(command.TargetStorageDescriptor)))
+                    {
+                        Parallel.ForEach(
+                            actorsFactory.Create(),
+                            actor =>
+                                {
+                                    var sw = Stopwatch.StartNew();
+                                    actor.ExecuteCommands(new[] { command });
+                                    sw.Stop();
 
-                                             Console.WriteLine($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
-                                         });
+                                    Console.WriteLine($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                                });
+                    }
                 }
 
 

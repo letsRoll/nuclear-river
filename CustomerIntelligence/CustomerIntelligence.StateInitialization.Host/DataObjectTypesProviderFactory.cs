@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using NuClear.CustomerIntelligence.Storage.Identitites.Connections;
 using NuClear.CustomerIntelligence.Storage.Model.Facts;
 using NuClear.Replication.Core.DataObjects;
-using NuClear.StateInitialization.Core;
 using NuClear.StateInitialization.Core.Commands;
+using NuClear.StateInitialization.Core.DataObjects;
 using NuClear.StateInitialization.Core.Factories;
 
 namespace NuClear.CustomerIntelligence.StateInitialization.Host
@@ -16,7 +16,7 @@ namespace NuClear.CustomerIntelligence.StateInitialization.Host
         {
             if (command.TargetStorageDescriptor.ConnectionStringIdentity is FactsConnectionStringIdentity)
             {
-                return new DataObjectTypesProvider(
+                return new CommandRegardlessDataObjectTypesProvider(
                     new List<Type>
                         {
                             typeof(Project),
@@ -41,7 +41,7 @@ namespace NuClear.CustomerIntelligence.StateInitialization.Host
             }
             if (command.TargetStorageDescriptor.ConnectionStringIdentity is CustomerIntelligenceConnectionStringIdentity)
             {
-                return new DataObjectTypesProvider(
+                return new CommandRegardlessDataObjectTypesProvider(
                     new List<Type>
                         {
                             typeof(Storage.Model.CI.Firm),

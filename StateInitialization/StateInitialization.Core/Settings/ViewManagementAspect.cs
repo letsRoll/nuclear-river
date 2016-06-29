@@ -3,15 +3,18 @@ using NuClear.Settings.API;
 
 namespace NuClear.StateInitialization.Core.Settings
 {
-    public interface IViewManagementSettings : ISettings
+    public interface IDbSchemaManagementSettings : ISettings
     {
-        bool TemporaryDropViews { get; }
+        bool DisableViews { get; }
+        bool DisableConstraints { get; }
     }
 
-    public class ViewManagementAspect : ISettingsAspect, IViewManagementSettings
+    public class DbSchemaManagementAspect : ISettingsAspect, IDbSchemaManagementSettings
     {
-        private readonly BoolSetting _temporaryDropViews = ConfigFileSetting.Bool.Optional("TemporaryDropViews", true);
+        private readonly BoolSetting _disableViews = ConfigFileSetting.Bool.Optional("DisableViews", true);
+        private readonly BoolSetting _disableConstraints = ConfigFileSetting.Bool.Optional("DisableConstraints", true);
 
-        public bool TemporaryDropViews => _temporaryDropViews.Value;
+        public bool DisableViews => _disableViews.Value;
+        public bool DisableConstraints => _disableConstraints.Value;
     }
 }

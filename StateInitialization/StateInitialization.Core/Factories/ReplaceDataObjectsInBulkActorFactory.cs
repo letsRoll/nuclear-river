@@ -8,12 +8,11 @@ using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.StateInitialization.Core.Actors;
-using NuClear.StateInitialization.Core.Commands;
 using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Factories
 {
-    public sealed class ReplaceDataObjectsInBulkActorFactory : IDataObjectsActorFactory, IDisposable
+    public sealed class ReplaceDataObjectsInBulkActorFactory : IDataObjectsActorFactory
     {
         private static readonly IReadOnlyDictionary<Type, Type> AccessorTypes =
             (from type in AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).SelectMany(x => x.ExportedTypes)
@@ -22,49 +21,35 @@ namespace NuClear.StateInitialization.Core.Factories
              select new { GenericArgument = @interface.GetGenericArguments()[0], Type = type })
                 .ToDictionary(x => x.GenericArgument, x => x.Type);
 
-        private readonly IDataObjectTypesProvider _dataObjectTypesProvider;
-        private readonly Func<DataConnection> _sourceDataConnectionFactory;
-        private readonly Func<DataConnection> _targetDataConnectionFactory;
-
-        private readonly List<IDisposable> _disposables = new List<IDisposable>();
+        private readonly Type _dataObjectType;
+        private readonly DataConnection _sourceDataConnection;
+        private readonly DataConnection _targetDataConnection;
 
         public ReplaceDataObjectsInBulkActorFactory(
-            IDataObjectTypesProvider dataObjectTypesProvider,
-            Func<DataConnection> sourceDataConnectionFactory,
-            Func<DataConnection> targetDataConnectionFactory)
+            Type dataObjectType,
+            DataConnection sourceDataConnection,
+            DataConnection targetDataConnection)
         {
-            _dataObjectTypesProvider = dataObjectTypesProvider;
-            _sourceDataConnectionFactory = sourceDataConnectionFactory;
-            _targetDataConnectionFactory = targetDataConnectionFactory;
+            _dataObjectType = dataObjectType;
+            _sourceDataConnection = sourceDataConnection;
+            _targetDataConnection = targetDataConnection;
         }
 
         public IReadOnlyCollection<IActor> Create()
         {
             var actors = new List<IActor>();
 
-            foreach (var dataObjectType in _dataObjectTypesProvider.Get<ReplaceDataObjectsInBulkCommand>())
-            {
-                var sourceDataConnection = _sourceDataConnectionFactory();
-                var targetDataConnection = _targetDataConnectionFactory();
-                _disposables.Add(sourceDataConnection);
-                _disposables.Add(targetDataConnection);
+            var accessorType = AccessorTypes[_dataObjectType];
+            var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(_sourceDataConnection));
+            var replaceDataObjectsActorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(_dataObjectType);
+            var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, _targetDataConnection);
+            actors.Add(replaceDataObjectsActor);
 
-                var accessorType = AccessorTypes[dataObjectType];
-                var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
-                var actorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(dataObjectType);
-                var actor = (IActor)Activator.CreateInstance(actorType, accessorInstance, targetDataConnection);
-                actors.Add(actor);
-            }
+            var updateStatisticsActorType = typeof(UpdateTableStatisticsActor<>).MakeGenericType(_dataObjectType);
+            var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, _targetDataConnection);
+            actors.Add(updateStatisticsActor);
 
             return actors;
-        }
-
-        public void Dispose()
-        {
-            foreach (var disposable in _disposables)
-            {
-                disposable.Dispose();
-            }
         }
     }
 }

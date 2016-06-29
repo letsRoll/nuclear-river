@@ -85,8 +85,20 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\CompositeActor.cs" />
+    <Compile Include="Actors\ConstraintsManagementActor.cs" />
     <Compile Include="Actors\ReplaceDataObjectsInBulkActor.cs" />
-    <Compile Include="DataObjectTypesProvider.cs" />
+    <Compile Include="Actors\UpdateTableStatisticsActor.cs" />
+    <Compile Include="Actors\ViewManagementActor.cs" />
+    <Compile Include="Commands\DisableContraintsCommand.cs" />
+    <Compile Include="Commands\DropViewsCommand.cs" />
+    <Compile Include="Commands\EnableConstraintsCommand.cs" />
+    <Compile Include="Commands\RestoreViewsCommand.cs" />
+    <Compile Include="Commands\UpdateTableStatisticsCommand.cs" />
+    <Compile Include="DataObjects\CommandRegardlessDataObjectTypesProvider.cs" />
+    <Compile Include="DataObjects\ICommandRegardlessDataObjectTypesProvider.cs" />
+    <Compile Include="Events\ConstraintsDisabledEvent.cs" />
+    <Compile Include="Events\ViewsDroppedEvent.cs" />
     <Compile Include="Factories\IDataObjectTypesProviderFactory.cs" />
     <Compile Include="BulkReplicationActor.cs" />
     <Compile Include="Commands\ReplaceDataObjectsInBulkCommand.cs" />
@@ -95,7 +107,6 @@
     <Compile Include="Settings\ViewManagementAspect.cs" />
     <Compile Include="Storage\LinqToDbQuery.cs" />
     <Compile Include="Storage\StorageDescriptor.cs" />
-    <Compile Include="Storage\ViewRemover.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

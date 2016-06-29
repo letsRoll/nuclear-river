@@ -26,15 +26,15 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var casted = commands.OfType<ReplaceDataObjectsInBulkCommand>();
-            if (casted.Count() != 1)
+            var command = commands.OfType<ReplaceDataObjectsInBulkCommand>().SingleOrDefault();
+            if (command == null)
             {
-                throw new ArgumentException($"There is should be only one command of type {typeof(ReplaceDataObjectsInBulkCommand).Name} in commands pipeline");
+                return Array.Empty<IEvent>();
             }
 
             try
             {
-                var options = new BulkCopyOptions { BulkCopyTimeout = 1800 };
+                var options = new BulkCopyOptions { BulkCopyTimeout = command.BulkCopyTimeout };
                 _targetDataConnection.GetTable<TDataObject>().Delete();
                 _targetDataConnection.BulkCopy(options, _dataObjectsSource);
 

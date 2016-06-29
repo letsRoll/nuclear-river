@@ -12,7 +12,7 @@ namespace NuClear.CustomerIntelligence.StateInitialization.Host
 {
     public sealed class DataObjectTypesProviderFactory : IDataObjectTypesProviderFactory
     {
-        public IDataObjectTypesProvider Create(ReplaceDataObjectsInBulkCommand command)
+        public IDataObjectTypesProvider Create(ReplicateInBulkCommand command)
         {
             if (command.TargetStorageDescriptor.ConnectionStringIdentity is FactsConnectionStringIdentity)
             {

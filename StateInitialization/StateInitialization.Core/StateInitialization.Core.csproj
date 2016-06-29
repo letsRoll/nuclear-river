@@ -93,6 +93,7 @@
     <Compile Include="Commands\DisableContraintsCommand.cs" />
     <Compile Include="Commands\DropViewsCommand.cs" />
     <Compile Include="Commands\EnableConstraintsCommand.cs" />
+    <Compile Include="Commands\ReplicateInBulkCommand.cs" />
     <Compile Include="Commands\RestoreViewsCommand.cs" />
     <Compile Include="Commands\UpdateTableStatisticsCommand.cs" />
     <Compile Include="DataObjects\CommandRegardlessDataObjectTypesProvider.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="Factories\ReplaceDataObjectsInBulkActorFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ViewManagementAspect.cs" />
+    <Compile Include="SqlConnectionExtensions.cs" />
     <Compile Include="Storage\LinqToDbQuery.cs" />
     <Compile Include="Storage\StorageDescriptor.cs" />
   </ItemGroup>

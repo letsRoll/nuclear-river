@@ -1,17 +1,14 @@
 ﻿using NuClear.Replication.Core;
-using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class ReplaceDataObjectsInBulkCommand : ICommand
     {
-        public ReplaceDataObjectsInBulkCommand(StorageDescriptor sourceStorageDescriptor, StorageDescriptor targetStorageDescriptor)
+        public ReplaceDataObjectsInBulkCommand(int bulkCopyTimeout = 1800)
         {
-            SourceStorageDescriptor = sourceStorageDescriptor;
-            TargetStorageDescriptor = targetStorageDescriptor;
+            BulkCopyTimeout = bulkCopyTimeout;
         }
 
-        public StorageDescriptor SourceStorageDescriptor { get; }
-        public StorageDescriptor TargetStorageDescriptor { get; }
+        public int BulkCopyTimeout { get;  }
     }
 }

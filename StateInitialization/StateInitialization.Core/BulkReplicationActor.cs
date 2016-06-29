@@ -51,7 +51,7 @@ namespace NuClear.StateInitialization.Core
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            foreach (var command in commands.Cast<ReplaceDataObjectsInBulkCommand>())
+            foreach (var command in commands.Cast<ReplicateInBulkCommand>())
             {
                 var commandStopwatch = Stopwatch.StartNew();
 
@@ -64,7 +64,7 @@ namespace NuClear.StateInitialization.Core
                     var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
 
-                    Parallel.ForEach(dataObjectTypes, dataObjectType => ReplaceInBulk(command, dataObjectType, targetConnection));
+                    Parallel.ForEach(dataObjectTypes, dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection));
 
                     var compensationalCommands = CreateCompensationalCommands(schemaChangedEvents);
                     if (compensationalCommands.Any())
@@ -137,24 +137,24 @@ namespace NuClear.StateInitialization.Core
                     });
         }
 
-        private void ReplaceInBulk(ReplaceDataObjectsInBulkCommand command, Type dataObjectType, DataConnection targetConnection)
+        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection)
         {
             var commands = new ICommand[]
                        {
-                           command,
-                           new UpdateTableStatisticsCommand(command.TargetStorageDescriptor.MappingSchema)
+                           new ReplaceDataObjectsInBulkCommand(),
+                           new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
                        };
 
             DataConnection sourceConnection;
-            using (var suppressed = new TransactionScope(TransactionScopeOption.Suppress))
+            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
             {
-                sourceConnection = CreateDataConnection(command.SourceStorageDescriptor);
+                sourceConnection = CreateDataConnection(sourceStorageDescriptor);
                 if (sourceConnection.Connection.State != ConnectionState.Open)
                 {
                     sourceConnection.Connection.Open();
                 }
 
-                suppressed.Complete();
+                scope.Complete();
             }
 
             using (sourceConnection)

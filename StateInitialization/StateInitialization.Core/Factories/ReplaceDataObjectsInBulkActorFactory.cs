@@ -46,7 +46,7 @@ namespace NuClear.StateInitialization.Core.Factories
             actors.Add(replaceDataObjectsActor);
 
             var updateStatisticsActorType = typeof(UpdateTableStatisticsActor<>).MakeGenericType(_dataObjectType);
-            var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, _targetDataConnection);
+            var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, _targetDataConnection.Connection);
             actors.Add(updateStatisticsActor);
 
             return actors;

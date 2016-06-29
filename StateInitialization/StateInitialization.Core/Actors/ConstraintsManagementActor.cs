@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 
-using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Smo;
 
 using NuClear.Replication.Core;
@@ -34,7 +33,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             if (commands.OfType<DisableContraintsCommand>().Any())
             {
-                var database = GetDatabase(_sqlConnection);
+                var database = _sqlConnection.GetDatabase();
                 var tables = database.Tables.OfType<Table>().Where(x => !x.IsSystemObject).ToArray();
 
                 var checks = tables.SelectMany(x => x.Checks.Cast<Check>().Where(c => c.IsEnabled)).ToArray();
@@ -72,15 +71,6 @@ namespace NuClear.StateInitialization.Core.Actors
             }
 
             return Array.Empty<IEvent>();
-        }
-
-        private static Database GetDatabase(SqlConnection sqlConnection)
-        {
-            var connection = new ServerConnection(sqlConnection);
-            var server = new Server(connection);
-
-            var connectionStringBuilder = new SqlConnectionStringBuilder(sqlConnection.ConnectionString);
-            return server.Databases[connectionStringBuilder.InitialCatalog];
         }
     }
 }

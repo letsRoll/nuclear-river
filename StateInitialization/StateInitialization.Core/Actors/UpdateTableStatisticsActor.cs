@@ -3,50 +3,56 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 
-using LinqToDB.Data;
 using LinqToDB.Mapping;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
+using NuClear.StateInitialization.Core.Commands;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
     public sealed class UpdateTableStatisticsActor<TDataObject> : IActor
     {
-        private readonly DataConnection _dataConnection;
+        private readonly SqlConnection _sqlConnection;
 
-        public UpdateTableStatisticsActor(DataConnection dataConnection)
+        public UpdateTableStatisticsActor(SqlConnection sqlConnection)
         {
-            _dataConnection = dataConnection;
+            _sqlConnection = sqlConnection;
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
+            var command = commands.OfType<UpdateTableStatisticsCommand>().SingleOrDefault();
+            if (command == null)
+            {
+                return Array.Empty<IEvent>();
+            }
 
-
-            var attributes = _dataConnection.MappingSchema.GetAttributes<TableAttribute>(typeof(TDataObject));
+            var attributes = command.MappingSchema.GetAttributes<TableAttribute>(typeof(TDataObject));
             var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? typeof(TDataObject).Name;
             try
             {
+                var database = _sqlConnection.GetDatabase();
+
                 var schemaName = attributes.Select(x => x.Schema).FirstOrDefault();
+
                 var builder = new SqlCommandBuilder();
+                tableName = builder.QuoteIdentifier(tableName);
                 if (!string.IsNullOrEmpty(schemaName))
                 {
-                    tableName = builder.QuoteIdentifier(tableName);
                     schemaName = builder.QuoteIdentifier(schemaName);
-                    _dataConnection.Execute($"UPDATE STATISTICS {schemaName}.{tableName}");
+                    database.Tables[tableName, schemaName].UpdateStatistics();
                 }
                 else
                 {
-                    tableName = builder.QuoteIdentifier(tableName);
-                    _dataConnection.Execute($"UPDATE STATISTICS {tableName}");
+                    database.Tables[tableName].UpdateStatistics();
                 }
 
                 return Array.Empty<IEvent>();
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error occured while statistics updating for table {tableName}{Environment.NewLine}{_dataConnection.LastQuery}", ex); ;
+                throw new Exception($"Error occured while statistics updating for table {tableName}", ex); ;
             }
         }
     }

@@ -146,7 +146,7 @@ namespace NuClear.StateInitialization.Core
                        };
 
             DataConnection sourceConnection;
-            using (var suppressed = new TransactionScope(TransactionScopeAsyncFlowOption.Suppress))
+            using (var suppressed = new TransactionScope(TransactionScopeOption.Suppress))
             {
                 sourceConnection = CreateDataConnection(command.SourceStorageDescriptor);
                 if (sourceConnection.Connection.State != ConnectionState.Open)

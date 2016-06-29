@@ -8,6 +8,7 @@ using NuClear.CustomerIntelligence.StateInitialization.Host.Assembling;
 using NuClear.CustomerIntelligence.Storage.Identitites.Connections;
 using NuClear.Replication.Core;
 using NuClear.StateInitialization.Core;
+using NuClear.StateInitialization.Core.Settings;
 using NuClear.Storage.API.ConnectionStrings;
 
 namespace NuClear.CustomerIntelligence.StateInitialization.Host
@@ -44,7 +45,7 @@ namespace NuClear.CustomerIntelligence.StateInitialization.Host
                 }
             }
 
-            var bulkReplicationActor = new BulkReplicationActor(new DataObjectTypesProviderFactory(), ConnectionStringSettings);
+            var bulkReplicationActor = new BulkReplicationActor(new DataObjectTypesProviderFactory(), ConnectionStringSettings, new DbSchemaManagementAspect());
 
             var sw = Stopwatch.StartNew();
             bulkReplicationActor.ExecuteCommands(commands);

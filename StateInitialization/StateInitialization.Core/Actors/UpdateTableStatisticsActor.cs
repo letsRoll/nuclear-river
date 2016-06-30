@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 
 using LinqToDB.Mapping;
@@ -27,6 +28,9 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 return Array.Empty<IEvent>();
             }
+
+            Debug.WriteLine(command.ToString());
+            Debug.WriteLine(command.MappingSchema.ToString());
 
             var attributes = command.MappingSchema.GetAttributes<TableAttribute>(typeof(TDataObject));
             var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? typeof(TDataObject).Name;

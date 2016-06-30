@@ -64,15 +64,22 @@ namespace NuClear.StateInitialization.Core
                     var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
 
-                    /*
-                    Parallel.ForEach(
-                        dataObjectTypes,
-                        dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout));
-                    */
-
-                    foreach (var dataObjectType in dataObjectTypes)
+                    if (command.ExecutionMode == ExecutionMode.Parallel)
                     {
-                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                        Parallel.ForEach(
+                            dataObjectTypes,
+                            dataObjectType =>
+                                {
+                                    targetConnection = CreateDataConnection(command.TargetStorageDescriptor);
+                                    ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                                });
+                    }
+                    else
+                    {
+                        foreach (var dataObjectType in dataObjectTypes)
+                        {
+                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                        }
                     }
 
                     schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));

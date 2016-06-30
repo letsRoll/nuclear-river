@@ -64,7 +64,11 @@ namespace NuClear.StateInitialization.Core
                     var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
 
-                    Parallel.ForEach(dataObjectTypes, dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection));
+                    // Parallel.ForEach(dataObjectTypes, dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection));
+                    foreach (var dataObjectType in dataObjectTypes)
+                    {
+                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection);
+                    }
 
                     var compensationalCommands = CreateCompensationalCommands(schemaChangedEvents);
                     if (compensationalCommands.Any())
@@ -81,7 +85,8 @@ namespace NuClear.StateInitialization.Core
                 }
 
                 commandStopwatch.Stop();
-                Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> [{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds} seconds");
+                Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
+                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds} seconds");
             }
 
             return Array.Empty<IEvent>();

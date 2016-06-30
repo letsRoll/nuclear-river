@@ -23,6 +23,11 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
+            foreach (var c in commands)
+            {
+                Debug.WriteLine(c.ToString());
+            }
+
             var command = commands.OfType<UpdateTableStatisticsCommand>().SingleOrDefault();
             if (command == null)
             {

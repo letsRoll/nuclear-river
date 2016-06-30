@@ -39,6 +39,10 @@ namespace NuClear.StateInitialization.Core.Factories
         {
             var actors = new List<IActor>();
 
+            var indexesManagementActorType = typeof(IndexesManagementActor<>).MakeGenericType(_dataObjectType);
+            var indexesManagementActor = (IActor)Activator.CreateInstance(indexesManagementActorType, _targetDataConnection.Connection);
+            actors.Add(indexesManagementActor);
+
             var accessorType = AccessorTypes[_dataObjectType];
             var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(_sourceDataConnection));
             var replaceDataObjectsActorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(_dataObjectType);
@@ -48,10 +52,6 @@ namespace NuClear.StateInitialization.Core.Factories
             var updateStatisticsActorType = typeof(UpdateTableStatisticsActor<>).MakeGenericType(_dataObjectType);
             var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, _targetDataConnection.Connection);
             actors.Add(updateStatisticsActor);
-
-            var indexesManagementActorType = typeof(IndexesManagementActor<>).MakeGenericType(_dataObjectType);
-            var indexesManagementActor = (IActor)Activator.CreateInstance(indexesManagementActorType, _targetDataConnection.Connection);
-            actors.Add(indexesManagementActor);
 
             return actors;
         }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Transactions;
 
 using LinqToDB.Mapping;
 
@@ -32,24 +31,19 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
+            var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
+            if (disableCommand != null)
             {
-                var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
-                if (disableCommand != null)
-                {
-                    return ExecuteCommand(disableCommand.MappingSchema, IndexesManagementMode.Disable);
-                }
-
-                var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
-                if (enableCommand != null)
-                {
-                    return ExecuteCommand(enableCommand.MappingSchema, IndexesManagementMode.Enable);
-                }
-
-                scope.Complete();
-
-                return Array.Empty<IEvent>();
+                return ExecuteCommand(disableCommand.MappingSchema, IndexesManagementMode.Disable);
             }
+
+            var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
+            if (enableCommand != null)
+            {
+                return ExecuteCommand(enableCommand.MappingSchema, IndexesManagementMode.Enable);
+            }
+
+            return Array.Empty<IEvent>();
         }
 
         private IReadOnlyCollection<IEvent> ExecuteCommand(MappingSchema mappingSchema, IndexesManagementMode indexesManagementMode)
@@ -65,7 +59,10 @@ namespace NuClear.StateInitialization.Core.Actors
 
                 if (indexesManagementMode == IndexesManagementMode.Disable)
                 {
-                    table.DisableAllIndexes();
+                    foreach (var index in table.Indexes.Cast<Index>().Where(x => !x.IsClustered && !x.IsDisabled))
+                    {
+                        index.Alter(IndexOperation.Disable);
+                    }
                 }
                 else
                 {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 using LinqToDB;
@@ -42,7 +43,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
             catch (Exception ex)
             {
-                throw new Exception($"Can not process entity type {typeof(TDataObject).Name}{Environment.NewLine}{_targetDataConnection.LastQuery}", ex);
+                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name}{Environment.NewLine}{_targetDataConnection.LastQuery}", ex);
             }
         }
     }

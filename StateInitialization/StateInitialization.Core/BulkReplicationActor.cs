@@ -64,9 +64,16 @@ namespace NuClear.StateInitialization.Core
                     var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
 
+                    /*
                     Parallel.ForEach(
                         dataObjectTypes,
                         dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout));
+                    */
+
+                    foreach (var dataObjectType in dataObjectTypes)
+                    {
+                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                    }
 
                     schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
 
@@ -132,13 +139,17 @@ namespace NuClear.StateInitialization.Core
 
         private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, int bulkCopyTimeout)
         {
-            var commands = new ICommand[]
-                       {
-                           new DisableIndexesCommand(targetConnection.MappingSchema),
-                           new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout),
-                           new EnableIndexesCommand(targetConnection.MappingSchema),
-                           new UpdateTableStatisticsCommand(targetConnection.MappingSchema),
-                       };
+            var firstStageCommands = new ICommand[]
+                                         {
+                                             new DisableIndexesCommand(targetConnection.MappingSchema),
+                                             new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout)
+                                         };
+
+            var secondStageCommands = new ICommand[]
+                                          {
+                                              new EnableIndexesCommand(targetConnection.MappingSchema),
+                                              new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
+                                          };
 
             DataConnection sourceConnection;
             using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
@@ -155,14 +166,23 @@ namespace NuClear.StateInitialization.Core
             using (sourceConnection)
             {
                 var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectType, sourceConnection, targetConnection);
-                foreach (var actor in actorsFactory.Create())
-                {
-                    var sw = Stopwatch.StartNew();
-                    actor.ExecuteCommands(commands);
-                    sw.Stop();
+                var actors = actorsFactory.Create();
 
-                    Console.WriteLine($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
-                }
+                Action<IReadOnlyCollection<ICommand>> execute =
+                    commands =>
+                        {
+                            foreach (var actor in actors)
+                            {
+                                var sw = Stopwatch.StartNew();
+                                actor.ExecuteCommands(commands);
+                                sw.Stop();
+
+                                Console.WriteLine($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                            }
+                        };
+
+                execute(firstStageCommands);
+                execute(secondStageCommands);
             }
         }
     }

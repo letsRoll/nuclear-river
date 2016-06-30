@@ -70,8 +70,10 @@ namespace NuClear.StateInitialization.Core
                             dataObjectTypes,
                             dataObjectType =>
                                 {
-                                    targetConnection = CreateDataConnection(command.TargetStorageDescriptor);
-                                    ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                                    using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                                    {
+                                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
+                                    }
                                 });
                     }
                     else

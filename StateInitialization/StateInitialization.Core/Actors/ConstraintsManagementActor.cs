@@ -13,7 +13,7 @@ using NuClear.StateInitialization.Core.Settings;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public class ConstraintsManagementActor : IActor
+    public sealed class ConstraintsManagementActor : IActor
     {
         private readonly SqlConnection _sqlConnection;
         private readonly IDbSchemaManagementSettings _schemaManagementSettings;

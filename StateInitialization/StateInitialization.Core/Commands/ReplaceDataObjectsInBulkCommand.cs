@@ -4,7 +4,7 @@ namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class ReplaceDataObjectsInBulkCommand : ICommand
     {
-        public ReplaceDataObjectsInBulkCommand(int bulkCopyTimeout = 1800)
+        public ReplaceDataObjectsInBulkCommand(int bulkCopyTimeout)
         {
             BulkCopyTimeout = bulkCopyTimeout;
         }

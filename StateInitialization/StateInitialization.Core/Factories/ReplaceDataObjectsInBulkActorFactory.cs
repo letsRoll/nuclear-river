@@ -49,6 +49,10 @@ namespace NuClear.StateInitialization.Core.Factories
             var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, _targetDataConnection.Connection);
             actors.Add(updateStatisticsActor);
 
+            var indexesManagementActorType = typeof(IndexesManagementActor<>).MakeGenericType(_dataObjectType);
+            var indexesManagementActor = (IActor)Activator.CreateInstance(indexesManagementActorType, _targetDataConnection.Connection);
+            actors.Add(indexesManagementActor);
+
             return actors;
         }
     }

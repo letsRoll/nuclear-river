@@ -17,7 +17,7 @@ namespace NuClear.StateInitialization.Core.DataObjects
         IReadOnlyCollection<Type> IDataObjectTypesProvider.Get<TCommand>()
         {
             var regardlessProviderName = typeof(ICommandRegardlessDataObjectTypesProvider).Name;
-            throw new NotSupportedException($"Instance of type {GetType().Name} must be used by {regardlessProviderName} interface only. Try to cast it to {regardlessProviderName}");
+            throw new NotSupportedException($"Instance of type {GetType().Name} must be used throught {regardlessProviderName} interface only. Try to cast it to {regardlessProviderName}");
         }
 
         IReadOnlyCollection<Type> ICommandRegardlessDataObjectTypesProvider.Get()

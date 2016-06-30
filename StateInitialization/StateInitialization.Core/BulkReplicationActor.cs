@@ -64,17 +64,11 @@ namespace NuClear.StateInitialization.Core
                     var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
 
-                    // Parallel.ForEach(dataObjectTypes, dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection));
-                    foreach (var dataObjectType in dataObjectTypes)
-                    {
-                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection);
-                    }
+                    Parallel.ForEach(
+                        dataObjectTypes,
+                        dataObjectType => ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout));
 
-                    var compensationalCommands = CreateCompensationalCommands(schemaChangedEvents);
-                    if (compensationalCommands.Any())
-                    {
-                        schemaManagenentActor.ExecuteCommands(compensationalCommands);
-                    }
+                    schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
 
                     transation.Complete();
                 }
@@ -94,13 +88,7 @@ namespace NuClear.StateInitialization.Core
 
         private static IEnumerable<Type> GetDataObjectTypes(IDataObjectTypesProvider dataObjectTypesProvider)
         {
-            var commandRegardlessProvider = dataObjectTypesProvider as ICommandRegardlessDataObjectTypesProvider;
-            if (commandRegardlessProvider == null)
-            {
-                throw new ApplicationException($"Data object types provider created with current instance of {typeof(IDataObjectTypesProviderFactory).Name} " +
-                                               $"does not implement {typeof(ICommandRegardlessDataObjectTypesProvider).Name} interface");
-            }
-
+            var commandRegardlessProvider = (ICommandRegardlessDataObjectTypesProvider)dataObjectTypesProvider;
             return commandRegardlessProvider.Get();
         }
 
@@ -128,13 +116,13 @@ namespace NuClear.StateInitialization.Core
             var connectionString = _connectionStringSettings.GetConnectionString(storageDescriptor.ConnectionStringIdentity);
             var connection = SqlServerTools.CreateDataConnection(connectionString);
             connection.AddMappingSchema(storageDescriptor.MappingSchema);
-            connection.CommandTimeout = (int)TimeSpan.FromMinutes(30).TotalMilliseconds;
+            connection.CommandTimeout = (int)TimeSpan.FromMinutes(storageDescriptor.CommandTimeout).TotalMilliseconds;
             return connection;
         }
 
         private IActor CreateDbSchemaManagementActor(SqlConnection sqlConnection)
         {
-            return new CompositeActor(
+            return new SequentialPipelineActor(
                 new IActor[]
                     {
                         new ViewManagementActor(sqlConnection, _schemaManagementSettings),
@@ -142,12 +130,14 @@ namespace NuClear.StateInitialization.Core
                     });
         }
 
-        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection)
+        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, int bulkCopyTimeout)
         {
             var commands = new ICommand[]
                        {
-                           new ReplaceDataObjectsInBulkCommand(),
-                           new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
+                           new DisableIndexesCommand(targetConnection.MappingSchema),
+                           new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout),
+                           new EnableIndexesCommand(targetConnection.MappingSchema),
+                           new UpdateTableStatisticsCommand(targetConnection.MappingSchema),
                        };
 
             DataConnection sourceConnection;

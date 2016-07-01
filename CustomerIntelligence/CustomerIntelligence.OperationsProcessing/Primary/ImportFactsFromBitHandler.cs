@@ -48,7 +48,7 @@ namespace NuClear.CustomerIntelligence.OperationsProcessing.Primary
                     foreach (var actor in actors)
                     {
                         var events = actor.ExecuteCommands(message.Commands);
-                        _eventLogger.Log(events);
+                        _eventLogger.Log(events.Distinct().ToArray());
                     }
 
                     _telemetryPublisher.Publish<BitStatisticsEntityProcessedCountIdentity>(message.Commands.Count);

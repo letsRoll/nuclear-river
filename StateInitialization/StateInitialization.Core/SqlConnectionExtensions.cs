@@ -1,4 +1,5 @@
-﻿using System.Data.SqlClient;
+﻿using System.Data;
+using System.Data.SqlClient;
 
 using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Smo;
@@ -9,6 +10,11 @@ namespace NuClear.StateInitialization.Core
     {
         public static Database GetDatabase(this SqlConnection sqlConnection)
         {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                sqlConnection.Open();
+            }
+
             var connection = new ServerConnection(sqlConnection);
             var server = new Server(connection);
 

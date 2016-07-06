@@ -1,20 +1,20 @@
 ﻿using System.Collections.Generic;
 
-using Microsoft.SqlServer.Management.Smo;
-
 using NuClear.Replication.Core;
 
 namespace NuClear.StateInitialization.Core.Events
 {
     public sealed class ConstraintsDisabledEvent : IEvent
     {
-        public ConstraintsDisabledEvent(IReadOnlyCollection<Check> checks, IReadOnlyCollection<ForeignKey> foreignKeys)
+        public ConstraintsDisabledEvent(
+            IReadOnlyDictionary<string, IEnumerable<string>> checks,
+            IReadOnlyDictionary<string, IEnumerable<string>> foreignKeys)
         {
             Checks = checks;
             ForeignKeys = foreignKeys;
         }
 
-        public IReadOnlyCollection<Check> Checks { get; }
-        public IReadOnlyCollection<ForeignKey> ForeignKeys { get; }
+        public IReadOnlyDictionary<string, IEnumerable<string>> Checks { get; }
+        public IReadOnlyDictionary<string, IEnumerable<string>> ForeignKeys { get; }
     }
 }

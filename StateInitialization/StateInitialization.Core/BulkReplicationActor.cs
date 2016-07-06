@@ -66,6 +66,8 @@ namespace NuClear.StateInitialization.Core
 
                     if (command.ExecutionMode == ExecutionMode.Parallel)
                     {
+                        transation.Complete();
+
                         Parallel.ForEach(
                             dataObjectTypes,
                             dataObjectType =>
@@ -75,6 +77,10 @@ namespace NuClear.StateInitialization.Core
                                         ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
                                     }
                                 });
+
+                        transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions);
+                        schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
+                        transation.Complete();
                     }
                     else
                     {
@@ -82,11 +88,11 @@ namespace NuClear.StateInitialization.Core
                         {
                             ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
                         }
+
+                        schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
+
+                        transation.Complete();
                     }
-
-                    schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
-
-                    transation.Complete();
                 }
                 finally
                 {

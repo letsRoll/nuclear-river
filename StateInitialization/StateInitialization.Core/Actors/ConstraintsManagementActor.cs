@@ -33,44 +33,75 @@ namespace NuClear.StateInitialization.Core.Actors
 
             if (commands.OfType<DisableContraintsCommand>().Any())
             {
-                var database = _sqlConnection.GetDatabase();
-                var tables = database.Tables.OfType<Table>().Where(x => !x.IsSystemObject).ToArray();
+                var tables = GetTables();
+                var constraints = tables.ToDictionary(
+                    x => x.Name,
+                    x => new
+                             {
+                                 Checks = x.Checks.Cast<Check>().Where(c => c.IsEnabled),
+                                 ForeignKeys = x.ForeignKeys.Cast<ForeignKey>().Where(fk => fk.IsEnabled)
+                             });
 
-                var checks = tables.SelectMany(x => x.Checks.Cast<Check>().Where(c => c.IsEnabled)).ToArray();
-                var foreignKeys = tables.SelectMany(x => x.ForeignKeys.Cast<ForeignKey>().Where(fk => fk.IsEnabled)).ToArray();
-
-                foreach (var check in checks)
+                foreach (var tableConstraints in constraints)
                 {
-                    check.IsEnabled = false;
-                    check.Alter();
+                    foreach (var check in tableConstraints.Value.Checks)
+                    {
+                        check.IsEnabled = false;
+                        check.Alter();
+                    }
+
+                    foreach (var foreignKey in tableConstraints.Value.ForeignKeys)
+                    {
+                        foreignKey.IsEnabled = false;
+                        foreignKey.Alter();
+                    }
                 }
 
-                foreach (var foreignKey in foreignKeys)
-                {
-                    foreignKey.IsEnabled = false;
-                    foreignKey.Alter();
-                }
-
-                return new[] { new ConstraintsDisabledEvent(checks, foreignKeys) };
+                return new[]
+                           {
+                               new ConstraintsDisabledEvent(
+                                   constraints.ToDictionary(x => x.Key, x => x.Value.Checks.Select(c => c.Name)),
+                                   constraints.ToDictionary(x => x.Key, x => x.Value.ForeignKeys.Select(c => c.Name)))
+                           };
             }
 
             var enableCommand = commands.OfType<EnableConstraintsCommand>().SingleOrDefault();
             if (enableCommand != null)
             {
-                foreach (var check in enableCommand.Checks)
+                var tables = GetTables();
+                foreach (var table in tables)
                 {
-                    check.IsEnabled = true;
-                    check.Alter();
-                }
+                    IEnumerable<string> checkNames;
+                    if (enableCommand.Checks.TryGetValue(table.Name, out checkNames))
+                    {
+                        var checks = table.Checks.Cast<Check>().Where(c => checkNames.Contains(c.Name)).ToArray();
+                        foreach (var check in checks)
+                        {
+                            check.IsEnabled = true;
+                            check.Alter();
+                        }
+                    }
 
-                foreach (var foreignKey in enableCommand.ForeignKeys)
-                {
-                    foreignKey.IsEnabled = true;
-                    foreignKey.Alter();
+                    IEnumerable<string> foreignKeyNames;
+                    if (enableCommand.ForeignKeys.TryGetValue(table.Name, out foreignKeyNames))
+                    {
+                        var foreignKeys = table.ForeignKeys.Cast<ForeignKey>().Where(fk => foreignKeyNames.Contains(fk.Name));
+                        foreach (var foreignKey in foreignKeys)
+                        {
+                            foreignKey.IsEnabled = true;
+                            foreignKey.Alter();
+                        }
+                    }
                 }
             }
 
             return Array.Empty<IEvent>();
+        }
+
+        private IEnumerable<Table> GetTables()
+        {
+            var database = _sqlConnection.GetDatabase();
+            return database.Tables.OfType<Table>().Where(x => !x.IsSystemObject).ToArray();
         }
     }
 }

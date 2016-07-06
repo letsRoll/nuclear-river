@@ -186,7 +186,7 @@ namespace NuClear.StateInitialization.Core
                                 actor.ExecuteCommands(commands);
                                 sw.Stop();
 
-                                Console.WriteLine($"[{DateTime.Now}]:  {actor.GetType().GetFriendlyName()}, {sw.Elapsed.TotalSeconds} seconds");
+                                Console.WriteLine($"[{DateTime.Now}]: {actor.GetType().GetFriendlyName()}, {sw.Elapsed.TotalSeconds} seconds");
                             }
                         };
 

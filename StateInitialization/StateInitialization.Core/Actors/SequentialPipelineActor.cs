@@ -31,7 +31,7 @@ namespace NuClear.StateInitialization.Core.Actors
                         var sw = Stopwatch.StartNew();
                         events.AddRange(actor.ExecuteCommands(commands));
                         sw.Stop();
-                        Console.WriteLine($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                        Console.WriteLine($"[{DateTime.Now}]: {actor.GetType().GetFriendlyName()}, {sw.Elapsed.TotalSeconds} seconds");
 
                         return events;
                     });

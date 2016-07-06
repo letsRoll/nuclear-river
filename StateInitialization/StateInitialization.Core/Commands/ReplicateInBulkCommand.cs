@@ -14,7 +14,7 @@ namespace NuClear.StateInitialization.Core.Commands
         public ReplicateInBulkCommand(
             StorageDescriptor sourceStorageDescriptor,
             StorageDescriptor targetStorageDescriptor,
-            int bulkCopyTimeout = 1800,
+            int bulkCopyTimeout = 30,
             ExecutionMode executionMode = ExecutionMode.Parallel)
         {
             SourceStorageDescriptor = sourceStorageDescriptor;

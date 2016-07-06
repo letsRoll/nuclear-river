@@ -35,7 +35,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             try
             {
-                var options = new BulkCopyOptions { BulkCopyTimeout = command.BulkCopyTimeout };
+                var options = new BulkCopyOptions { BulkCopyTimeout = (int)TimeSpan.FromMinutes(command.BulkCopyTimeout).TotalSeconds };
                 _targetDataConnection.GetTable<TDataObject>().Delete();
                 _targetDataConnection.BulkCopy(options, _dataObjectsSource);
 

@@ -47,12 +47,16 @@ namespace NuClear.StateInitialization.Core.Actors
                     foreach (var check in tableConstraints.Value.Checks)
                     {
                         check.IsEnabled = false;
+
+                        Console.WriteLine($"Disabling check constraint [{check.Name}]...");
                         check.Alter();
                     }
 
                     foreach (var foreignKey in tableConstraints.Value.ForeignKeys)
                     {
                         foreignKey.IsEnabled = false;
+
+                        Console.WriteLine($"Disabling foreign key constraint [{foreignKey.Name}]...");
                         foreignKey.Alter();
                     }
                 }
@@ -78,6 +82,8 @@ namespace NuClear.StateInitialization.Core.Actors
                         foreach (var check in checks)
                         {
                             check.IsEnabled = true;
+
+                            Console.WriteLine($"Enabling check constraint [{check.Name}]...");
                             check.Alter();
                         }
                     }
@@ -89,6 +95,8 @@ namespace NuClear.StateInitialization.Core.Actors
                         foreach (var foreignKey in foreignKeys)
                         {
                             foreignKey.IsEnabled = true;
+
+                            Console.WriteLine($"Enabling foreign key constraint [{foreignKey.Name}]...");
                             foreignKey.Alter();
                         }
                     }

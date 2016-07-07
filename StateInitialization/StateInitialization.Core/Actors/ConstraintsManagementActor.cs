@@ -34,34 +34,34 @@ namespace NuClear.StateInitialization.Core.Actors
             if (commands.OfType<DisableContraintsCommand>().Any())
             {
                 var tables = GetTables();
-                var tableConstraints = tables.ToDictionary(
-                    x => x,
+                var constraints = tables.ToDictionary(
+                    x => x.Name,
                     x => new
                              {
                                  Checks = x.Checks.Cast<Check>().Where(c => c.IsEnabled),
                                  ForeignKeys = x.ForeignKeys.Cast<ForeignKey>().Where(fk => fk.IsEnabled)
                              });
 
-                foreach (var table in tableConstraints)
+                foreach (var tableConstraints in constraints)
                 {
-                    foreach (var check in table.Value.Checks)
+                    foreach (var check in tableConstraints.Value.Checks)
                     {
                         check.IsEnabled = false;
+                        check.Alter();
                     }
 
-                    foreach (var foreignKey in table.Value.ForeignKeys)
+                    foreach (var foreignKey in tableConstraints.Value.ForeignKeys)
                     {
                         foreignKey.IsEnabled = false;
+                        foreignKey.Alter();
                     }
-
-                    table.Key.Alter();
                 }
 
                 return new[]
                            {
                                new ConstraintsDisabledEvent(
-                                   tableConstraints.ToDictionary(x => x.Key.Name, x => x.Value.Checks.Select(c => c.Name)),
-                                   tableConstraints.ToDictionary(x => x.Key.Name, x => x.Value.ForeignKeys.Select(c => c.Name)))
+                                   constraints.ToDictionary(x => x.Key, x => x.Value.Checks.Select(c => c.Name)),
+                                   constraints.ToDictionary(x => x.Key, x => x.Value.ForeignKeys.Select(c => c.Name)))
                            };
             }
 
@@ -78,6 +78,7 @@ namespace NuClear.StateInitialization.Core.Actors
                         foreach (var check in checks)
                         {
                             check.IsEnabled = true;
+                            check.Alter();
                         }
                     }
 
@@ -88,10 +89,9 @@ namespace NuClear.StateInitialization.Core.Actors
                         foreach (var foreignKey in foreignKeys)
                         {
                             foreignKey.IsEnabled = true;
+                            foreignKey.Alter();
                         }
                     }
-
-                    table.Alter();
                 }
             }
 

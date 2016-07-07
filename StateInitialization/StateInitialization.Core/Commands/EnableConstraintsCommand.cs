@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 
 using NuClear.Replication.Core;
 
@@ -7,15 +8,14 @@ namespace NuClear.StateInitialization.Core.Commands
     public sealed class EnableConstraintsCommand : ICommand
     {
         public EnableConstraintsCommand(
-            IReadOnlyDictionary<string, IEnumerable<string>> checks,
-            IReadOnlyDictionary<string, IEnumerable<string>> foreignKeys)
+            IReadOnlyCollection<StringCollection> checksToRestore,
+            IReadOnlyCollection<StringCollection> foreignKeysToRestore)
         {
-            Checks = checks;
-            ForeignKeys = foreignKeys;
+            ChecksToRestore = checksToRestore;
+            ForeignKeysToRestore = foreignKeysToRestore;
         }
 
-        public IReadOnlyDictionary<string, IEnumerable<string>> Checks { get; }
-
-        public IReadOnlyDictionary<string, IEnumerable<string>> ForeignKeys { get; }
+        public IReadOnlyCollection<StringCollection> ChecksToRestore { get; set; }
+        public IReadOnlyCollection<StringCollection> ForeignKeysToRestore { get; set; }
     }
 }

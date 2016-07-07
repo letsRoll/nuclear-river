@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 
 using NuClear.Replication.Core;
 
@@ -6,15 +7,13 @@ namespace NuClear.StateInitialization.Core.Events
 {
     public sealed class ConstraintsDisabledEvent : IEvent
     {
-        public ConstraintsDisabledEvent(
-            IReadOnlyDictionary<string, IEnumerable<string>> checks,
-            IReadOnlyDictionary<string, IEnumerable<string>> foreignKeys)
+        public ConstraintsDisabledEvent(IReadOnlyCollection<StringCollection> checks, IReadOnlyCollection<StringCollection> foreignKeys)
         {
             Checks = checks;
             ForeignKeys = foreignKeys;
         }
 
-        public IReadOnlyDictionary<string, IEnumerable<string>> Checks { get; }
-        public IReadOnlyDictionary<string, IEnumerable<string>> ForeignKeys { get; }
+        public IReadOnlyCollection<StringCollection> Checks { get; }
+        public IReadOnlyCollection<StringCollection> ForeignKeys { get; }
     }
 }

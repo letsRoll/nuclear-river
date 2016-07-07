@@ -38,8 +38,8 @@ namespace NuClear.StateInitialization.Core.Actors
                     x => x.Name,
                     x => new
                              {
-                                 Checks = x.Checks.Cast<Check>().Where(c => c.IsEnabled),
-                                 ForeignKeys = x.ForeignKeys.Cast<ForeignKey>().Where(fk => fk.IsEnabled)
+                                 Checks = x.Checks.Cast<Check>().Where(c => c.IsEnabled).ToArray(),
+                                 ForeignKeys = x.ForeignKeys.Cast<ForeignKey>().Where(fk => fk.IsEnabled).ToArray()
                              });
 
                 foreach (var tableConstraints in constraints)

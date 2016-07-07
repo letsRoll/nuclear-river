@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-using LinqToDB;
 using LinqToDB.Data;
+using LinqToDB.Mapping;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
@@ -33,10 +33,20 @@ namespace NuClear.StateInitialization.Core.Actors
                 return Array.Empty<IEvent>();
             }
 
+            var attributes = _targetDataConnection.MappingSchema.GetAttributes<TableAttribute>(typeof(TDataObject));
+            var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? typeof(TDataObject).Name;
+
+            var schemaName = attributes.Select(x => x.Schema).FirstOrDefault();
+            if (!string.IsNullOrEmpty(schemaName))
+            {
+                tableName = $"{schemaName}.{tableName}";
+            }
+
             try
             {
+                _targetDataConnection.Execute($"TRUNCATE TABLE {tableName}");
+
                 var options = new BulkCopyOptions { BulkCopyTimeout = (int)TimeSpan.FromMinutes(command.BulkCopyTimeout).TotalSeconds };
-                _targetDataConnection.GetTable<TDataObject>().Delete();
                 _targetDataConnection.BulkCopy(options, _dataObjectsSource);
 
                 return Array.Empty<IEvent>();

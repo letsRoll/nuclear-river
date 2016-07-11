@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 
 using LinqToDB.Data;
@@ -36,9 +37,13 @@ namespace NuClear.StateInitialization.Core.Actors
             var attributes = _targetDataConnection.MappingSchema.GetAttributes<TableAttribute>(typeof(TDataObject));
             var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? typeof(TDataObject).Name;
 
+            var builder = new SqlCommandBuilder();
+            tableName = builder.QuoteIdentifier(tableName);
+
             var schemaName = attributes.Select(x => x.Schema).FirstOrDefault();
             if (!string.IsNullOrEmpty(schemaName))
             {
+                schemaName = builder.QuoteIdentifier(schemaName);
                 tableName = $"{schemaName}.{tableName}";
             }
 

@@ -16,11 +16,13 @@ namespace NuClear.StateInitialization.Core.Actors
     public class ViewManagementActor : IActor
     {
         private readonly SqlConnection _sqlConnection;
+        private readonly int _commandTimeout;
         private readonly IDbSchemaManagementSettings _schemaManagementSettings;
 
-        public ViewManagementActor(SqlConnection sqlConnection, IDbSchemaManagementSettings schemaManagementSettings)
+        public ViewManagementActor(SqlConnection sqlConnection, int commandTimeout, IDbSchemaManagementSettings schemaManagementSettings)
         {
             _sqlConnection = sqlConnection;
+            _commandTimeout = commandTimeout;
             _schemaManagementSettings = schemaManagementSettings;
         }
 
@@ -53,7 +55,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 {
                     foreach (var script in view)
                     {
-                        var command = new SqlCommand(script, _sqlConnection);
+                        var command = new SqlCommand(script, _sqlConnection) { CommandTimeout = _commandTimeout };
                         command.ExecuteNonQuery();
                     }
                 }

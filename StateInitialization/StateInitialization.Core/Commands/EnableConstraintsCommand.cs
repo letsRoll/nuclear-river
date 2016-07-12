@@ -15,7 +15,7 @@ namespace NuClear.StateInitialization.Core.Commands
             ForeignKeysToRestore = foreignKeysToRestore;
         }
 
-        public IReadOnlyCollection<StringCollection> ChecksToRestore { get; set; }
-        public IReadOnlyCollection<StringCollection> ForeignKeysToRestore { get; set; }
+        public IReadOnlyCollection<StringCollection> ChecksToRestore { get; }
+        public IReadOnlyCollection<StringCollection> ForeignKeysToRestore { get; }
     }
 }

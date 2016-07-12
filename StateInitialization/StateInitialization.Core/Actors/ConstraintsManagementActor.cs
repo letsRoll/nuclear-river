@@ -17,11 +17,13 @@ namespace NuClear.StateInitialization.Core.Actors
     public sealed class ConstraintsManagementActor : IActor
     {
         private readonly SqlConnection _sqlConnection;
+        private readonly int _commandTimeout;
         private readonly IDbSchemaManagementSettings _schemaManagementSettings;
 
-        public ConstraintsManagementActor(SqlConnection sqlConnection, IDbSchemaManagementSettings schemaManagementSettings)
+        public ConstraintsManagementActor(SqlConnection sqlConnection, int commandTimeout, IDbSchemaManagementSettings schemaManagementSettings)
         {
             _sqlConnection = sqlConnection;
+            _commandTimeout = commandTimeout;
             _schemaManagementSettings = schemaManagementSettings;
         }
 
@@ -63,7 +65,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 {
                     foreach (var script in check)
                     {
-                        var command = new SqlCommand(script, _sqlConnection);
+                        var command = new SqlCommand(script, _sqlConnection) { CommandTimeout = _commandTimeout };
                         command.ExecuteNonQuery();
                     }
                 }

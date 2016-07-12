@@ -11,6 +11,6 @@ namespace NuClear.StateInitialization.Core.Commands
             MappingSchema = mappingSchema;
         }
 
-        public MappingSchema MappingSchema { get; set; }
+        public MappingSchema MappingSchema { get; }
     }
 }

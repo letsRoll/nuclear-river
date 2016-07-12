@@ -61,7 +61,7 @@ namespace NuClear.StateInitialization.Core
                 var targetConnection = CreateDataConnection(command.TargetStorageDescriptor);
                 try
                 {
-                    var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection);
+                    var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection, command.TargetStorageDescriptor.CommandTimeout);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
 
                     if (command.ExecutionMode == ExecutionMode.Parallel)
@@ -142,13 +142,14 @@ namespace NuClear.StateInitialization.Core
             return connection;
         }
 
-        private IActor CreateDbSchemaManagementActor(SqlConnection sqlConnection)
+        private IActor CreateDbSchemaManagementActor(SqlConnection sqlConnection, int commandTimeout)
         {
+            var timeout = (int)TimeSpan.FromMinutes(commandTimeout).TotalSeconds;
             return new SequentialPipelineActor(
                 new IActor[]
                     {
-                        new ViewManagementActor(sqlConnection, _schemaManagementSettings),
-                        new ConstraintsManagementActor(sqlConnection, _schemaManagementSettings)
+                        new ViewManagementActor(sqlConnection, timeout, _schemaManagementSettings),
+                        new ConstraintsManagementActor(sqlConnection, timeout, _schemaManagementSettings)
                     });
         }
 

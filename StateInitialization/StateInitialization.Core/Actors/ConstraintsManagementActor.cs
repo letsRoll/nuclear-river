@@ -74,7 +74,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 {
                     foreach (var script in foreinKey)
                     {
-                        var command = new SqlCommand(script, _sqlConnection);
+                        var command = new SqlCommand(script, _sqlConnection) { CommandTimeout = _commandTimeout };
                         command.ExecuteNonQuery();
                     }
                 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using NuClear.CustomerIntelligence.Replication.Commands;
@@ -9,12 +10,14 @@ namespace NuClear.CustomerIntelligence.Replication.Actors
 {
     public class AggregateActor : IAggregateActor
     {
+        private readonly IReadOnlyCollection<Type> _entityTypes;
         private readonly LeafToRootActor _leafToRootActor;
         private readonly RootToLeafActor _rootToLeafActor;
         private readonly SubrootToLeafActor _subrootToLeafActor;
 
         public AggregateActor(IAggregateRootActor aggregateRootActor)
         {
+            _entityTypes = aggregateRootActor.GetEntityTypes();
             _leafToRootActor = new LeafToRootActor(aggregateRootActor);
             _rootToLeafActor = new RootToLeafActor(aggregateRootActor);
             _subrootToLeafActor = new SubrootToLeafActor(aggregateRootActor.GetEntityActors());
@@ -31,6 +34,7 @@ namespace NuClear.CustomerIntelligence.Replication.Actors
                                    (result, next) =>
                                        {
                                            result.Add(new DeleteDataObjectCommand(next.AggregateRootType, next.AggregateRootId));
+                                           result.AddRange(_entityTypes.Select(x => new DeleteDataObjectCommand(x, next.AggregateRootId)));
                                            result.Add(new ReplaceValueObjectCommand(next.AggregateRootId));
                                            return result;
                                        })
@@ -43,6 +47,7 @@ namespace NuClear.CustomerIntelligence.Replication.Actors
                                                    (result, next) =>
                                                        {
                                                            result.Add(new CreateDataObjectCommand(next.AggregateRootType, next.AggregateRootId));
+                                                           result.AddRange(_entityTypes.Select(x => new CreateDataObjectCommand(x, next.AggregateRootId)));
                                                            result.Add(new ReplaceValueObjectCommand(next.AggregateRootId));
                                                            return result;
                                                        })
@@ -55,6 +60,7 @@ namespace NuClear.CustomerIntelligence.Replication.Actors
                                                    (result, next) =>
                                                        {
                                                            result.Add(new SyncDataObjectCommand(next.AggregateRootType, next.AggregateRootId));
+                                                           result.AddRange(_entityTypes.Select(x => new SyncDataObjectCommand(x, next.AggregateRootId)));
                                                            result.Add(new ReplaceValueObjectCommand(next.AggregateRootId));
                                                            return result;
                                                        })

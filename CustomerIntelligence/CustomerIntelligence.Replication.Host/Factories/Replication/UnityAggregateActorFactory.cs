@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Microsoft.Practices.Unity;
 
@@ -13,9 +14,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host.Factories.Replication
 {
     public sealed class UnityAggregateActorFactory : IAggregateActorFactory
     {
-        private readonly IUnityContainer _unityContainer;
-
-        private static readonly IReadOnlyDictionary<Type, Type> AggregateRootActors =
+        private static readonly Dictionary<Type, Type> AggregateRootActors =
             new Dictionary<Type, Type>
                 {
                     { typeof(Firm), typeof(FirmAggregateRootActor) },
@@ -26,16 +25,27 @@ namespace NuClear.CustomerIntelligence.Replication.Host.Factories.Replication
                     { typeof(ProjectStatistics), typeof(ProjectStatisticsAggregateRootActor) }
                 };
 
+        private readonly IUnityContainer _unityContainer;
+
         public UnityAggregateActorFactory(IUnityContainer unityContainer)
         {
             _unityContainer = unityContainer;
         }
 
-        public IActor Create(Type aggregateRootType)
+        public IReadOnlyCollection<IActor> Create(IReadOnlyCollection<Type> aggregateRootTypes)
         {
-            var aggregateRootActorType = AggregateRootActors[aggregateRootType];
-            var aggregateRootActor = (IAggregateRootActor)_unityContainer.Resolve(aggregateRootActorType);
-            return new AggregateActor(aggregateRootActor);
+            var actors = new List<IActor>();
+            foreach (var aggregateRootType in AggregateRootActors.Keys)
+            {
+                if (aggregateRootTypes.Contains(aggregateRootType))
+                {
+                    var aggregateRootActorType = AggregateRootActors[aggregateRootType];
+                    var aggregateRootActor = (IAggregateRootActor)_unityContainer.Resolve(aggregateRootActorType);
+                    actors.Add(new AggregateActor(aggregateRootActor));
+                }
+            }
+
+            return actors;
         }
     }
 }

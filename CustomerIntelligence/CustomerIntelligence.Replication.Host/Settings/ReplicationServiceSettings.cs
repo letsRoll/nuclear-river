@@ -56,8 +56,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host.Settings
                    .Use(new QuartzSettingsAspect(connectionStringSettings.GetConnectionString(InfrastructureConnectionStringIdentity.Instance)))
                    .Use<CorporateBusSettingsAspect>()
                    .Use<LogstashSettingsAspect>()
-                   .Use<IdentityServiceClientSettingsAspect>()
-                   .Use<SquirrelSettings>();
+                   .Use<IdentityServiceClientSettingsAspect>();
         }
 
         public int ReplicationBatchSize => _replicationBatchSize.Value;

@@ -110,7 +110,7 @@ function QueueDeploy-ConvertUseCasesService {
 				Import-Module "$localPSScriptRoot\metadata.psm1" -DisableNameChecking
 				Add-Metadata $localMetadata
 
-				Import-Module "$localPSScriptRoot\deploy.psm1" -DisableNameChecking
+				Import-Module "$localPSScriptRoot\deploy.winservice.psm1" -DisableNameChecking
 
 				Load-WinServiceModule $entryPointMetadataKey
 				Take-WinServiceOffline $entryPointMetadataKey

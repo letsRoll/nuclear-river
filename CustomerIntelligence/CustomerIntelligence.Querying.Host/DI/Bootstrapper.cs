@@ -64,7 +64,7 @@ namespace NuClear.CustomerIntelligence.Querying.Host.DI
                     new ITracerContextEntryProvider[]
                     {
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.Environment, environmentSettings.EnvironmentName),
-                        new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPoint, environmentSettings.HostName),
+                        new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPoint, environmentSettings.EntryPointName),
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPointHost, NetworkInfo.ComputerFQDN),
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPointInstanceId, Guid.NewGuid().ToString()),
                         new TracerContextSelfHostedEntryProvider(TracerContextKeys.Required.UserAccount) // TODO {all, 08.05.2015}: Если появится авторизация, надо будет доработать логирование

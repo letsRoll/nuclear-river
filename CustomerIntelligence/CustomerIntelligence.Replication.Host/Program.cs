@@ -22,14 +22,13 @@ namespace NuClear.CustomerIntelligence.Replication.Host
         {
             var settingsContainer = new ReplicationServiceSettings();
             var environmentSettings = settingsContainer.AsSettings<IEnvironmentSettings>();
-            var squirrelSettings = settingsContainer.AsSettings<ISquirrelSettings>();
             var connectionStringSettings = settingsContainer.AsSettings<IConnectionStringSettings>();
 
             var tracerContextEntryProviders =
                     new ITracerContextEntryProvider[]
                     {
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.Environment, environmentSettings.EnvironmentName),
-                        new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPoint, environmentSettings.HostName),
+                        new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPoint, environmentSettings.EntryPointName),
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPointHost, NetworkInfo.ComputerFQDN),
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPointInstanceId, Guid.NewGuid().ToString()),
                         new TracerContextSelfHostedEntryProvider(TracerContextKeys.Required.UserAccount)
@@ -50,7 +49,9 @@ namespace NuClear.CustomerIntelligence.Replication.Host
                 container = Bootstrapper.ConfigureUnity(settingsContainer, tracer, tracerContextManager);
                 var scheduleManager = container.Resolve<ISchedulerManager>();
 
-                var host = new River.Hosting.Interactive.Host(squirrelSettings.UpdateServerUrl, scheduleManager);
+                var host = new River.Hosting.Interactive.Host(scheduleManager,
+                    $"{environmentSettings.EntryPointName}-{environmentSettings.EnvironmentName}",
+                    $"2GIS NuClear River {environmentSettings.EntryPointName.Replace(".", " ")} Service ({environmentSettings.EnvironmentName})");
                 host.ConfigureAndRun();
             }
             finally

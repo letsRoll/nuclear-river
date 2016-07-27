@@ -1,18 +1,16 @@
 ﻿param([string[]]$TaskList = @(), [hashtable]$Properties = @{})
 #Requires –Version 3.0
 
-if ($TaskList.Count -eq 0){
-	$TaskList = @('Build-NuGet', 'Deploy-NuGet')
+if ($TaskList.Count -eq 0){	
+	$TaskList = @('Build-Packages', 'Deploy-Packages')
 }
 
 if ($Properties.Count -eq 0){
  	$Properties.EnvironmentName = 'Test.20'
 	$Properties.EntryPoints = @(
-		'CustomerIntelligence.Querying.Host'
+		#'CustomerIntelligence.Querying.Host'
 		'CustomerIntelligence.Replication.Host'
 	)
-	#$Properties.HostsToUpdate = 'CustomerIntelligence.Replication.Host'
-	#$Properties.HostsToInstall = 'CustomerIntelligence.Replication.Host'
 	#$Properties.UseCaseRoute = 'ERM'
 	#$Properties.UpdateSchemas = 'CustomerIntelligence'
 }

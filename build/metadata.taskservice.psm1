@@ -96,17 +96,14 @@ function Get-TargetHostsMetadata ($Context){
 
 function Get-ServiceNameMetadata ($Context) {
 	switch ($Context.EntryPoint) {
-		'CustomerIntelligence.Replication.Host' {
-			return @{
-				'ServiceName' = 'CustomerIntelligence.Replication.Host'
-				'ServiceDisplayName' = '2GIS NuClear River CustomerIntelligence Replication Host Service'
-			}
-		}
 		'ConvertUseCasesService' {
 			return @{
 				'ServiceName' = 'ConvertUseCases'
 				'ServiceDisplayName' = '2GIS NuClear River Convert UseCases Service'
 			}
+		}
+		default {
+			return @{}
 		}
 	}
 }

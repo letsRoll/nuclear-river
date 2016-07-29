@@ -26,33 +26,35 @@ function QueueDeploy-SquirrelPackages {
 	$entryPointNames = $Metadata['SquirrelEntryPoints']
 	foreach ($entryPointName in $entryPointNames){
 
-		Add-DeployQueue $entryPointName {
-			param($localBuildToolsRoot, $localPSScriptRoot, $localMetadata, $localEntryPointName)
+		if($Metadata[$entryPointName]){
+			Add-DeployQueue $entryPointName {
+				param($localBuildToolsRoot, $localPSScriptRoot, $localMetadata, $localEntryPointName)
 
-			Import-Module "$localBuildToolsRoot\modules\winrm.psm1" -DisableNameChecking
+				Import-Module "$localBuildToolsRoot\modules\winrm.psm1" -DisableNameChecking
 			
-			$metadataModulePath = "$localBuildToolsRoot\modules\metadata.psm1"
-			$squirrelRemoteModulePath = "$localPSScriptRoot\squirrel.remote.psm1"
+				$metadataModulePath = "$localBuildToolsRoot\modules\metadata.psm1"
+				$squirrelRemoteModulePath = "$localPSScriptRoot\squirrel.remote.psm1"
 
-			$entryPointMetadata = $localMetadata[$localEntryPointName]
-			foreach($targetHost in $entryPointMetadata.TargetHosts){
+				$entryPointMetadata = $localMetadata[$localEntryPointName]
+				foreach($targetHost in $entryPointMetadata.TargetHosts){
 			
-				$session = Get-CachedSession $targetHost
-				Import-ModuleToSession $session $metadataModulePath
-				Import-ModuleToSession $session $squirrelRemoteModulePath
+					$session = Get-CachedSession $targetHost
+					Import-ModuleToSession $session $metadataModulePath
+					Import-ModuleToSession $session $squirrelRemoteModulePath
 	
-				Invoke-Command $session {
-					param($metadata, $packageId)
+					Invoke-Command $session {
+						param($metadata, $packageId)
 
-					Add-Metadata $metadata
+						Add-Metadata $metadata
 
-					$appBaseDir = "${Env:SystemRoot}\ServiceProfiles\NetworkService\AppData\Local"
+						$appBaseDir = "${Env:SystemRoot}\ServiceProfiles\NetworkService\AppData\Local"
 
-					Update-SquirrelPackage $packageId $appBaseDir
+						Update-SquirrelPackage $packageId $appBaseDir
 
-				} -ArgumentList @($localMetadata, $localEntryPointName)
-			}
+					} -ArgumentList @($localMetadata, $localEntryPointName)
+				}
 
-		} -ArgumentList @($BuildToolsRoot, $PSScriptRoot, $Metadata, $entryPointName)
+			} -ArgumentList @($BuildToolsRoot, $PSScriptRoot, $Metadata, $entryPointName)
+		}
 	}	
 }

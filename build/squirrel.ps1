@@ -14,10 +14,12 @@ Task Publish-SquirrelPackages {
 	$entryPointNames = $Metadata['SquirrelEntryPoints']
 	foreach ($entryPointName in $entryPointNames){
 
-		$artifacts = Get-Artifacts $entryPointName
-		$packageFileName = Create-SquirrelPackage $entryPointName $packagesVersion $artifacts
+		if($Metadata[$entryPointName]){
+			$artifacts = Get-Artifacts $entryPointName
+			$packageFileName = Create-SquirrelPackage $entryPointName $packagesVersion $artifacts
 
-		Publish-SquirrelPackage $packageFileName $entryPointName
+			Publish-SquirrelPackage $packageFileName $entryPointName
+		}
 	}
 }
 

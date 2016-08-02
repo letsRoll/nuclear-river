@@ -57,47 +57,48 @@ namespace NuClear.StateInitialization.Core
 
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
-                var transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions);
-                var targetConnection = CreateDataConnection(command.TargetStorageDescriptor);
-                try
+                if (command.ExecutionMode == ExecutionMode.Parallel)
                 {
-                    var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection, command.TargetStorageDescriptor.CommandTimeout);
-                    var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() });
+                    IReadOnlyCollection<IEvent> schemaChangedEvents = null;
+                    ExecuteInTransactionScope(
+                        command,
+                        (targetConnection, schemaManagenentActor) =>
+                            {
+                                schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
+                            });
 
-                    if (command.ExecutionMode == ExecutionMode.Parallel)
-                    {
-                        transation.Complete();
-
-                        Parallel.ForEach(
+                    Parallel.ForEach(
                             dataObjectTypes,
                             dataObjectType =>
+                            {
+                                using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
                                 {
-                                    using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
-                                    {
-                                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
-                                    }
-                                });
+                                    ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
+                                }
+                            });
 
-                        transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions);
-                        schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
-                        transation.Complete();
-                    }
-                    else
-                    {
-                        foreach (var dataObjectType in dataObjectTypes)
-                        {
-                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
-                        }
-
-                        schemaManagenentActor.ExecuteCommands(CreateCompensationalCommands(schemaChangedEvents));
-
-                        transation.Complete();
-                    }
+                    ExecuteInTransactionScope(
+                        command,
+                        (targetConnection, schemaManagenentActor) =>
+                            {
+                                schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+                            });
                 }
-                finally
+                else
                 {
-                    targetConnection.Dispose();
-                    transation.Dispose();
+                    ExecuteInTransactionScope(
+                        command,
+                        (targetConnection, schemaManagenentActor) =>
+                            {
+                                var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
+
+                                foreach (var dataObjectType in dataObjectTypes)
+                                {
+                                    ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                                }
+
+                                schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+                            });
                 }
 
                 commandStopwatch.Stop();
@@ -114,7 +115,12 @@ namespace NuClear.StateInitialization.Core
             return commandRegardlessProvider.Get();
         }
 
-        private static IReadOnlyCollection<ICommand> CreateCompensationalCommands(IReadOnlyCollection<IEvent> events)
+        private static IReadOnlyCollection<ICommand> CreateSchemaChangesCommands()
+        {
+            return new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() };
+        }
+
+        private static IReadOnlyCollection<ICommand> CreateSchemaChangesCompensationalCommands(IReadOnlyCollection<IEvent> events)
         {
             var commands = new List<ICommand>();
 
@@ -133,6 +139,19 @@ namespace NuClear.StateInitialization.Core
             return commands;
         }
 
+        private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)
+        {
+            using (var transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions))
+            {
+                using (var targetConnection = CreateDataConnection(command.TargetStorageDescriptor))
+                {
+                    var schemaManagenentActor = CreateDbSchemaManagementActor((SqlConnection)targetConnection.Connection, command.TargetStorageDescriptor.CommandTimeout);
+                    action(targetConnection, schemaManagenentActor);
+                    transation.Complete();
+                }
+            }
+        }
+
         private DataConnection CreateDataConnection(StorageDescriptor storageDescriptor)
         {
             var connectionString = _connectionStringSettings.GetConnectionString(storageDescriptor.ConnectionStringIdentity);
@@ -142,7 +161,7 @@ namespace NuClear.StateInitialization.Core
             return connection;
         }
 
-        private IActor CreateDbSchemaManagementActor(SqlConnection sqlConnection, int commandTimeout)
+        private SequentialPipelineActor CreateDbSchemaManagementActor(SqlConnection sqlConnection, int commandTimeout)
         {
             var timeout = (int)TimeSpan.FromMinutes(commandTimeout).TotalSeconds;
             return new SequentialPipelineActor(
@@ -167,7 +186,19 @@ namespace NuClear.StateInitialization.Core
                                               new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
                                           };
 
-            using (var sourceConnection = CreateDataConnection(sourceStorageDescriptor))
+            DataConnection sourceConnection;
+            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
+            {
+                sourceConnection = CreateDataConnection(sourceStorageDescriptor);
+                if (sourceConnection.Connection.State != ConnectionState.Open)
+                {
+                    sourceConnection.Connection.Open();
+                }
+
+                scope.Complete();
+            }
+
+            using (sourceConnection)
             {
                 var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectType, sourceConnection, targetConnection);
                 var actors = actorsFactory.Create();

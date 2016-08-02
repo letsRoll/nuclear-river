@@ -167,19 +167,7 @@ namespace NuClear.StateInitialization.Core
                                               new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
                                           };
 
-            DataConnection sourceConnection;
-            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
-            {
-                sourceConnection = CreateDataConnection(sourceStorageDescriptor);
-                if (sourceConnection.Connection.State != ConnectionState.Open)
-                {
-                    sourceConnection.Connection.Open();
-                }
-
-                scope.Complete();
-            }
-
-            using (sourceConnection)
+            using (var sourceConnection = CreateDataConnection(sourceStorageDescriptor))
             {
                 var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectType, sourceConnection, targetConnection);
                 var actors = actorsFactory.Create();

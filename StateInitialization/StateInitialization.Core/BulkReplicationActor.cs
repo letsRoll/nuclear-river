@@ -57,49 +57,8 @@ namespace NuClear.StateInitialization.Core
 
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
-                if (command.ExecutionMode == ExecutionMode.Parallel)
-                {
-                    IReadOnlyCollection<IEvent> schemaChangedEvents = null;
-                    ExecuteInTransactionScope(
-                        command,
-                        (targetConnection, schemaManagenentActor) =>
-                            {
-                                schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
-                            });
-
-                    Parallel.ForEach(
-                            dataObjectTypes,
-                            dataObjectType =>
-                            {
-                                using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
-                                {
-                                    ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
-                                }
-                            });
-
-                    ExecuteInTransactionScope(
-                        command,
-                        (targetConnection, schemaManagenentActor) =>
-                            {
-                                schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
-                            });
-                }
-                else
-                {
-                    ExecuteInTransactionScope(
-                        command,
-                        (targetConnection, schemaManagenentActor) =>
-                            {
-                                var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
-
-                                foreach (var dataObjectType in dataObjectTypes)
-                                {
-                                    ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
-                                }
-
-                                schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
-                            });
-                }
+                var executionStrategy = DetermineExecutionStrategy(command);
+                executionStrategy.Invoke(command, dataObjectTypes);
 
                 commandStopwatch.Stop();
                 Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
@@ -137,6 +96,64 @@ namespace NuClear.StateInitialization.Core
             }
 
             return commands;
+        }
+
+        private Action<ReplicateInBulkCommand, IEnumerable<Type>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
+        {
+            switch (command.ExecutionMode)
+            {
+                case ExecutionMode.Parallel:
+                    return ParallelExecutionStrategy;
+                case ExecutionMode.Sequential:
+                    return SequentialExecutionStrategy;
+                default:
+                    throw new ArgumentException($"Execution mode {command.ExecutionMode} is not supported", nameof(command));
+            }
+        }
+
+        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IEnumerable<Type> dataObjectTypes)
+        {
+            IReadOnlyCollection<IEvent> schemaChangedEvents = null;
+            ExecuteInTransactionScope(
+                command,
+                (targetConnection, schemaManagenentActor) =>
+                {
+                    schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
+                });
+
+            Parallel.ForEach(
+                    dataObjectTypes,
+                    dataObjectType =>
+                    {
+                        using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                        {
+                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
+                        }
+                    });
+
+            ExecuteInTransactionScope(
+                command,
+                (targetConnection, schemaManagenentActor) =>
+                {
+                    schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+                });
+        }
+
+        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IEnumerable<Type> dataObjectTypes)
+        {
+            ExecuteInTransactionScope(
+                command,
+                (targetConnection, schemaManagenentActor) =>
+                {
+                    var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
+
+                    foreach (var dataObjectType in dataObjectTypes)
+                    {
+                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                    }
+
+                    schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+                });
         }
 
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)

@@ -133,7 +133,6 @@
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="Host.Builders.cs" />
-    <Compile Include="HostParameters.cs" />
     <Compile Include="InteractiveModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

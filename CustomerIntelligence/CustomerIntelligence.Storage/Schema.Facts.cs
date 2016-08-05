@@ -11,7 +11,7 @@ namespace NuClear.CustomerIntelligence.Storage
     public static partial class Schema
     {
         private const string ErmSchema = "ERM";
-        private const string BitSchema = "BIT";
+        private const string BitFacts = "BitFacts";
 
         public static MappingSchema Facts
         {
@@ -39,20 +39,20 @@ namespace NuClear.CustomerIntelligence.Storage
                 config.Entity<Territory>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
                 config.Entity<SalesModelCategoryRestriction>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
 
-                config.Entity<FirmCategoryStatistics>().HasSchemaName(BitSchema)
+                config.Entity<FirmCategoryStatistics>().HasSchemaName(BitFacts)
                       .Property(x => x.FirmId).IsPrimaryKey()
                       .Property(x => x.CategoryId).IsPrimaryKey();
 
-                config.Entity<ProjectCategoryStatistics>().HasSchemaName(BitSchema)
+                config.Entity<ProjectCategoryStatistics>().HasSchemaName(BitFacts)
                       .Property(x => x.ProjectId).IsPrimaryKey()
                       .Property(x => x.CategoryId).IsPrimaryKey();
 
-                config.Entity<FirmCategoryForecast>().HasSchemaName(BitSchema)
+                config.Entity<FirmCategoryForecast>().HasSchemaName(BitFacts)
                       .Property(x => x.ProjectId).IsPrimaryKey()
                       .Property(x => x.FirmId).IsPrimaryKey()
                       .Property(x => x.CategoryId).IsPrimaryKey();
 
-                config.Entity<FirmForecast>().HasSchemaName(BitSchema)
+                config.Entity<FirmForecast>().HasSchemaName(BitFacts)
                       .Property(x => x.ProjectId).IsPrimaryKey()
                       .Property(x => x.FirmId).IsPrimaryKey();
 

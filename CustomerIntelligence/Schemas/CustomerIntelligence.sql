@@ -15,7 +15,7 @@ if object_id('CustomerIntelligence.Client') is not null drop table CustomerIntel
 if object_id('CustomerIntelligence.Contact') is not null drop table CustomerIntelligence.Contact
 if object_id('CustomerIntelligence.ClientContact') is not null drop table CustomerIntelligence.ClientContact
 if object_id('CustomerIntelligence.FirmCategory') is not null drop table CustomerIntelligence.FirmCategory -- удалить после релиза
-if object_id('BIT.FirmCategory', 'view') is not null drop view BIT.FirmCategory -- удалить после релиза
+if object_id('BitFacts.FirmCategory', 'view') is not null drop view BitFacts.FirmCategory -- удалить после релиза
 if object_id('CustomerIntelligence.FirmCategory1') is not null drop table CustomerIntelligence.FirmCategory1
 if object_id('CustomerIntelligence.FirmCategory2') is not null drop table CustomerIntelligence.FirmCategory2
 if object_id('CustomerIntelligence.FirmCategory3') is not null drop table CustomerIntelligence.FirmCategory3

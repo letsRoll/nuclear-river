@@ -55,8 +55,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CustomerIntelligence", "Cus
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schemas", "Schemas", "{02A5AF22-F311-46F6-A155-D022430BD529}"
 	ProjectSection(SolutionItems) = preProject
+		CustomerIntelligence\Schemas\Aggregates.sql = CustomerIntelligence\Schemas\Aggregates.sql
 		CustomerIntelligence\Schemas\Bit.Facts.sql = CustomerIntelligence\Schemas\Bit.Facts.sql
-		CustomerIntelligence\Schemas\CustomerIntelligence.sql = CustomerIntelligence\Schemas\CustomerIntelligence.sql
 		CustomerIntelligence\Schemas\Erm.Facts.sql = CustomerIntelligence\Schemas\Erm.Facts.sql
 	EndProjectSection
 EndProject

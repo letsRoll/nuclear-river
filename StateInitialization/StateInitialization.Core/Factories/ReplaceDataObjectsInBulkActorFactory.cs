@@ -39,15 +39,19 @@ namespace NuClear.StateInitialization.Core.Factories
         {
             var actors = new List<IActor>();
 
-            var indexesManagementActorType = typeof(IndexesManagementActor<>).MakeGenericType(_dataObjectType);
-            var indexesManagementActor = (IActor)Activator.CreateInstance(indexesManagementActorType, _targetDataConnection.Connection);
-            actors.Add(indexesManagementActor);
+            var disableIndexesActorType = typeof(DisableIndexesActor<>).MakeGenericType(_dataObjectType);
+            var disableIndexesActor = (IActor)Activator.CreateInstance(disableIndexesActorType, _targetDataConnection.Connection);
+            actors.Add(disableIndexesActor);
 
             var accessorType = AccessorTypes[_dataObjectType];
             var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(_sourceDataConnection));
             var replaceDataObjectsActorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(_dataObjectType);
             var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, _targetDataConnection);
             actors.Add(replaceDataObjectsActor);
+
+            var enableIndexesActorType = typeof(EnableIndexesActor<>).MakeGenericType(_dataObjectType);
+            var enableIndexesActor = (IActor)Activator.CreateInstance(enableIndexesActorType, _targetDataConnection.Connection);
+            actors.Add(enableIndexesActor);
 
             var updateStatisticsActorType = typeof(UpdateTableStatisticsActor<>).MakeGenericType(_dataObjectType);
             var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, _targetDataConnection.Connection);

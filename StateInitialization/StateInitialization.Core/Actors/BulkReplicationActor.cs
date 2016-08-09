@@ -13,18 +13,16 @@ using LinqToDB.DataProvider.SqlServer;
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.Replication.Core.DataObjects;
-using NuClear.StateInitialization.Core.Actors;
 using NuClear.StateInitialization.Core.Commands;
 using NuClear.StateInitialization.Core.DataObjects;
 using NuClear.StateInitialization.Core.Events;
 using NuClear.StateInitialization.Core.Factories;
-using NuClear.StateInitialization.Core.Settings;
 using NuClear.StateInitialization.Core.Storage;
 using NuClear.Storage.API.ConnectionStrings;
 
 using IsolationLevel = System.Transactions.IsolationLevel;
 
-namespace NuClear.StateInitialization.Core
+namespace NuClear.StateInitialization.Core.Actors
 {
     public sealed class BulkReplicationActor : IActor
     {
@@ -37,16 +35,13 @@ namespace NuClear.StateInitialization.Core
 
         private readonly IDataObjectTypesProviderFactory _dataObjectTypesProviderFactory;
         private readonly IConnectionStringSettings _connectionStringSettings;
-        private readonly IDbSchemaManagementSettings _schemaManagementSettings;
 
         public BulkReplicationActor(
             IDataObjectTypesProviderFactory dataObjectTypesProviderFactory,
-            IConnectionStringSettings connectionStringSettings,
-            IDbSchemaManagementSettings schemaManagementSettings)
+            IConnectionStringSettings connectionStringSettings)
         {
             _dataObjectTypesProviderFactory = dataObjectTypesProviderFactory;
             _connectionStringSettings = connectionStringSettings;
-            _schemaManagementSettings = schemaManagementSettings;
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
@@ -74,9 +69,31 @@ namespace NuClear.StateInitialization.Core
             return commandRegardlessProvider.Get();
         }
 
-        private static IReadOnlyCollection<ICommand> CreateSchemaChangesCommands()
+        private static SequentialPipelineActor CreateDbSchemaManagementActor(SqlConnection sqlConnection, TimeSpan commandTimeout)
         {
-            return new ICommand[] { new DropViewsCommand(), new DisableContraintsCommand() };
+            return new SequentialPipelineActor(
+                new IActor[]
+                    {
+                        new ViewManagementActor(sqlConnection, commandTimeout),
+                        new ConstraintsManagementActor(sqlConnection, commandTimeout)
+                    });
+        }
+
+        private static IReadOnlyCollection<ICommand> CreateSchemaChangesCommands(DbManagementMode mode)
+        {
+            var commands = new List<ICommand>();
+            if (mode.HasFlag(DbManagementMode.DropAndRecreateViews))
+            {
+                commands.Add(new DropViewsCommand());
+            }
+
+            if (mode.HasFlag(DbManagementMode.DropAndRecreateConstraints))
+            {
+                commands.Add(new DisableContraintsCommand());
+
+            }
+
+            return commands;
         }
 
         private static IReadOnlyCollection<ICommand> CreateSchemaChangesCompensationalCommands(IReadOnlyCollection<IEvent> events)
@@ -118,7 +135,7 @@ namespace NuClear.StateInitialization.Core
                 command,
                 (targetConnection, schemaManagenentActor) =>
                 {
-                    schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
+                    schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
                 });
 
             Parallel.ForEach(
@@ -145,7 +162,7 @@ namespace NuClear.StateInitialization.Core
                 command,
                 (targetConnection, schemaManagenentActor) =>
                 {
-                    var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands());
+                    var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
 
                     foreach (var dataObjectType in dataObjectTypes)
                     {
@@ -174,36 +191,14 @@ namespace NuClear.StateInitialization.Core
             var connectionString = _connectionStringSettings.GetConnectionString(storageDescriptor.ConnectionStringIdentity);
             var connection = SqlServerTools.CreateDataConnection(connectionString);
             connection.AddMappingSchema(storageDescriptor.MappingSchema);
-            connection.CommandTimeout = (int)TimeSpan.FromMinutes(storageDescriptor.CommandTimeout).TotalMilliseconds;
+            connection.CommandTimeout = (int)storageDescriptor.CommandTimeout.TotalMilliseconds;
             return connection;
         }
 
-        private SequentialPipelineActor CreateDbSchemaManagementActor(SqlConnection sqlConnection, int commandTimeout)
+        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, TimeSpan bulkCopyTimeout)
         {
-            var timeout = (int)TimeSpan.FromMinutes(commandTimeout).TotalSeconds;
-            return new SequentialPipelineActor(
-                new IActor[]
-                    {
-                        new ViewManagementActor(sqlConnection, timeout, _schemaManagementSettings),
-                        new ConstraintsManagementActor(sqlConnection, timeout, _schemaManagementSettings)
-                    });
-        }
-
-        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, int bulkCopyTimeout)
-        {
-            var firstStageCommands = new ICommand[]
-                                         {
-                                             new DisableIndexesCommand(targetConnection.MappingSchema),
-                                             new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout)
-                                         };
-
-            var secondStageCommands = new ICommand[]
-                                          {
-                                              new EnableIndexesCommand(targetConnection.MappingSchema),
-                                              new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
-                                          };
-
             DataConnection sourceConnection;
+            // Creating connection to source that will NOT be enlisted in transactions
             using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
             {
                 sourceConnection = CreateDataConnection(sourceStorageDescriptor);
@@ -220,21 +215,21 @@ namespace NuClear.StateInitialization.Core
                 var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectType, sourceConnection, targetConnection);
                 var actors = actorsFactory.Create();
 
-                Action<IReadOnlyCollection<ICommand>> execute =
-                    commands =>
-                        {
-                            foreach (var actor in actors)
+                foreach (var actor in actors)
+                {
+                    var sw = Stopwatch.StartNew();
+                    actor.ExecuteCommands(
+                        new ICommand[]
                             {
-                                var sw = Stopwatch.StartNew();
-                                actor.ExecuteCommands(commands);
-                                sw.Stop();
+                                new DisableIndexesCommand(targetConnection.MappingSchema),
+                                new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout),
+                                new EnableIndexesCommand(targetConnection.MappingSchema),
+                                new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
+                            });
+                    sw.Stop();
 
-                                Console.WriteLine($"[{DateTime.Now}]: {actor.GetType().GetFriendlyName()}, {sw.Elapsed.TotalSeconds} seconds");
-                            }
-                        };
-
-                execute(firstStageCommands);
-                execute(secondStageCommands);
+                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                }
             }
         }
     }

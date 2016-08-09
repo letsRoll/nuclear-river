@@ -51,7 +51,7 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 _targetDataConnection.Execute($"TRUNCATE TABLE {tableName}");
 
-                var options = new BulkCopyOptions { BulkCopyTimeout = (int)TimeSpan.FromMinutes(command.BulkCopyTimeout).TotalSeconds };
+                var options = new BulkCopyOptions { BulkCopyTimeout = (int)command.BulkCopyTimeout.TotalSeconds };
                 _targetDataConnection.BulkCopy(options, _dataObjectsSource);
 
                 return Array.Empty<IEvent>();

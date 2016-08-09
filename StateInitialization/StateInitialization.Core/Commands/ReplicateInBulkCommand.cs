@@ -1,4 +1,6 @@
-﻿using NuClear.Replication.Core;
+﻿using System;
+
+using NuClear.Replication.Core;
 using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
@@ -9,23 +11,35 @@ namespace NuClear.StateInitialization.Core.Commands
         Parallel
     }
 
+    [Flags]
+    public enum DbManagementMode
+    {
+        DropAndRecreateViews = 1,
+        DropAndRecreateConstraints = 2
+    }
+
     public sealed class ReplicateInBulkCommand : ICommand
     {
+        private static readonly TimeSpan DefaultBulkCopyTimeout = TimeSpan.FromMinutes(30);
+
         public ReplicateInBulkCommand(
             StorageDescriptor sourceStorageDescriptor,
             StorageDescriptor targetStorageDescriptor,
-            int bulkCopyTimeout = 30,
-            ExecutionMode executionMode = ExecutionMode.Parallel)
+            DbManagementMode databaseManagementMode = DbManagementMode.DropAndRecreateConstraints,
+            ExecutionMode executionMode = ExecutionMode.Parallel, 
+            TimeSpan? bulkCopyTimeout = null)
         {
             SourceStorageDescriptor = sourceStorageDescriptor;
             TargetStorageDescriptor = targetStorageDescriptor;
-            BulkCopyTimeout = bulkCopyTimeout;
+            DbManagementMode = databaseManagementMode;
             ExecutionMode = executionMode;
+            BulkCopyTimeout = bulkCopyTimeout ?? DefaultBulkCopyTimeout;
         }
 
         public StorageDescriptor SourceStorageDescriptor { get; }
         public StorageDescriptor TargetStorageDescriptor { get; }
-        public int BulkCopyTimeout { get; set; }
-        public ExecutionMode ExecutionMode { get; set; }
+        public DbManagementMode DbManagementMode { get; }
+        public ExecutionMode ExecutionMode { get; }
+        public TimeSpan BulkCopyTimeout { get; }
     }
 }

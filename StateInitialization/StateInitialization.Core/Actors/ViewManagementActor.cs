@@ -9,7 +9,6 @@ using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.StateInitialization.Core.Commands;
 using NuClear.StateInitialization.Core.Events;
-using NuClear.StateInitialization.Core.Settings;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
@@ -17,22 +16,15 @@ namespace NuClear.StateInitialization.Core.Actors
     {
         private readonly SqlConnection _sqlConnection;
         private readonly int _commandTimeout;
-        private readonly IDbSchemaManagementSettings _schemaManagementSettings;
 
-        public ViewManagementActor(SqlConnection sqlConnection, int commandTimeout, IDbSchemaManagementSettings schemaManagementSettings)
+        public ViewManagementActor(SqlConnection sqlConnection, TimeSpan commandTimeout)
         {
             _sqlConnection = sqlConnection;
-            _commandTimeout = commandTimeout;
-            _schemaManagementSettings = schemaManagementSettings;
+            _commandTimeout = (int)commandTimeout.TotalSeconds;
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            if (!_schemaManagementSettings.DisableViews)
-            {
-                return Array.Empty<IEvent>();
-            }
-
             if (commands.OfType<DropViewsCommand>().Any())
             {
                 var database = _sqlConnection.GetDatabase();

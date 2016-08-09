@@ -6,8 +6,7 @@ using NuClear.CustomerIntelligence.StateInitialization.Host;
 using NuClear.DataTest.Metamodel;
 using NuClear.DataTest.Metamodel.Dsl;
 using NuClear.Metamodeling.Provider;
-using NuClear.StateInitialization.Core;
-using NuClear.StateInitialization.Core.Settings;
+using NuClear.StateInitialization.Core.Actors;
 using NuClear.Storage.API.ConnectionStrings;
 
 namespace NuClear.CustomerIntelligence.Replication.StateInitialization.Tests
@@ -35,7 +34,7 @@ namespace NuClear.CustomerIntelligence.Replication.StateInitialization.Tests
 
         public void Act()
         {
-            var bulkReplicationActor = new BulkReplicationActor(new DataObjectTypesProviderFactory(), _connectionStringSettings, new DbSchemaManagementAspect());
+            var bulkReplicationActor = new BulkReplicationActor(new DataObjectTypesProviderFactory(), _connectionStringSettings);
             bulkReplicationActor.ExecuteCommands(new[] { _key.Command });
         }
     }

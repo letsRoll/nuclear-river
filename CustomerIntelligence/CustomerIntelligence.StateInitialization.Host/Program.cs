@@ -7,7 +7,7 @@ using NuClear.Assembling.TypeProcessing;
 using NuClear.CustomerIntelligence.StateInitialization.Host.Assembling;
 using NuClear.CustomerIntelligence.Storage.Identitites.Connections;
 using NuClear.Replication.Core;
-using NuClear.StateInitialization.Core;
+using NuClear.StateInitialization.Core.Actors;
 using NuClear.Storage.API.ConnectionStrings;
 
 namespace NuClear.CustomerIntelligence.StateInitialization.Host

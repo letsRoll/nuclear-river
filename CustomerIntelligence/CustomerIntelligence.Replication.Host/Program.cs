@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.ServiceProcess;
 
 using Microsoft.Practices.Unity;
 
@@ -24,18 +20,12 @@ namespace NuClear.CustomerIntelligence.Replication.Host
     {
         private static void Main(string[] args)
         {
-            var isDebuggerMode = IsDebuggerMode(args);
-            if (isDebuggerMode && !Debugger.IsAttached)
-            {
-                Debugger.Launch();
-            }
-
             var settingsContainer = new ReplicationServiceSettings();
             var environmentSettings = settingsContainer.AsSettings<IEnvironmentSettings>();
             var connectionStringSettings = settingsContainer.AsSettings<IConnectionStringSettings>();
 
             var tracerContextEntryProviders =
-                    new ITracerContextEntryProvider[] 
+                    new ITracerContextEntryProvider[]
                     {
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.Environment, environmentSettings.EnvironmentName),
                         new TracerContextConstEntryProvider(TracerContextKeys.Required.EntryPoint, environmentSettings.EntryPointName),
@@ -44,61 +34,30 @@ namespace NuClear.CustomerIntelligence.Replication.Host
                         new TracerContextSelfHostedEntryProvider(TracerContextKeys.Required.UserAccount)
                     };
 
-
             var tracerContextManager = new TracerContextManager(tracerContextEntryProviders);
             var tracer = Log4NetTracerBuilder.Use
                                              .DefaultXmlConfig
                                              .Console
-                                             .EventLog
                                              .Logstash(new Uri(connectionStringSettings.GetConnectionString(LoggingConnectionStringIdentity.Instance)))
                                              .Build;
+
+            tracer.Info($"Host started with args: {string.Join(",", args)}");
 
             IUnityContainer container = null;
             try
             {
                 container = Bootstrapper.ConfigureUnity(settingsContainer, tracer, tracerContextManager);
-                var schedulerManager = container.Resolve<ISchedulerManager>();
-                if (IsConsoleMode(args))
-                {
-                    schedulerManager.Start();
+                var scheduleManager = container.Resolve<ISchedulerManager>();
 
-                    Console.WriteLine("Advanced Search Replication service successfully started.");
-                    Console.WriteLine("Press ENTER to stop...");
-
-                    Console.ReadLine();
-
-                    Console.WriteLine("Advanced Search Replication service is stopping...");
-
-                    schedulerManager.Stop();
-
-                    Console.WriteLine("Advanced Search Replication service stopped successfully. Press ENTER to exit...");
-                    Console.ReadLine();
-                }
-                else
-                {
-                    using (var replicationService = new ReplicationService(schedulerManager))
-                    {
-                        ServiceBase.Run(replicationService);
-                    }
-                }
+                var host = new River.Hosting.Interactive.Host(scheduleManager,
+                    $"{environmentSettings.EntryPointName}-{environmentSettings.EnvironmentName}",
+                    $"2GIS NuClear River {environmentSettings.EntryPointName.Replace(".", " ")} Service ({environmentSettings.EnvironmentName})");
+                host.ConfigureAndRun();
             }
             finally
             {
-                if (container != null)
-                {
-                    container.Dispose();
-                }
+                container?.Dispose();
             }
-        }
-
-        private static bool IsDebuggerMode(IEnumerable<string> args)
-        {
-            return args.Any(x => x.LastIndexOf("debug", StringComparison.OrdinalIgnoreCase) >= 0);
-        }
-
-        private static bool IsConsoleMode(IEnumerable<string> args)
-        {
-            return args.Any(x => x.LastIndexOf("console", StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }

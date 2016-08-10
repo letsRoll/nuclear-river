@@ -105,10 +105,10 @@ function Get-IisAppPoolMetadata ($Context) {
 function Get-TakeOfflineMetadata ($Context) {
 	switch($Context.EnvType){
 		'Production' {
-			return @{ 'TakeOffline' = $false }
+			return @{ 'TakeOffline' = $true }
 		}
 		default {
-			return @{ 'TakeOffline' = $true }
+			return @{ 'TakeOffline' = $false }
 		}
 	}
 }

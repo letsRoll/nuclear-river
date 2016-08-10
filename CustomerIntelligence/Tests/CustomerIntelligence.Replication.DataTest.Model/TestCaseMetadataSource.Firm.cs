@@ -227,14 +227,24 @@ namespace NuClear.CustomerIntelligence.Replication.StateInitialization.Tests
 
         // ReSharper disable once UnusedMember.Local
         private static ArrangeMetadataElement FirmWithActivity
-            => ArrangeMetadataElement.Config
+            => ArrangeMetadataElement
+                .Config
                 .Name(nameof(FirmWithActivity))
                 .IncludeSharedDictionary(MinimalFirmAggregate)
                 .Erm(
-                    new Erm::Phonecall { Id = 1, IsActive = true, IsDeleted = false, Status = 2, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
-                    new Erm::PhonecallReference { ActivityId = 1, Reference = 1, ReferencedObjectId = 1, ReferencedType = 146 })
+                    new Erm::Appointment { Id = 1, IsActive = true, IsDeleted = false, Status = 2, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Erm::AppointmentReference { ActivityId = 1, Reference = 1, ReferencedObjectId = 1, ReferencedType = 146 },
+                    new Erm::Letter { Id = 2, IsActive = true, IsDeleted = false, Status = 2, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Erm::LetterReference { ActivityId = 2, Reference = 1, ReferencedObjectId = 1, ReferencedType = 146 },
+                    new Erm::Phonecall { Id = 3, IsActive = true, IsDeleted = false, Status = 2, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Erm::PhonecallReference { ActivityId = 3, Reference = 1, ReferencedObjectId = 1, ReferencedType = 146 },
+                    new Erm::Task { Id = 4, IsActive = true, IsDeleted = false, Status = 2, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Erm::TaskReference { ActivityId = 4, Reference = 1, ReferencedObjectId = 1, ReferencedType = 146 })
                 .Fact(
-                    new Facts::Activity { Id = 1, FirmId = 1, ModifiedOn = DateTimeOffset.Parse("2010-01-01") })
+                    new Facts::Activity { Id = 1, FirmId = 1, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Facts::Activity { Id = 2, FirmId = 1, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Facts::Activity { Id = 3, FirmId = 1, ModifiedOn = DateTimeOffset.Parse("2010-01-01") },
+                    new Facts::Activity { Id = 4, FirmId = 1, ModifiedOn = DateTimeOffset.Parse("2010-01-01") })
                 .Mutate(m => m.Update<CI::FirmActivity>(x => x.FirmId == 1, x => x.LastActivityOn = DateTimeOffset.Parse("2010-01-01")));
 
         // ReSharper disable once UnusedMember.Local
@@ -252,11 +262,25 @@ namespace NuClear.CustomerIntelligence.Replication.StateInitialization.Tests
 
         // ReSharper disable once UnusedMember.Local
         private static ArrangeMetadataElement BornToFail
-            => ArrangeMetadataElement.Config
+            => ArrangeMetadataElement
+                .Config
                 .Name(nameof(BornToFail))
                 .Erm(
-                    new Erm::Firm { Id = 1, ClientId = null, ClosedForAscertainment = false, CreatedOn = DateTimeOffset.MinValue, IsActive = true, IsDeleted = false, LastDisqualifyTime = null, Name = "FirmName", OrganizationUnitId = 1, OwnerId = 27 })
+                    new Erm::Firm
+                        {
+                            Id = 1,
+                            ClientId = null,
+                            ClosedForAscertainment = false,
+                            CreatedOn = DateTimeOffset.MinValue,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LastDisqualifyTime = null,
+                            Name = "FirmName",
+                            OrganizationUnitId = 1,
+                            OwnerId = 27
+                        })
                 .Fact()
+                .CustomerIntelligence(new CI::FirmBalance())
                 .Ignored();
     }
 }

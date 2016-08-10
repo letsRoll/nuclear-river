@@ -5,6 +5,6 @@ namespace NuClear.StateInitialization.Core.Factories
 {
     public interface IDataObjectTypesProviderFactory
     {
-        IDataObjectTypesProvider Create(ReplaceDataObjectsInBulkCommand command);
+        IDataObjectTypesProvider Create(ReplicateInBulkCommand command);
     }
 }

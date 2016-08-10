@@ -64,31 +64,28 @@ namespace NuClear.CustomerIntelligence.OperationsProcessing.Final
 
         private void Handle(IReadOnlyCollection<IAggregateCommand> commands)
         {
-            var commandGroups = commands.GroupBy(x => x.AggregateRootType);
+            var aggregateRootTypes = commands.Select(x => x.AggregateRootType).ToArray();
+            var actors = _aggregateActorFactory.Create(aggregateRootTypes);
 
             // TODO: Can agreggate actors be executed in parallel? See https://github.com/2gis/nuclear-river/issues/76
-            foreach (var commandGroup in commandGroups)
+            foreach (var actor in actors)
             {
-                ExecuteCommands(commandGroup.Key, commandGroup.ToArray());
+                var actorName = actor.GetType().GetFriendlyName();
+
+                using (var transaction = new TransactionScope(
+                    TransactionScopeOption.Required,
+                    new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero }))
+                {
+                    using (Probe.Create($"ETL2 {actorName}"))
+                    {
+                        actor.ExecuteCommands(commands);
+                    }
+
+                    transaction.Complete();
+                }
             }
 
             _telemetryPublisher.Publish<AggregateProcessedOperationCountIdentity>(commands.Count);
-        }
-
-        private void ExecuteCommands(Type aggregateRootType, IReadOnlyCollection<IAggregateCommand> commands)
-        {
-            using (var transaction = new TransactionScope(
-                TransactionScopeOption.Required,
-                new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero }))
-            {
-                using (Probe.Create($"ETL2 {aggregateRootType.Name}"))
-                {
-                    var actor = _aggregateActorFactory.Create(aggregateRootType);
-                    actor.ExecuteCommands(commands);
-                }
-
-                transaction.Complete();
-            }
         }
     }
 }

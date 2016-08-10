@@ -40,6 +40,8 @@ namespace NuClear.Replication.Core.Actors
             _dataChangesHandler = dataChangesHandler;
         }
 
+        public Type EntityType => typeof(TDataObject);
+
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
             if (!commands.Any())
@@ -60,7 +62,6 @@ namespace NuClear.Replication.Core.Actors
 
             return events;
         }
-
         public abstract IReadOnlyCollection<IActor> GetValueObjectActors();
     }
 }

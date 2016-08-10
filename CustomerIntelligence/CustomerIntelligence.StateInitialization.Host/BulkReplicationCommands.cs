@@ -7,14 +7,15 @@ namespace NuClear.CustomerIntelligence.StateInitialization.Host
 {
     public static class BulkReplicationCommands
     {
-        public static ReplaceDataObjectsInBulkCommand FactsToCi { get; } =
-            new ReplaceDataObjectsInBulkCommand(
+        public static ReplicateInBulkCommand FactsToCi { get; } =
+            new ReplicateInBulkCommand(
                 new StorageDescriptor(FactsConnectionStringIdentity.Instance, Schema.Facts),
                 new StorageDescriptor(CustomerIntelligenceConnectionStringIdentity.Instance, Schema.CustomerIntelligence));
 
-        public static ReplaceDataObjectsInBulkCommand ErmToFacts { get; } =
-            new ReplaceDataObjectsInBulkCommand(
+        public static ReplicateInBulkCommand ErmToFacts { get; } =
+            new ReplicateInBulkCommand(
                 new StorageDescriptor(ErmConnectionStringIdentity.Instance, Schema.Erm),
-                new StorageDescriptor(FactsConnectionStringIdentity.Instance, Schema.Facts));
+                new StorageDescriptor(FactsConnectionStringIdentity.Instance, Schema.Facts),
+                DbManagementMode.DropAndRecreateViews | DbManagementMode.DropAndRecreateConstraints);
     }
 }

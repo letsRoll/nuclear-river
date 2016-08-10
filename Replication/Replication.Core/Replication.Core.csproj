@@ -69,6 +69,7 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\AggregateRootActorExtensions.cs" />
     <Compile Include="Actors\CreateDataObjectsActor.cs" />
     <Compile Include="Actors\DataObjectsActorBase.cs" />
     <Compile Include="Actors\DeleteDataObjectsActor.cs" />

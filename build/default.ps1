@@ -14,6 +14,7 @@ Include 'convertusecases.ps1'
 Include 'updateschemas.ps1'
 Include 'bulktool.ps1'
 Include 'datatest.ps1'
+Include 'squirrel.ps1'
 
 # OData
 function QueueBuild-OData {
@@ -35,11 +36,6 @@ function QueueBuild-TaskService {
 		QueueBuild-AppPackage $projectFileName 'CustomerIntelligence.Replication.Host'
 	}
 }
-function QueueDeploy-TaskService {
-	if ($Metadata['CustomerIntelligence.Replication.Host']){
-		QueueDeploy-WinService 'CustomerIntelligence.Replication.Host'
-	}
-}
 
 Task QueueBuild-Packages {
 
@@ -54,7 +50,7 @@ Task QueueDeploy-Packages {
 
 	QueueDeploy-ConvertUseCasesService
 	QueueDeploy-OData
-	QueueDeploy-TaskService
+	QueueDeploy-SquirrelPackages
 
 	Invoke-DeployQueue
 }
@@ -68,7 +64,8 @@ Task Validate-PullRequest -depends Run-UnitTests, Run-DataTests
 
 Task Build-Packages -depends `
 Build-ConvertUseCasesService, `
-QueueBuild-Packages
+QueueBuild-Packages, `
+Publish-SquirrelPackages
 
 Task Deploy-Packages -depends `
 Update-Schemas, `

@@ -84,6 +84,10 @@ function Get-NuGetMetadata {
 				'PrereleaseSymbolSource' = 'http://nuget.2gis.local/SymbolServer/NuGet'
 			}
 		}
+		'Squirrel' = @{
+			'PublishSource' = '\\uk-erm-test01\c$\inetpub\updates.test.erm.2gis.ru'
+			'UpdateServerUrl' = 'http://updates.test.erm.2gis.ru'
+		}
 	}
 }
 
@@ -128,6 +132,7 @@ function Parse-EnvironmentMetadata ($Properties) {
 	}
 
 	$environmentMetadata += Get-EntryPointsMetadata $entryPoints $context
+	$environmentMetadata += @{ 'SquirrelEntryPoints' = @('CustomerIntelligence.Replication.Host') }
 
 	$updateSchemas = $Properties['UpdateSchemas']
 	if ($updateSchemas){

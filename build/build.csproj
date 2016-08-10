@@ -37,13 +37,14 @@
     <None Include="squirrel.local.psm1" />
     <None Include="squirrel.ps1" />
     <None Include="bulktool.ps1" />
+    <None Include="metadata.servicebus.psm1" />
+    <None Include="servicebus.ps1" />
     <None Include="convertusecases.ps1" />
     <None Include="datatest.ps1" />
     <None Include="default.ps1" />
     <None Include="metadata.ps1" />
     <None Include="metadata.taskservice.psm1" />
     <None Include="metadata.transform.psm1" />
-    <None Include="metadata.usecaseroute.psm1" />
     <None Include="metadata.web.psm1" />
     <None Include="project.json" />
     <None Include="run-build.ps1" />

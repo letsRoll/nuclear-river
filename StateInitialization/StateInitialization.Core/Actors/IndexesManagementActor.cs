@@ -59,7 +59,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
                 if (indexesManagementMode == IndexesManagementMode.Disable)
                 {
-                    foreach (var index in table.Indexes.Cast<Index>().Where(x => !x.IsClustered && !x.IsDisabled))
+                    foreach (var index in table.Indexes.Cast<Index>().Where(x => x != null && !x.IsClustered && !x.IsDisabled))
                     {
                         index.Alter(IndexOperation.Disable);
                     }

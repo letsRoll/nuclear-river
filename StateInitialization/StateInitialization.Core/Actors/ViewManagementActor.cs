@@ -28,7 +28,7 @@ namespace NuClear.StateInitialization.Core.Actors
             if (commands.OfType<DropViewsCommand>().Any())
             {
                 var database = _sqlConnection.GetDatabase();
-                var views = database.Views.Cast<View>().Where(v => !v.IsSystemObject).ToArray();
+                var views = database.Views.Cast<View>().Where(v => v != null && !v.IsSystemObject).ToArray();
 
                 var viewsToRestore = new List<StringCollection>();
                 foreach (var view in views)

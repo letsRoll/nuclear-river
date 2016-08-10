@@ -10,11 +10,11 @@ namespace NuClear.CustomerIntelligence.Replication.StateInitialization.Tests
 
     public sealed class Facts : IKey
     {
-        public ReplicateInBulkCommand Command => BulkReplicationCommands.ErmToFacts;
+        public ReplicateInBulkCommand Command => BulkReplicationCommands.ErmToFacts.Sequential();
     }
 
     public sealed class CustomerIntelligence : IKey
     {
-        public ReplicateInBulkCommand Command => BulkReplicationCommands.FactsToCi;
+        public ReplicateInBulkCommand Command => BulkReplicationCommands.FactsToCi.Sequential();
     }
 }

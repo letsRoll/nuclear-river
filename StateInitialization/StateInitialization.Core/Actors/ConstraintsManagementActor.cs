@@ -26,7 +26,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            if (commands.OfType<DisableContraintsCommand>().Any())
+            if (commands.OfType<DisableConstraintsCommand>().Any())
             {
                 var tables = GetTables();
 

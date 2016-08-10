@@ -19,6 +19,6 @@ namespace NuClear.StateInitialization.Core.Storage
 
         public IConnectionStringIdentity ConnectionStringIdentity { get; }
         public MappingSchema MappingSchema { get; }
-        public TimeSpan CommandTimeout { get; set; }
+        public TimeSpan CommandTimeout { get; }
     }
 }

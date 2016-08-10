@@ -89,7 +89,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             if (mode.HasFlag(DbManagementMode.DropAndRecreateConstraints))
             {
-                commands.Add(new DisableContraintsCommand());
+                commands.Add(new DisableConstraintsCommand());
 
             }
 

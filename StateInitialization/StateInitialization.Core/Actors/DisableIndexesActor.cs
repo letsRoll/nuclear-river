@@ -9,19 +9,19 @@ using NuClear.StateInitialization.Core.Commands;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public sealed class EnableIndexesActor<TDataObject> : IActor
+    public sealed class DisableIndexesActor<TDataObject> : IActor
     {
         private readonly IActor _indexesManagementActor;
 
-        public EnableIndexesActor(SqlConnection sqlConnection)
+        public DisableIndexesActor(SqlConnection sqlConnection)
         {
             _indexesManagementActor = new IndexesManagementActor<TDataObject>(sqlConnection);
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
-            return enableCommand == null ? Array.Empty<IEvent>() : _indexesManagementActor.ExecuteCommands(new[] { enableCommand });
+            var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
+            return disableCommand == null ? Array.Empty<IEvent>() : _indexesManagementActor.ExecuteCommands(new[] { disableCommand });
         }
     }
 }

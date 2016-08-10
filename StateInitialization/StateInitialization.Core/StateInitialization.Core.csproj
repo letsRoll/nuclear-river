@@ -94,7 +94,7 @@
     <Compile Include="Actors\ReplaceDataObjectsInBulkActor.cs" />
     <Compile Include="Actors\UpdateTableStatisticsActor.cs" />
     <Compile Include="Actors\ViewManagementActor.cs" />
-    <Compile Include="Commands\DisableContraintsCommand.cs" />
+    <Compile Include="Commands\DisableConstraintsCommand.cs" />
     <Compile Include="Commands\EnableIndexesCommand.cs" />
     <Compile Include="Commands\DisableIndexesCommand.cs" />
     <Compile Include="Commands\DropViewsCommand.cs" />

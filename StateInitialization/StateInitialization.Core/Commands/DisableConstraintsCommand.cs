@@ -2,7 +2,7 @@
 
 namespace NuClear.StateInitialization.Core.Commands
 {
-    public sealed class DisableContraintsCommand : ICommand
+    public sealed class DisableConstraintsCommand : ICommand
     {
     }
 }

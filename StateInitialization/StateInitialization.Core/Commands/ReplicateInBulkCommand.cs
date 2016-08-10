@@ -26,7 +26,7 @@ namespace NuClear.StateInitialization.Core.Commands
             StorageDescriptor sourceStorageDescriptor,
             StorageDescriptor targetStorageDescriptor,
             DbManagementMode databaseManagementMode = DbManagementMode.DropAndRecreateConstraints,
-            ExecutionMode executionMode = ExecutionMode.Parallel, 
+            ExecutionMode executionMode = ExecutionMode.Parallel,
             TimeSpan? bulkCopyTimeout = null)
         {
             SourceStorageDescriptor = sourceStorageDescriptor;

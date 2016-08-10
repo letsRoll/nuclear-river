@@ -10,8 +10,8 @@ namespace NuClear.CustomerIntelligence.Storage
 {
     public static partial class Schema
     {
-        private const string ErmSchema = "ERM";
-        private const string BitSchema = "BIT";
+        private const string ErmFacts = "ErmFacts";
+        private const string BitFacts = "BitFacts";
 
         public static MappingSchema Facts
         {
@@ -20,39 +20,39 @@ namespace NuClear.CustomerIntelligence.Storage
                 var schema = new MappingSchema(nameof(Facts), new SqlServerMappingSchema());
                 var config = schema.GetFluentMappingBuilder();
 
-                config.Entity<Account>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Activity>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Category>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<CategoryGroup>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<BranchOfficeOrganizationUnit>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<CategoryFirmAddress>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<CategoryOrganizationUnit>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Client>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Contact>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Firm>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<FirmAddress>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<FirmContact>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Lead>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<LegalPerson>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Order>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Project>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<Territory>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
-                config.Entity<SalesModelCategoryRestriction>().HasSchemaName(ErmSchema).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Account>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Activity>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Category>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<CategoryGroup>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<BranchOfficeOrganizationUnit>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<CategoryFirmAddress>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<CategoryOrganizationUnit>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Client>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Contact>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Firm>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<FirmAddress>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<FirmContact>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Lead>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<LegalPerson>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Order>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Project>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<Territory>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
+                config.Entity<SalesModelCategoryRestriction>().HasSchemaName(ErmFacts).Property(x => x.Id).IsPrimaryKey();
 
-                config.Entity<FirmCategoryStatistics>().HasSchemaName(BitSchema)
+                config.Entity<FirmCategoryStatistics>().HasSchemaName(BitFacts)
                       .Property(x => x.FirmId).IsPrimaryKey()
                       .Property(x => x.CategoryId).IsPrimaryKey();
 
-                config.Entity<ProjectCategoryStatistics>().HasSchemaName(BitSchema)
+                config.Entity<ProjectCategoryStatistics>().HasSchemaName(BitFacts)
                       .Property(x => x.ProjectId).IsPrimaryKey()
                       .Property(x => x.CategoryId).IsPrimaryKey();
 
-                config.Entity<FirmCategoryForecast>().HasSchemaName(BitSchema)
+                config.Entity<FirmCategoryForecast>().HasSchemaName(BitFacts)
                       .Property(x => x.ProjectId).IsPrimaryKey()
                       .Property(x => x.FirmId).IsPrimaryKey()
                       .Property(x => x.CategoryId).IsPrimaryKey();
 
-                config.Entity<FirmForecast>().HasSchemaName(BitSchema)
+                config.Entity<FirmForecast>().HasSchemaName(BitFacts)
                       .Property(x => x.ProjectId).IsPrimaryKey()
                       .Property(x => x.FirmId).IsPrimaryKey();
 

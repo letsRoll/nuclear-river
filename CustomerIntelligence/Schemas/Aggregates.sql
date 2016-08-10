@@ -1,33 +1,33 @@
 ﻿-- create schema
-if not exists (select * from sys.schemas where name = 'CustomerIntelligence') exec('create schema CustomerIntelligence')
+if not exists (select * from sys.schemas where name = 'Aggregates') exec('create schema Aggregates')
 
 -- drop tables
-if object_id('CustomerIntelligence.CategoryGroup') is not null drop table CustomerIntelligence.CategoryGroup
-if object_id('CustomerIntelligence.Project') is not null drop table CustomerIntelligence.Project
-if object_id('CustomerIntelligence.ProjectCategory') is not null drop table CustomerIntelligence.ProjectCategory
-if object_id('CustomerIntelligence.Territory') is not null drop table CustomerIntelligence.Territory
-if object_id('CustomerIntelligence.Firm') is not null drop table CustomerIntelligence.Firm
-if object_id('CustomerIntelligence.FirmBalance') is not null drop table CustomerIntelligence.FirmBalance
-if object_id('CustomerIntelligence.FirmLead') is not null drop table CustomerIntelligence.FirmLead
-if object_id('CustomerIntelligence.FirmForecast') is not null drop table CustomerIntelligence.FirmForecast
-if object_id('CustomerIntelligence.FirmActivity') is not null drop table CustomerIntelligence.FirmActivity
-if object_id('CustomerIntelligence.Client') is not null drop table CustomerIntelligence.Client
-if object_id('CustomerIntelligence.Contact') is not null drop table CustomerIntelligence.Contact
-if object_id('CustomerIntelligence.ClientContact') is not null drop table CustomerIntelligence.ClientContact
-if object_id('CustomerIntelligence.FirmCategory') is not null drop table CustomerIntelligence.FirmCategory -- удалить после релиза
-if object_id('BIT.FirmCategory', 'view') is not null drop view BIT.FirmCategory -- удалить после релиза
-if object_id('CustomerIntelligence.FirmCategory1') is not null drop table CustomerIntelligence.FirmCategory1
-if object_id('CustomerIntelligence.FirmCategory2') is not null drop table CustomerIntelligence.FirmCategory2
-if object_id('CustomerIntelligence.FirmCategory3') is not null drop table CustomerIntelligence.FirmCategory3
-if object_id('CustomerIntelligence.FirmTerritory') is not null drop table CustomerIntelligence.FirmTerritory
-if object_id('CustomerIntelligence.ProjectCategoryStatistics') is not null drop table CustomerIntelligence.ProjectCategoryStatistics
-if object_id('CustomerIntelligence.ProjectStatistics') is not null drop table CustomerIntelligence.ProjectStatistics
-if object_id('CustomerIntelligence.FirmView', 'view') is not null drop view CustomerIntelligence.FirmView
+if object_id('Aggregates.CategoryGroup') is not null drop table Aggregates.CategoryGroup
+if object_id('Aggregates.Project') is not null drop table Aggregates.Project
+if object_id('Aggregates.ProjectCategory') is not null drop table Aggregates.ProjectCategory
+if object_id('Aggregates.Territory') is not null drop table Aggregates.Territory
+if object_id('Aggregates.Firm') is not null drop table Aggregates.Firm
+if object_id('Aggregates.FirmBalance') is not null drop table Aggregates.FirmBalance
+if object_id('Aggregates.FirmLead') is not null drop table Aggregates.FirmLead
+if object_id('Aggregates.FirmForecast') is not null drop table Aggregates.FirmForecast
+if object_id('Aggregates.FirmActivity') is not null drop table Aggregates.FirmActivity
+if object_id('Aggregates.Client') is not null drop table Aggregates.Client
+if object_id('Aggregates.Contact') is not null drop table Aggregates.Contact
+if object_id('Aggregates.ClientContact') is not null drop table Aggregates.ClientContact
+if object_id('Aggregates.FirmCategory') is not null drop table Aggregates.FirmCategory -- удалить после релиза
+if object_id('BitFacts.FirmCategory', 'view') is not null drop view BitFacts.FirmCategory -- удалить после релиза
+if object_id('Aggregates.FirmCategory1') is not null drop table Aggregates.FirmCategory1
+if object_id('Aggregates.FirmCategory2') is not null drop table Aggregates.FirmCategory2
+if object_id('Aggregates.FirmCategory3') is not null drop table Aggregates.FirmCategory3
+if object_id('Aggregates.FirmTerritory') is not null drop table Aggregates.FirmTerritory
+if object_id('Aggregates.ProjectCategoryStatistics') is not null drop table Aggregates.ProjectCategoryStatistics
+if object_id('Aggregates.ProjectStatistics') is not null drop table Aggregates.ProjectStatistics
+if object_id('Aggregates.FirmView', 'view') is not null drop view Aggregates.FirmView
 go
 
 
 -- CategoryGroup
-create table CustomerIntelligence.CategoryGroup(
+create table Aggregates.CategoryGroup(
 	Id bigint not null
     , Name nvarchar(256) not null
     , Rate float not null
@@ -36,7 +36,7 @@ create table CustomerIntelligence.CategoryGroup(
 go
 
 -- Project
-create table CustomerIntelligence.Project(
+create table Aggregates.Project(
 	Id bigint not null
     , Name nvarchar(256) not null
     , constraint PK_Projects primary key (Id)
@@ -44,7 +44,7 @@ create table CustomerIntelligence.Project(
 go
 
 -- ProjectCategory
-create table CustomerIntelligence.ProjectCategory(
+create table Aggregates.ProjectCategory(
 	ProjectId bigint not null
     , CategoryId bigint not null
     , Name nvarchar(256) not null
@@ -56,7 +56,7 @@ create table CustomerIntelligence.ProjectCategory(
 go
 
 -- Territory
-create table CustomerIntelligence.Territory(
+create table Aggregates.Territory(
 	Id bigint not null
     , Name nvarchar(256) not null
     , ProjectId bigint not null
@@ -65,7 +65,7 @@ create table CustomerIntelligence.Territory(
 go
 
 -- Firm
-create table CustomerIntelligence.Firm(
+create table Aggregates.Firm(
 	Id bigint not null
     , Name nvarchar(256) not null
     , CreatedOn datetimeoffset(2) not null
@@ -83,7 +83,7 @@ create table CustomerIntelligence.Firm(
 go
 
 -- FirmActivity
-create table CustomerIntelligence.FirmActivity(
+create table Aggregates.FirmActivity(
 	FirmId bigint not null
     , LastActivityOn datetimeoffset(2) null
     , constraint PK_FirmActivities primary key (FirmId)
@@ -91,7 +91,7 @@ create table CustomerIntelligence.FirmActivity(
 go
 
 -- FirmBalance
-create table CustomerIntelligence.FirmBalance(
+create table Aggregates.FirmBalance(
     FirmId bigint not null
     , AccountId bigint not null
 	, ProjectId bigint not null
@@ -101,7 +101,7 @@ create table CustomerIntelligence.FirmBalance(
 go
 
 -- FirmCategory1
-create table CustomerIntelligence.FirmCategory1(
+create table Aggregates.FirmCategory1(
 	FirmId bigint not null
 	, CategoryId bigint not null
     , constraint PK_FirmCategory1 primary key (FirmId, CategoryId)
@@ -109,7 +109,7 @@ create table CustomerIntelligence.FirmCategory1(
 go
 
 -- FirmCategory2
-create table CustomerIntelligence.FirmCategory2(
+create table Aggregates.FirmCategory2(
 	FirmId bigint not null
 	, CategoryId bigint not null
     , constraint PK_FirmCategory2 primary key (FirmId, CategoryId)
@@ -117,14 +117,14 @@ create table CustomerIntelligence.FirmCategory2(
 go
 
 -- ProjectStatistics
-create table CustomerIntelligence.ProjectStatistics(
+create table Aggregates.ProjectStatistics(
     Id bigint not null
     , constraint PK_ProjectStatistics primary key (Id)
 )
 go
 
 -- FirmForecast
-create table CustomerIntelligence.ProjectCategoryStatistics(
+create table Aggregates.ProjectCategoryStatistics(
     ProjectId bigint not null
     , CategoryId bigint not null
     , constraint PK_ProjectCategoryStatistics primary key (ProjectId, CategoryId)
@@ -132,7 +132,7 @@ create table CustomerIntelligence.ProjectCategoryStatistics(
 go
 
 -- FirmCategory3
-create table CustomerIntelligence.FirmCategory3(
+create table Aggregates.FirmCategory3(
     ProjectId bigint not null
     , FirmId bigint not null
     , CategoryId bigint not null
@@ -148,7 +148,7 @@ create table CustomerIntelligence.FirmCategory3(
 go
 
 -- FirmForecast
-create table CustomerIntelligence.FirmForecast(
+create table Aggregates.FirmForecast(
     ProjectId bigint not null
     , FirmId bigint not null
     , ForecastClick int not null
@@ -158,7 +158,7 @@ create table CustomerIntelligence.FirmForecast(
 go
 
 -- FirmLead
-create table CustomerIntelligence.FirmLead(
+create table Aggregates.FirmLead(
 	FirmId bigint not null
     , LeadId bigint not null
     , IsInQueue bit not null
@@ -168,7 +168,7 @@ create table CustomerIntelligence.FirmLead(
 go
 
 -- FirmTerritory
-create table CustomerIntelligence.FirmTerritory(
+create table Aggregates.FirmTerritory(
 	FirmId bigint not null
     , FirmAddressId bigint not null
 	, TerritoryId bigint null
@@ -177,7 +177,7 @@ create table CustomerIntelligence.FirmTerritory(
 go
 
 -- Client
-create table CustomerIntelligence.Client(
+create table Aggregates.Client(
 	Id bigint not null
     , Name nvarchar(256) not null
     , CategoryGroupId bigint not null
@@ -186,7 +186,7 @@ create table CustomerIntelligence.Client(
 go
 
 -- ClientContact
-create table CustomerIntelligence.ClientContact(
+create table Aggregates.ClientContact(
     ClientId bigint not null
     , ContactId bigint not null
     , [Role] int not null
@@ -196,61 +196,61 @@ go
 
 
 -- FirmView
-create view CustomerIntelligence.FirmView
+create view Aggregates.FirmView
 as
 select Firm.*, FirmActivity.LastActivityOn, FirmForecast.ForecastClick, FirmForecast.ForecastAmount
-from CustomerIntelligence.Firm
-	inner join CustomerIntelligence.FirmActivity on FirmActivity.FirmId = Firm.Id
-	left join CustomerIntelligence.FirmForecast on FirmForecast.FirmId = Firm.Id
+from Aggregates.Firm
+	inner join Aggregates.FirmActivity on FirmActivity.FirmId = Firm.Id
+	left join Aggregates.FirmForecast on FirmForecast.FirmId = Firm.Id
 go
 
 
 -- Идексы для клиента
 create nonclustered index IX_Quering_1
-on CustomerIntelligence.Firm (ProjectId,OwnerId,CreatedOn)
+on Aggregates.Firm (ProjectId,OwnerId,CreatedOn)
 include (Id)
 go
 create nonclustered index IX_Quering_2
-on CustomerIntelligence.Firm (ProjectId,OwnerId,LastDistributedOn)
+on Aggregates.Firm (ProjectId,OwnerId,LastDistributedOn)
 include (Id)
 go
 create nonclustered index IX_Quering_3
-on CustomerIntelligence.Firm (ProjectId,OwnerId,LastDisqualifiedOn)
+on Aggregates.Firm (ProjectId,OwnerId,LastDisqualifiedOn)
 include (Id)
 go
 create nonclustered index IX_Quering_4
-on CustomerIntelligence.Firm (LastDistributedOn,ProjectId,OwnerId)
+on Aggregates.Firm (LastDistributedOn,ProjectId,OwnerId)
 include (Id,Name,LastDisqualifiedOn,ClientId)
 go
 create nonclustered index IX_Quering_5
-on CustomerIntelligence.Firm (ProjectId,OwnerId)
+on Aggregates.Firm (ProjectId,OwnerId)
 include (Id,Name,LastDisqualifiedOn,ClientId)
 go
 create nonclustered index IX_Quering_6
-on CustomerIntelligence.Firm (HasWebsite,ProjectId,OwnerId)
+on Aggregates.Firm (HasWebsite,ProjectId,OwnerId)
 include (Id)
 go
 create nonclustered index IX_Quering_7
-on CustomerIntelligence.Firm (HasWebsite,ProjectId,OwnerId)
+on Aggregates.Firm (HasWebsite,ProjectId,OwnerId)
 include (Id,Name,LastDisqualifiedOn,ClientId)
 go
 create nonclustered index IX_Quering_8
-on CustomerIntelligence.Firm (ProjectId,OwnerId,AddressCount)
+on Aggregates.Firm (ProjectId,OwnerId,AddressCount)
 include (Id)
 go
 create nonclustered index IX_Quering_9
-on CustomerIntelligence.Firm (ProjectId,OwnerId,AddressCount)
+on Aggregates.Firm (ProjectId,OwnerId,AddressCount)
 include (Id,Name,LastDisqualifiedOn,ClientId)
 go
 create nonclustered index IX_Quering_10
-on CustomerIntelligence.FirmBalance (ProjectId,Balance)
+on Aggregates.FirmBalance (ProjectId,Balance)
 include (FirmId)
 go
 create nonclustered index IX_Quering_11
-on CustomerIntelligence.FirmActivity(LastActivityOn)
+on Aggregates.FirmActivity(LastActivityOn)
 include (FirmId)
 go
 create nonclustered index IX_Quering_12
-on CustomerIntelligence.ClientContact (Role)
+on Aggregates.ClientContact (Role)
 include (ClientId)
 go

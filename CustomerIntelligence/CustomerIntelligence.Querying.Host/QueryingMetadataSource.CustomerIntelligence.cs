@@ -285,14 +285,14 @@ namespace NuClear.CustomerIntelligence.Querying.Host
                 public const string Client = TableSchema + "." + "Client";
                 public const string ClientContact = TableSchema + "." + "ClientContact";
 
-                private const string TableSchema = "CustomerIntelligence";
+                private const string TableSchema = "Aggregates";
             }
 
             private static class ViewName
             {
                 public const string Firm = ViewSchema + "." + "FirmView";
 
-                private const string ViewSchema = "CustomerIntelligence";
+                private const string ViewSchema = "Aggregates";
             }
         }
     }

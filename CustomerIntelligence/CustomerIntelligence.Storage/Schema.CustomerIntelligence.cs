@@ -10,7 +10,7 @@ namespace NuClear.CustomerIntelligence.Storage
 {
     public static partial class Schema
     {
-        private const string CustomerIntelligenceSchema = "CustomerIntelligence";
+        private const string AggregatesSchema = "Aggregates";
 
         public static MappingSchema CustomerIntelligence
         {
@@ -20,62 +20,62 @@ namespace NuClear.CustomerIntelligence.Storage
                 var config = schema.GetFluentMappingBuilder();
 
                 config.Entity<CategoryGroup>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.Id);
 
                 config.Entity<Client>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.Id);
 
                 config.Entity<ClientContact>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<Firm>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.Id);
 
                 config.Entity<FirmLead>()
-                      .HasSchemaName(CustomerIntelligenceSchema);
+                      .HasSchemaName(AggregatesSchema);
 
                 config.Entity<FirmActivity>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<FirmBalance>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<FirmCategory1>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<FirmCategory2>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<FirmTerritory>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<Project>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.Id);
 
                 config.Entity<ProjectCategory>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<Territory>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.Id);
 
                 config.Entity<ProjectStatistics>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.Id);
 
                 config.Entity<ProjectCategoryStatistics>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 config.Entity<FirmForecast>()
-                    .HasSchemaName(CustomerIntelligenceSchema)
+                    .HasSchemaName(AggregatesSchema)
                     .HasPrimaryKey(x => x.FirmId);
 
                 config.Entity<FirmCategory3>()
-                    .HasSchemaName(CustomerIntelligenceSchema);
+                    .HasSchemaName(AggregatesSchema);
 
                 schema.SetDataType(typeof(decimal), new SqlDataType(DataType.Decimal, 19, 4));
                 schema.SetDataType(typeof(decimal?), new SqlDataType(DataType.Decimal, 19, 4));

@@ -1,33 +1,33 @@
 ﻿-- create schema
-if not exists (select * from sys.schemas where name = 'ERM') exec('create schema ERM')
+if not exists (select * from sys.schemas where name = 'ErmFacts') exec('create schema ErmFacts')
 
 -- drop views with schemabindings
-if object_id('ERM.ViewClient', 'view') is not null drop view ERM.ViewClient
+if object_id('ErmFacts.ViewClient', 'view') is not null drop view ErmFacts.ViewClient
 
 -- drop tables
-if object_id('ERM.Account') is not null drop table ERM.Account
-if object_id('ERM.Activity') is not null drop table ERM.Activity
-if object_id('ERM.BranchOfficeOrganizationUnit') is not null drop table ERM.BranchOfficeOrganizationUnit
-if object_id('ERM.Category') is not null drop table ERM.Category
-if object_id('ERM.CategoryGroup') is not null drop table ERM.CategoryGroup
-if object_id('ERM.CategoryFirmAddress') is not null drop table ERM.CategoryFirmAddress
-if object_id('ERM.CategoryOrganizationUnit') is not null drop table ERM.CategoryOrganizationUnit
-if object_id('ERM.Client') is not null drop table ERM.Client
-if object_id('ERM.Contact') is not null drop table ERM.Contact
-if object_id('ERM.Firm') is not null drop table ERM.Firm
-if object_id('ERM.FirmAddress') is not null drop table ERM.FirmAddress
-if object_id('ERM.FirmContact') is not null drop table ERM.FirmContact
-if object_id('ERM.Lead') is not null drop table ERM.Lead
-if object_id('ERM.LegalPerson') is not null drop table ERM.LegalPerson
-if object_id('ERM.Order') is not null drop table ERM.[Order]
-if object_id('ERM.Project') is not null drop table ERM.Project
-if object_id('ERM.Territory') is not null drop table ERM.Territory
-if object_id('ERM.SalesModelCategoryRestriction') is not null drop table ERM.SalesModelCategoryRestriction
+if object_id('ErmFacts.Account') is not null drop table ErmFacts.Account
+if object_id('ErmFacts.Activity') is not null drop table ErmFacts.Activity
+if object_id('ErmFacts.BranchOfficeOrganizationUnit') is not null drop table ErmFacts.BranchOfficeOrganizationUnit
+if object_id('ErmFacts.Category') is not null drop table ErmFacts.Category
+if object_id('ErmFacts.CategoryGroup') is not null drop table ErmFacts.CategoryGroup
+if object_id('ErmFacts.CategoryFirmAddress') is not null drop table ErmFacts.CategoryFirmAddress
+if object_id('ErmFacts.CategoryOrganizationUnit') is not null drop table ErmFacts.CategoryOrganizationUnit
+if object_id('ErmFacts.Client') is not null drop table ErmFacts.Client
+if object_id('ErmFacts.Contact') is not null drop table ErmFacts.Contact
+if object_id('ErmFacts.Firm') is not null drop table ErmFacts.Firm
+if object_id('ErmFacts.FirmAddress') is not null drop table ErmFacts.FirmAddress
+if object_id('ErmFacts.FirmContact') is not null drop table ErmFacts.FirmContact
+if object_id('ErmFacts.Lead') is not null drop table ErmFacts.Lead
+if object_id('ErmFacts.LegalPerson') is not null drop table ErmFacts.LegalPerson
+if object_id('ErmFacts.Order') is not null drop table ErmFacts.[Order]
+if object_id('ErmFacts.Project') is not null drop table ErmFacts.Project
+if object_id('ErmFacts.Territory') is not null drop table ErmFacts.Territory
+if object_id('ErmFacts.SalesModelCategoryRestriction') is not null drop table ErmFacts.SalesModelCategoryRestriction
 go
 
 
 -- Account
-create table ERM.Account(
+create table ErmFacts.Account(
 	Id bigint not null
     , Balance decimal(19,4) not null
     , BranchOfficeOrganizationUnitId bigint not null
@@ -37,7 +37,7 @@ create table ERM.Account(
 go
 
 -- Activity
-create table ERM.Activity(
+create table ErmFacts.Activity(
 	Id bigint not null
     , ModifiedOn datetimeoffset(2) not null
 	, FirmId bigint null
@@ -46,16 +46,16 @@ create table ERM.Activity(
 )
 go
 create nonclustered index IX_Activity_ClientId
-on ERM.Activity (ClientId)
+on ErmFacts.Activity (ClientId)
 include (ModifiedOn)
 go
 create nonclustered index IX_Activity_FirmId
-on ERM.Activity (FirmId)
+on ErmFacts.Activity (FirmId)
 include (ModifiedOn)
 go
 
 -- BranchOfficeOrganizationUnit
-create table ERM.BranchOfficeOrganizationUnit(
+create table ErmFacts.BranchOfficeOrganizationUnit(
 	Id bigint not null
     , OrganizationUnitId bigint not null
     , constraint PK_BranchOfficeOrganizationUnits primary key (Id)
@@ -63,7 +63,7 @@ create table ERM.BranchOfficeOrganizationUnit(
 go
 
 -- Category
-create table ERM.Category(
+create table ErmFacts.Category(
 	Id bigint not null
     , Name nvarchar(256) not null
     , [Level] int not null
@@ -73,7 +73,7 @@ create table ERM.Category(
 go
 
 -- CategoryGroup
-create table ERM.CategoryGroup(
+create table ErmFacts.CategoryGroup(
 	Id bigint not null
     , Name nvarchar(256) not null
     , Rate float not null
@@ -82,7 +82,7 @@ create table ERM.CategoryGroup(
 go
 
 -- CategoryFirmAddress
-create table ERM.CategoryFirmAddress(
+create table ErmFacts.CategoryFirmAddress(
 	Id bigint not null
     , CategoryId bigint not null
     , FirmAddressId bigint not null
@@ -90,16 +90,16 @@ create table ERM.CategoryFirmAddress(
 )
 go
 create nonclustered index IX_CategoryFirmAddress_FirmAddressId
-on ERM.CategoryFirmAddress (FirmAddressId)
+on ErmFacts.CategoryFirmAddress (FirmAddressId)
 include (CategoryId)
 go
 create nonclustered index IX_CategoryFirmAddress_CategoryId
-on ERM.CategoryFirmAddress (CategoryId)
+on ErmFacts.CategoryFirmAddress (CategoryId)
 include (FirmAddressId)
 go
 
 -- CategoryOrganizationUnit
-create table ERM.CategoryOrganizationUnit(
+create table ErmFacts.CategoryOrganizationUnit(
 	Id bigint not null
 	, CategoryId bigint not null
     , CategoryGroupId bigint not null
@@ -108,12 +108,12 @@ create table ERM.CategoryOrganizationUnit(
 )
 go
 create nonclustered index IX_CategoryOrganizationUnit_CategoryId_OrganizationUnitId
-on ERM.CategoryOrganizationUnit (CategoryId, OrganizationUnitId)
+on ErmFacts.CategoryOrganizationUnit (CategoryId, OrganizationUnitId)
 include (CategoryGroupId)
 go
 
 -- Client
-create table ERM.Client(
+create table ErmFacts.Client(
 	Id bigint not null
     , Name nvarchar(256) not null
     , LastDisqualifiedOn datetimeoffset(2) null
@@ -124,7 +124,7 @@ create table ERM.Client(
 go
 
 -- Contact
-create table ERM.Contact(
+create table ErmFacts.Contact(
 	Id bigint not null
 	, [Role] int not null
     , HasPhone bit not null constraint DF_Contacts_HasPhone default 0
@@ -134,11 +134,11 @@ create table ERM.Contact(
 )
 go
 create nonclustered index IX_Contact_HasPhone_HasWebsite
-on ERM.Contact (HasPhone, HasWebsite)
+on ErmFacts.Contact (HasPhone, HasWebsite)
 go
 
 -- Firm
-create table ERM.Firm(
+create table ErmFacts.Firm(
 	Id bigint not null
     , Name nvarchar(256) not null
     , CreatedOn datetimeoffset(2) not null
@@ -150,12 +150,12 @@ create table ERM.Firm(
 )
 go
 create nonclustered index IX_Firm_ClientId_OrganizationUnitId
-on ERM.Firm (ClientId, OrganizationUnitId)
+on ErmFacts.Firm (ClientId, OrganizationUnitId)
 include (Id)
 go
 
 -- FirmAddress
-create table ERM.FirmAddress(
+create table ErmFacts.FirmAddress(
 	Id bigint not null
     , FirmId bigint not null
 	, TerritoryId bigint null
@@ -163,12 +163,12 @@ create table ERM.FirmAddress(
 )
 go
 create nonclustered index IX_FirmAddress_FirmId
-on ERM.FirmAddress (FirmId)
+on ErmFacts.FirmAddress (FirmId)
 include (Id)
 go
 
 -- FirmContact
-create table ERM.FirmContact(
+create table ErmFacts.FirmContact(
 	Id bigint not null
     , HasPhone bit not null constraint DF_FirmContacts_HasPhone default 0
     , HasWebsite bit not null constraint DF_FirmContacts_HasWebsite default 0
@@ -177,14 +177,14 @@ create table ERM.FirmContact(
 )
 go
 create nonclustered index IX_FirmContact_HasPhone_FirmAddressId
-on ERM.FirmContact (HasPhone, FirmAddressId)
+on ErmFacts.FirmContact (HasPhone, FirmAddressId)
 go
 create nonclustered index IX_FirmContact_HasWebsite_FirmAddressId
-on ERM.FirmContact (HasWebsite,FirmAddressId)
+on ErmFacts.FirmContact (HasWebsite,FirmAddressId)
 go
 
 -- Lead
-create table ERM.Lead(
+create table ErmFacts.Lead(
 	Id bigint not null
     , FirmId bigint not null
     , IsInQueue bigint not null
@@ -194,7 +194,7 @@ create table ERM.Lead(
 go
 
 -- LegalPerson
-create table ERM.LegalPerson(
+create table ErmFacts.LegalPerson(
 	Id bigint not null
     , ClientId bigint not null
     , constraint PK_LegalPersons primary key (Id)
@@ -202,7 +202,7 @@ create table ERM.LegalPerson(
 go
 
 -- Order
-create table ERM.[Order](
+create table ErmFacts.[Order](
 	Id bigint not null
     , EndDistributionDateFact datetimeoffset(2) not null
     , FirmId bigint null
@@ -211,7 +211,7 @@ create table ERM.[Order](
 go
 
 -- Project
-create table ERM.Project(
+create table ErmFacts.Project(
 	Id bigint not null
     , Name nvarchar(256) not null
     , OrganizationUnitId bigint not null
@@ -220,7 +220,7 @@ create table ERM.Project(
 go
 
 -- Territory
-create table ERM.Territory(
+create table ErmFacts.Territory(
 	Id bigint not null
     , Name nvarchar(256) not null
     , OrganizationUnitId bigint not null
@@ -229,7 +229,7 @@ create table ERM.Territory(
 go
 
 -- SalesModelCategoryRestriction
-create table ERM.SalesModelCategoryRestriction(
+create table ErmFacts.SalesModelCategoryRestriction(
     Id bigint not null
     , CategoryId bigint not null
     , ProjectId  bigint not null
@@ -239,7 +239,7 @@ create table ERM.SalesModelCategoryRestriction(
 go
 
 -- ViewClient, indexed view for query optimization
-create view ERM.ViewClient
+create view ErmFacts.ViewClient
 with schemabinding
 as
 select 
@@ -248,17 +248,17 @@ select
 	CategoryOrganizationUnit.CategoryId,
 	CategoryOrganizationUnit.CategoryGroupId,
 	CategoryGroup.Rate
-from ERM.Firm
-	inner join ERM.FirmAddress on Firm.Id = FirmAddress.FirmId
-	inner join ERM.CategoryFirmAddress on FirmAddress.Id = CategoryFirmAddress.FirmAddressId
-	inner join ERM.CategoryOrganizationUnit on CategoryFirmAddress.CategoryId = CategoryOrganizationUnit.CategoryId AND Firm.OrganizationUnitId = CategoryOrganizationUnit.OrganizationUnitId
-	inner join ERM.CategoryGroup on CategoryOrganizationUnit.CategoryGroupId = CategoryGroup.Id
+from ErmFacts.Firm
+	inner join ErmFacts.FirmAddress on Firm.Id = FirmAddress.FirmId
+	inner join ErmFacts.CategoryFirmAddress on FirmAddress.Id = CategoryFirmAddress.FirmAddressId
+	inner join ErmFacts.CategoryOrganizationUnit on CategoryFirmAddress.CategoryId = CategoryOrganizationUnit.CategoryId AND Firm.OrganizationUnitId = CategoryOrganizationUnit.OrganizationUnitId
+	inner join ErmFacts.CategoryGroup on CategoryOrganizationUnit.CategoryGroupId = CategoryGroup.Id
 where Firm.ClientId is not null
 go
 create unique clustered index PK_ViewClient
-    on ERM.ViewClient (FirmAddressId, CategoryId)
+    on ErmFacts.ViewClient (FirmAddressId, CategoryId)
 go
 create nonclustered index IX_ViewClient_ClientId_CategoryGroupId_Rate
-	on ERM.ViewClient (ClientId, Rate)
+	on ErmFacts.ViewClient (ClientId, Rate)
 	include (CategoryGroupId)
 go

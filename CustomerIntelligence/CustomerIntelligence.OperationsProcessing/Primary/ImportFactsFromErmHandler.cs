@@ -105,7 +105,7 @@ namespace NuClear.CustomerIntelligence.OperationsProcessing.Primary
 
             _telemetryPublisher.Publish<ErmProcessedOperationCountIdentity>(commands.Count);
 
-            _eventLogger.Log(events);
+            _eventLogger.Log(events.Distinct().ToArray());
 
             _tracer.Debug("Executing fact commands finished");
         }

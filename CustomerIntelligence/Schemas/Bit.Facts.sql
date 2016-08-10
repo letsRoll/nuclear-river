@@ -1,15 +1,15 @@
 ﻿-- create schema
-if not exists (select * from sys.schemas where name = 'BIT') exec('create schema BIT')
+if not exists (select * from sys.schemas where name = 'BitFacts') exec('create schema BitFacts')
 
 -- drop tables
-if object_id('BIT.ProjectCategoryStatistics') is not null drop table BIT.ProjectCategoryStatistics
-if object_id('BIT.FirmCategoryStatistics') is not null drop table BIT.FirmCategoryStatistics
-if object_id('BIT.FirmForecast') is not null drop table BIT.FirmForecast
-if object_id('BIT.FirmCategoryForecast') is not null drop table BIT.FirmCategoryForecast
+if object_id('BitFacts.ProjectCategoryStatistics') is not null drop table BitFacts.ProjectCategoryStatistics
+if object_id('BitFacts.FirmCategoryStatistics') is not null drop table BitFacts.FirmCategoryStatistics
+if object_id('BitFacts.FirmForecast') is not null drop table BitFacts.FirmForecast
+if object_id('BitFacts.FirmCategoryForecast') is not null drop table BitFacts.FirmCategoryForecast
 go
 
 -- ProjectCategoryStatistics
-create table BIT.ProjectCategoryStatistics(
+create table BitFacts.ProjectCategoryStatistics(
     ProjectId bigint not null,
     CategoryId bigint not null,
     AdvertisersCount bigint not null, 
@@ -18,7 +18,7 @@ create table BIT.ProjectCategoryStatistics(
 go
 
 -- FirmCategoryStatistics
-create table BIT.FirmCategoryStatistics(
+create table BitFacts.FirmCategoryStatistics(
     ProjectId bigint not null,
     FirmId bigint not null,
     CategoryId bigint not null,
@@ -29,7 +29,7 @@ create table BIT.FirmCategoryStatistics(
 go
 
 -- FirmForecast
-create table BIT.FirmForecast(
+create table BitFacts.FirmForecast(
     ProjectId bigint not null,
     FirmId bigint not null,
     ForecastClick int not null,
@@ -39,7 +39,7 @@ create table BIT.FirmForecast(
 go
 
 -- FirmCategoryForecast
-create table BIT.FirmCategoryForecast(
+create table BitFacts.FirmCategoryForecast(
     ProjectId bigint not null,
     FirmId bigint not null,
     CategoryId bigint not null,

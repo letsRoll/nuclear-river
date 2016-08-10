@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Querying.Metadata.Tests", "Querying\Tests\Querying.Metadata.Tests\Querying.Metadata.Tests.csproj", "{16DA002C-3DA3-4303-AC10-8FE046F0ED2C}"
 EndProject
@@ -55,9 +55,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CustomerIntelligence", "Cus
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schemas", "Schemas", "{02A5AF22-F311-46F6-A155-D022430BD529}"
 	ProjectSection(SolutionItems) = preProject
-		CustomerIntelligence\Schemas\BIT.sql = CustomerIntelligence\Schemas\BIT.sql
-		CustomerIntelligence\Schemas\CustomerIntelligence.sql = CustomerIntelligence\Schemas\CustomerIntelligence.sql
-		CustomerIntelligence\Schemas\ERM.sql = CustomerIntelligence\Schemas\ERM.sql
+		CustomerIntelligence\Schemas\Aggregates.sql = CustomerIntelligence\Schemas\Aggregates.sql
+		CustomerIntelligence\Schemas\Bit.Facts.sql = CustomerIntelligence\Schemas\Bit.Facts.sql
+		CustomerIntelligence\Schemas\Erm.Facts.sql = CustomerIntelligence\Schemas\Erm.Facts.sql
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hosting.Common", "Hosting\Hosting.Common\Hosting.Common.csproj", "{D4238D0C-3315-4449-B1AE-80F716D58D04}"

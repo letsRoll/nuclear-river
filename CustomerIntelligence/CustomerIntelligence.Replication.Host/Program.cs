@@ -51,7 +51,7 @@ namespace NuClear.CustomerIntelligence.Replication.Host
 
                 var host = new River.Hosting.Interactive.Host(scheduleManager,
                     $"{environmentSettings.EntryPointName}-{environmentSettings.EnvironmentName}",
-                    $"2GIS NuClear River {environmentSettings.EntryPointName.Replace(".", " ")} Service ({environmentSettings.EnvironmentName})");
+                    $"2GIS NuClear {environmentSettings.EntryPointName.Replace(".", " ")} Service ({environmentSettings.EnvironmentName})");
                 host.ConfigureAndRun();
             }
             finally

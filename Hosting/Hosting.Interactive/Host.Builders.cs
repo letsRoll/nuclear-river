@@ -131,7 +131,7 @@ namespace NuClear.River.Hosting.Interactive
                 {
                     Name = serviceName,
 
-                    // squirrel hook wait onlo 15 second on hook
+                    // squirrel hook wait only 15 seconds
                     // so we can't wait for service stop more that 5 seconds
                     StopTimeOut = TimeSpan.FromSeconds(5),
                 };

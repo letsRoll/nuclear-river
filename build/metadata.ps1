@@ -83,8 +83,8 @@ function Get-NuGetMetadata {
 			}
 		}
 		'Squirrel' = @{
-			'PublishSource' = '\\uk-erm-test01\c$\inetpub\updates.test.erm.2gis.ru'
-			'UpdateServerUrl' = 'http://updates.test.erm.2gis.ru'
+			'UpdateServerUrl' = 'https://updates.test.erm.2gis.ru/artifacts'
+			'PublishSource' = '\\2gis.local\operationDFS\ERMCRM\artifacts'
 		}
 	}
 }
@@ -145,7 +145,6 @@ function Parse-EnvironmentMetadata ($Properties) {
 $AllSchemas = @{
 	'ERM' = @{ ConnectionStringKey = 'Facts'; SqlFile = 'CustomerIntelligence\Schemas\Erm.Facts.sql' }
 	'BIT' = @{ ConnectionStringKey = 'Facts'; SqlFile = 'CustomerIntelligence\Schemas\Bit.Facts.sql' }
-	'Transport' = @{ ConnectionStringKey = 'Facts'; SqlFile = 'Replication\Schemas\Transport.sql' }
 	'CustomerIntelligence' = @{ ConnectionStringKey = 'CustomerIntelligence'; SqlFile = 'CustomerIntelligence\Schemas\Aggregates.sql' }
 }
 

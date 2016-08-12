@@ -16,11 +16,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Querying.Edm.Tests", "Query
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomerIntelligence.Querying.Host", "CustomerIntelligence\CustomerIntelligence.Querying.Host\CustomerIntelligence.Querying.Host.csproj", "{4D48AAC9-C244-41A3-9E89-187860717B1F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Schemas", "Schemas", "{3E0E1141-0E55-4BB4-AA1F-80BF236D43B2}"
-	ProjectSection(SolutionItems) = preProject
-		Replication\Schemas\Transport.sql = Replication\Schemas\Transport.sql
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomerIntelligence.Replication.Host", "CustomerIntelligence\CustomerIntelligence.Replication.Host\CustomerIntelligence.Replication.Host.csproj", "{C332689C-FFAB-44D4-91BD-920B134C0982}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Replication.OperationsProcessing", "Replication\Replication.OperationsProcessing\Replication.OperationsProcessing.csproj", "{8E3D39D6-6BEE-4EDC-ACE0-8C24CA929164}"
@@ -259,7 +254,6 @@ Global
 		{135EF4B2-E97C-44B5-A6AC-6E97B103DE55} = {77AAFA66-EC7B-44AD-80A2-58B6E5A5A3A9}
 		{1FB39973-A18A-4764-96D5-6F3347FF3EE6} = {F1BB08E3-5A59-42F0-887A-14A26AD4D729}
 		{4D48AAC9-C244-41A3-9E89-187860717B1F} = {C80A3A09-DFCA-4FDE-8835-39F047FFA4BB}
-		{3E0E1141-0E55-4BB4-AA1F-80BF236D43B2} = {B2560A63-4013-4556-8DF7-26F711AEED01}
 		{C332689C-FFAB-44D4-91BD-920B134C0982} = {C80A3A09-DFCA-4FDE-8835-39F047FFA4BB}
 		{8E3D39D6-6BEE-4EDC-ACE0-8C24CA929164} = {B2560A63-4013-4556-8DF7-26F711AEED01}
 		{F3C74BF1-8646-4DB6-AECB-42E10F8542B6} = {8F3C0046-1F47-4C8E-8B03-D35E96686C6F}

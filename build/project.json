@@ -3,7 +3,7 @@
     "net461": {}
   },
   "dependencies": {
-    "2GIS.NuClear.BuildTools": "0.2.77",
+    "2GIS.NuClear.BuildTools": "0.2.77"
   },
   "runtimes": {
     "win": {}

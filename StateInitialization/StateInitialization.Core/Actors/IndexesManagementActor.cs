@@ -56,21 +56,22 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 var database = _sqlConnection.GetDatabase();
                 var table = !string.IsNullOrEmpty(schemaName) ? database.Tables[tableName, schemaName] : database.Tables[tableName];
-
-                if (indexesManagementMode == IndexesManagementMode.Disable)
+                lock (GlobalLocker.Instance)
                 {
-                    foreach (var index in table.Indexes.Cast<Index>().Where(x => x != null && !x.IsClustered && !x.IsDisabled))
+                    if (indexesManagementMode == IndexesManagementMode.Disable)
                     {
-                        index.Alter(IndexOperation.Disable);
+                        foreach (var index in table.Indexes.Cast<Index>().Where(x => x != null && !x.IsClustered && !x.IsDisabled))
+                        {
+                            index.Alter(IndexOperation.Disable);
+                        }
                     }
-                }
-                else
-                {
-                    table.EnableAllIndexes(IndexEnableAction.Rebuild);
+                    else
+                    {
+                        table.EnableAllIndexes(IndexEnableAction.Rebuild);
+                    }
                 }
 
                 return Array.Empty<IEvent>();
-
             }
             catch (Exception ex)
             {

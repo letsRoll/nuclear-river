@@ -88,6 +88,7 @@
     <Compile Include="Actors\BulkReplicationActor.cs" />
     <Compile Include="Actors\EnableIndexesActor.cs" />
     <Compile Include="Actors\DisableIndexesActor.cs" />
+    <Compile Include="Actors\GlobalLocker.cs" />
     <Compile Include="Actors\IndexesManagementActor.cs" />
     <Compile Include="Actors\SequentialPipelineActor.cs" />
     <Compile Include="Actors\ConstraintsManagementActor.cs" />

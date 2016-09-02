@@ -144,7 +144,14 @@ namespace NuClear.StateInitialization.Core.Actors
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
                         {
-                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
+                            try
+                            {
+                                ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"Failed to replicate using parallel strategy {dataObjectType.FullName}", ex);
+                            }
                         }
                     });
 
@@ -166,7 +173,14 @@ namespace NuClear.StateInitialization.Core.Actors
 
                     foreach (var dataObjectType in dataObjectTypes)
                     {
-                        ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                        try
+                        {
+                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception($"Failed to replicate using sequential strategy {dataObjectType.FullName}", ex);
+                        }
                     }
 
                     schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));

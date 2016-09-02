@@ -56,6 +56,11 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 var database = _sqlConnection.GetDatabase();
                 var table = !string.IsNullOrEmpty(schemaName) ? database.Tables[tableName, schemaName] : database.Tables[tableName];
+                if (table == null)
+                {
+                    throw new Exception($"Table not found: schemaName = {schemaName}, tableName = {tableName}");
+                }
+
                 lock (GlobalLocker.Instance)
                 {
                     if (indexesManagementMode == IndexesManagementMode.Disable)

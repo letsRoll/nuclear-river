@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 
 using LinqToDB.Data;
-using LinqToDB.Mapping;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
@@ -29,32 +27,20 @@ namespace NuClear.StateInitialization.Core.Actors
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
             var command = commands.OfType<ReplaceDataObjectsInBulkCommand>().SingleOrDefault();
-            if (command == null)
+            if (command != null)
             {
-                return Array.Empty<IEvent>();
+                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds);
             }
 
-            var attributes = _targetDataConnection.MappingSchema.GetAttributes<TableAttribute>(typeof(TDataObject));
-            var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? typeof(TDataObject).Name;
+            return Array.Empty<IEvent>();
+        }
 
-            var builder = new SqlCommandBuilder();
-            tableName = builder.QuoteIdentifier(tableName);
-
-            var schemaName = attributes.Select(x => x.Schema).FirstOrDefault();
-            if (!string.IsNullOrEmpty(schemaName))
-            {
-                schemaName = builder.QuoteIdentifier(schemaName);
-                tableName = $"{schemaName}.{tableName}";
-            }
-
+        private void ExecuteBulkCopy(int timeout)
+        {
             try
             {
-                _targetDataConnection.Execute($"TRUNCATE TABLE {tableName}");
-
-                var options = new BulkCopyOptions { BulkCopyTimeout = (int)command.BulkCopyTimeout.TotalSeconds };
+                var options = new BulkCopyOptions { BulkCopyTimeout = timeout };
                 _targetDataConnection.BulkCopy(options, _dataObjectsSource);
-
-                return Array.Empty<IEvent>();
             }
             catch (Exception ex)
             {

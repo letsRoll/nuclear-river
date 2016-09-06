@@ -236,6 +236,7 @@ namespace NuClear.StateInitialization.Core.Actors
                         new ICommand[]
                             {
                                 new DisableIndexesCommand(targetConnection.MappingSchema),
+                                new TruncateTableCommand(),
                                 new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout),
                                 new EnableIndexesCommand(targetConnection.MappingSchema),
                                 new UpdateTableStatisticsCommand(targetConnection.MappingSchema)

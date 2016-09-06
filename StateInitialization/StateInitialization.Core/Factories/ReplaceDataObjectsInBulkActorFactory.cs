@@ -14,12 +14,13 @@ namespace NuClear.StateInitialization.Core.Factories
 {
     public sealed class ReplaceDataObjectsInBulkActorFactory : IDataObjectsActorFactory
     {
-        private static readonly IReadOnlyDictionary<Type, Type> AccessorTypes =
+        private static readonly IReadOnlyDictionary<Type, Type[]> AccessorTypes =
             (from type in AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).SelectMany(x => x.ExportedTypes)
              from @interface in type.GetInterfaces()
-             where @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IStorageBasedDataObjectAccessor<>)
+             where !type.IsAbstract && @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IStorageBasedDataObjectAccessor<>)
              select new { GenericArgument = @interface.GetGenericArguments()[0], Type = type })
-                .ToDictionary(x => x.GenericArgument, x => x.Type);
+                .GroupBy(x => x.GenericArgument, x => x.Type)
+                .ToDictionary(x => x.Key, x => x.ToArray());
 
         private readonly Type _dataObjectType;
         private readonly DataConnection _sourceDataConnection;
@@ -43,11 +44,18 @@ namespace NuClear.StateInitialization.Core.Factories
             var disableIndexesActor = (IActor)Activator.CreateInstance(disableIndexesActorType, _targetDataConnection.Connection);
             actors.Add(disableIndexesActor);
 
-            var accessorType = AccessorTypes[_dataObjectType];
-            var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(_sourceDataConnection));
-            var replaceDataObjectsActorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(_dataObjectType);
-            var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, _targetDataConnection);
-            actors.Add(replaceDataObjectsActor);
+            var truncateTableActorType = typeof(TruncateTableActor<>).MakeGenericType(_dataObjectType);
+            var truncateTableActor = (IActor)Activator.CreateInstance(truncateTableActorType, _targetDataConnection);
+            actors.Add(truncateTableActor);
+
+            var accessorTypes = AccessorTypes[_dataObjectType];
+            foreach (var accessorType in accessorTypes)
+            {
+                var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(_sourceDataConnection));
+                var replaceDataObjectsActorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(_dataObjectType);
+                var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, _targetDataConnection);
+                actors.Add(replaceDataObjectsActor);
+            }
 
             var enableIndexesActorType = typeof(EnableIndexesActor<>).MakeGenericType(_dataObjectType);
             var enableIndexesActor = (IActor)Activator.CreateInstance(enableIndexesActorType, _targetDataConnection.Connection);

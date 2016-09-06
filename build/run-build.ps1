@@ -1,18 +1,7 @@
 ﻿param([string[]]$TaskList = @(), [hashtable]$Properties = @{})
-#Requires –Version 3.0
 
 if ($TaskList.Count -eq 0){
-	$TaskList = @('Build-NuGet', 'Deploy-NuGet')
-}
-
-if ($Properties.Count -eq 0){
- 	$Properties.EnvironmentName = 'Test.20'
-	$Properties.EntryPoints = @(
-		'CustomerIntelligence.Querying.Host'
-		'CustomerIntelligence.Replication.Host'
-	)
-	#$Properties.UseCaseRoute = 'ERM'
-	#$Properties.UpdateSchemas = 'CustomerIntelligence'
+	$TaskList = @('Run-UnitTests', 'Build-NuGet')
 }
 
 Set-StrictMode -Version Latest
@@ -21,7 +10,6 @@ $ErrorActionPreference = 'Stop'
 cls
 
 $Properties.SolutionDir = Join-Path $PSScriptRoot '..'
-$Properties.BuildFile = Join-Path $PSScriptRoot 'default.ps1'
 
 # Restore-Packages
 & {
@@ -39,8 +27,16 @@ $Properties.BuildFile = Join-Path $PSScriptRoot 'default.ps1'
 $packageName = "2GIS.NuClear.BuildTools"
 $packageVersion = (ConvertFrom-Json (Get-Content "$PSScriptRoot\project.json" -Raw)).dependencies.PSObject.Properties[$packageName].Value
 Import-Module "${env:UserProfile}\.nuget\packages\$packageName\$packageVersion\tools\buildtools.psm1" -DisableNameChecking -Force
+Add-Metadata @{
+	'NuGet' = @{
+		'Publish' = @{
+			'Source' = 'https://www.nuget.org/api/v2/package'
+			'PrereleaseSource' = 'http://nuget.2gis.local/api/v2/package'
 
-$metadata = & "$PSScriptRoot\metadata.ps1" $Properties
-Add-Metadata $metadata
+			'SymbolSource'= 'https://nuget.smbsrc.net/api/v2/package'
+			'PrereleaseSymbolSource' = 'http://nuget.2gis.local/SymbolServer/NuGet'
+		}
+	}
+}
 
 Run-Build $TaskList $Properties

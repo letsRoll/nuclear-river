@@ -4,8 +4,8 @@ namespace NuClear.Replication.OperationsProcessing.Transports
 {
     public interface IBinaryEventSerializer
     {
-        void Serialize(IBinaryWriter writer, IEvent @event);
+        byte[] Serialize(IEvent @event);
 
-        IEvent Deserialize(IBinaryReader binaryReader);
+        IEvent Deserialize(byte[] message);
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 using Microsoft.ServiceBus.Messaging;
 
@@ -19,38 +18,8 @@ namespace NuClear.Replication.OperationsProcessing.Transports.ServiceBus
 
         public BrokeredMessage Convert(IEvent @event)
         {
-            var stream = new MemoryStream();
-            var writer = new StreamBinaryWriter(stream);
-            _serializer.Serialize(writer, @event);
+            var stream = new MemoryStream(_serializer.Serialize(@event));
             return new BrokeredMessage(stream, true);
-        }
-
-        private class StreamBinaryWriter : IBinaryWriter
-        {
-            private readonly Stream _stream;
-
-            public StreamBinaryWriter(Stream stream)
-            {
-                _stream = stream;
-            }
-
-            public void Write(byte[] buffer)
-            {
-                if (buffer == null)
-                {
-                    throw new ArgumentNullException(nameof(buffer));
-                }
-                Write(buffer, 0, buffer.Length);
-            }
-
-            public void Write(byte[] buffer, int index, int count)
-            {
-                if (buffer == null)
-                {
-                    throw new ArgumentNullException(nameof(buffer));
-                }
-                _stream.Write(buffer, index, count);
-            }
         }
     }
 }

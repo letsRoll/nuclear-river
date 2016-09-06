@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 using Microsoft.ServiceBus.Messaging;
 
@@ -26,37 +25,12 @@ namespace NuClear.Replication.OperationsProcessing.Transports.ServiceBus
         private IEvent Transform(BrokeredMessage message)
         {
             var bodyStream = message.GetBody<Stream>();
-            var binaryReader = new StreamBinaryReader(bodyStream);
-            return _eventSerializer.Deserialize(binaryReader);
-        }
-
-        private class StreamBinaryReader : IBinaryReader
-        {
-            private const int Capacity = 1024;
-            private readonly Stream _stream;
-
-            public StreamBinaryReader(Stream stream)
+            using (var memory = new MemoryStream())
             {
-                _stream = stream;
-            }
-
-            public int Read(byte[] buffer, int index, int count)
-            {
-                if (buffer == null)
-                {
-                    throw new ArgumentNullException(nameof(buffer));
-                }
-                return _stream.Read(buffer, index, count);
-            }
-
-            public byte[] ReadToEnd()
-            {
-                using (var memory = new MemoryStream(Capacity))
-                {
-                    _stream.CopyTo(memory);
-                    return memory.ToArray();
-                }
+                bodyStream.CopyTo(memory);
+                return _eventSerializer.Deserialize(memory.ToArray());
             }
         }
     }
+
 }

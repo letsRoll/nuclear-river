@@ -207,8 +207,6 @@
     <Compile Include="Transports\CorporateBus\CorporateBusMessage.cs" />
     <Compile Include="Transports\CorporateBus\CorporateBusOperationsReceiver.cs" />
     <Compile Include="Transports\IBinaryEventSerializer.cs" />
-    <Compile Include="Transports\IBinaryReader.cs" />
-    <Compile Include="Transports\IBinaryWriter.cs" />
     <Compile Include="Transports\IEventDispatcher.cs" />
     <Compile Include="Transports\IEventSender.cs" />
     <Compile Include="Transports\IFlowAspect.cs" />

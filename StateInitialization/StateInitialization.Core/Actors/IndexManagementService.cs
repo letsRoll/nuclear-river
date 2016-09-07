@@ -10,6 +10,7 @@ namespace NuClear.StateInitialization.Core.Actors
 {
     public sealed class IndexManagementService
     {
+        private static readonly object IndexLock = new object();
         private readonly SqlConnection _sqlConnection;
 
         public IndexManagementService(SqlConnection sqlConnection)
@@ -48,7 +49,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         private void DisableIndexes(Table tableType)
         {
-            lock (GlobalLocker.Instance)
+            lock (IndexLock)
             {
                 foreach (var index in tableType.Indexes.Cast<Index>().Where(x => x != null && !x.IsClustered && !x.IsDisabled))
                 {
@@ -59,7 +60,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         private void EnableIndexes(Table tableType)
         {
-            lock (GlobalLocker.Instance)
+            lock (IndexLock)
             {
                 tableType.EnableAllIndexes(IndexEnableAction.Rebuild);
             }

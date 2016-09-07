@@ -11,17 +11,22 @@ namespace NuClear.StateInitialization.Core.Actors
 {
     public sealed class EnableIndexesActor<TDataObject> : IActor
     {
-        private readonly IActor _indexesManagementActor;
+        private readonly IndexManagementService _indexManagementService;
 
         public EnableIndexesActor(SqlConnection sqlConnection)
         {
-            _indexesManagementActor = new IndexesManagementActor<TDataObject>(sqlConnection);
+            _indexManagementService = new IndexManagementService(sqlConnection);
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
-            return enableCommand == null ? Array.Empty<IEvent>() : _indexesManagementActor.ExecuteCommands(new[] { enableCommand });
+            var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
+            if (disableCommand != null)
+            {
+                _indexManagementService.EnableIndexes(disableCommand.MappingSchema, typeof(TDataObject));
+            }
+
+            return Array.Empty<IEvent>();
         }
     }
 }

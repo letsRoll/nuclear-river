@@ -9,6 +9,7 @@ using System.Transactions;
 
 using LinqToDB.Data;
 using LinqToDB.DataProvider.SqlServer;
+using LinqToDB.Mapping;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
@@ -115,6 +116,30 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
+        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(MappingSchema mappingSchema, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        {
+            var commands = new List<ICommand>();
+            if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
+            {
+                commands.Add(new DisableIndexesCommand(mappingSchema));
+            }
+
+            commands.Add(new TruncateTableCommand());
+            commands.Add(new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout));
+
+            if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
+            {
+                commands.Add(new EnableIndexesCommand(mappingSchema));
+            }
+
+            if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
+            {
+                commands.Add(new UpdateTableStatisticsCommand(mappingSchema));
+            }
+
+            return commands;
+        }
+
         private Action<ReplicateInBulkCommand, IEnumerable<Type>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
@@ -146,7 +171,8 @@ namespace NuClear.StateInitialization.Core.Actors
                         {
                             try
                             {
-                                ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, command.BulkCopyTimeout);
+                                var replicationCommands = CreateReplicationCommands(connection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode);
+                                ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
@@ -175,7 +201,8 @@ namespace NuClear.StateInitialization.Core.Actors
                     {
                         try
                         {
-                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, command.BulkCopyTimeout);
+                            var replicationCommands = CreateReplicationCommands(targetConnection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode);
+                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, replicationCommands);
                         }
                         catch (Exception ex)
                         {
@@ -209,7 +236,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return connection;
         }
 
-        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, TimeSpan bulkCopyTimeout)
+        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
         {
             DataConnection sourceConnection;
             // Creating connection to source that will NOT be enlisted in transactions
@@ -232,15 +259,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 foreach (var actor in actors)
                 {
                     var sw = Stopwatch.StartNew();
-                    actor.ExecuteCommands(
-                        new ICommand[]
-                            {
-                                new DisableIndexesCommand(targetConnection.MappingSchema),
-                                new TruncateTableCommand(),
-                                new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout),
-                                new EnableIndexesCommand(targetConnection.MappingSchema),
-                                new UpdateTableStatisticsCommand(targetConnection.MappingSchema)
-                            });
+                    actor.ExecuteCommands(replicationCommands);
                     sw.Stop();
 
                     Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");

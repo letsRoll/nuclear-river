@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 
 using LinqToDB.Data;
+using LinqToDB.Linq;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
@@ -44,7 +45,8 @@ namespace NuClear.StateInitialization.Core.Actors
             }
             catch (Exception ex)
             {
-                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name}{Environment.NewLine}{_targetDataConnection.LastQuery}", ex);
+                var linq2DBQuery = _dataObjectsSource as IExpressionQuery<TDataObject>;
+                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name}{Environment.NewLine}{linq2DBQuery?.SqlText}{Environment.NewLine}", ex);
             }
         }
     }

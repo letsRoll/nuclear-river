@@ -38,10 +38,9 @@ namespace NuClear.StateInitialization.Core.Actors
             var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? typeof(TDataObject).Name;
 
             var schemaName = attributes.Select(x => x.Schema).FirstOrDefault();
-            if (!string.IsNullOrEmpty(schemaName))
-            {
-                tableName = $"{schemaName}.{tableName}";
-            }
+            tableName = string.IsNullOrEmpty(schemaName)
+                            ? $"[{tableName}]"
+                            : $"[{schemaName}].[{tableName}]";
 
             _targetDataConnection.Execute($"TRUNCATE TABLE {tableName}");
         }

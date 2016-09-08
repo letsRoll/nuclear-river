@@ -206,10 +206,13 @@
     <Compile Include="Telemetry\StatisticsProcessingDelayIdentity.cs" />
     <Compile Include="Transports\CorporateBus\CorporateBusMessage.cs" />
     <Compile Include="Transports\CorporateBus\CorporateBusOperationsReceiver.cs" />
+    <Compile Include="Transports\IBinaryEventSerializer.cs" />
     <Compile Include="Transports\IEventDispatcher.cs" />
     <Compile Include="Transports\IEventSender.cs" />
     <Compile Include="Transports\IFlowAspect.cs" />
     <Compile Include="Transports\IXmlEventSerializer.cs" />
+    <Compile Include="Transports\ServiceBus\BinaryEvent2BrokeredMessageConverter.cs" />
+    <Compile Include="Transports\ServiceBus\BrokeredMessage2BinaryEventMessageTransformer.cs" />
     <Compile Include="Transports\ServiceBus\BrokeredMessageWithXmlPayload2EventMessageTransformer.cs" />
     <Compile Include="EventMessage.cs" />
     <Compile Include="Transports\ServiceBus\Event2BrokeredMessageConverter.cs" />

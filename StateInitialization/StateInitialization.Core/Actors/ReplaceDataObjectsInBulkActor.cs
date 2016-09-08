@@ -18,9 +18,11 @@ namespace NuClear.StateInitialization.Core.Actors
     {
         private readonly IQueryable<TDataObject> _dataObjectsSource;
         private readonly DataConnection _targetDataConnection;
+        private readonly string _dataObjectAccessorName;
 
         public ReplaceDataObjectsInBulkActor(IStorageBasedDataObjectAccessor<TDataObject> dataObjectAccessor, DataConnection targetDataConnection)
         {
+            _dataObjectAccessorName = dataObjectAccessor.GetType().Name;
             _dataObjectsSource = dataObjectAccessor.GetSource();
             _targetDataConnection = targetDataConnection;
         }
@@ -45,8 +47,18 @@ namespace NuClear.StateInitialization.Core.Actors
             }
             catch (Exception ex)
             {
-                var linq2DBQuery = _dataObjectsSource as IExpressionQuery<TDataObject>;
-                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name}{Environment.NewLine}{linq2DBQuery?.SqlText}{Environment.NewLine}", ex);
+                string sqlText;
+                try
+                {
+                    var linq2DBQuery = _dataObjectsSource as IExpressionQuery<TDataObject>;
+                    sqlText = linq2DBQuery?.SqlText;
+                }
+                catch (Exception innerException)
+                {
+                    sqlText = $"can not build sql query: {innerException.Message}";
+                }
+
+                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name} using {_dataObjectAccessorName}{Environment.NewLine}{sqlText}{Environment.NewLine}", ex);
             }
         }
     }

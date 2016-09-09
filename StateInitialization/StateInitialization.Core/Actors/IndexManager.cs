@@ -8,12 +8,12 @@ using Microsoft.SqlServer.Management.Smo;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public sealed class IndexManagementService
+    internal sealed class IndexManager
     {
         private static readonly object IndexLock = new object();
         private readonly SqlConnection _sqlConnection;
 
-        public IndexManagementService(SqlConnection sqlConnection)
+        public IndexManager(SqlConnection sqlConnection)
         {
             _sqlConnection = sqlConnection;
         }

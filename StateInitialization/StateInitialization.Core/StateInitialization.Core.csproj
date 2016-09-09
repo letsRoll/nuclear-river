@@ -88,7 +88,7 @@
     <Compile Include="Actors\BulkReplicationActor.cs" />
     <Compile Include="Actors\EnableIndexesActor.cs" />
     <Compile Include="Actors\DisableIndexesActor.cs" />
-    <Compile Include="Actors\IndexManagementService.cs" />
+    <Compile Include="Actors\IndexManager.cs" />
     <Compile Include="Actors\TruncateTableActor.cs" />
     <Compile Include="Actors\SequentialPipelineActor.cs" />
     <Compile Include="Actors\ConstraintsManagementActor.cs" />

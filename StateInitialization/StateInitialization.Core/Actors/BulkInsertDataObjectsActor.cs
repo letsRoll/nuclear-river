@@ -13,14 +13,14 @@ using NuClear.StateInitialization.Core.Commands;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public sealed class ReplaceDataObjectsInBulkActor<TDataObject> : IActor
+    internal sealed class BulkInsertDataObjectsActor<TDataObject> : IActor
         where TDataObject : class
     {
         private readonly IQueryable<TDataObject> _dataObjectsSource;
         private readonly DataConnection _targetDataConnection;
         private readonly string _dataObjectAccessorName;
 
-        public ReplaceDataObjectsInBulkActor(IStorageBasedDataObjectAccessor<TDataObject> dataObjectAccessor, DataConnection targetDataConnection)
+        public BulkInsertDataObjectsActor(IStorageBasedDataObjectAccessor<TDataObject> dataObjectAccessor, DataConnection targetDataConnection)
         {
             _dataObjectAccessorName = dataObjectAccessor.GetType().Name;
             _dataObjectsSource = dataObjectAccessor.GetSource();
@@ -29,7 +29,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var command = commands.OfType<ReplaceDataObjectsInBulkCommand>().SingleOrDefault();
+            var command = commands.OfType<BulkInsertDataObjectsCommand>().SingleOrDefault();
             if (command != null)
             {
                 ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds);

@@ -52,7 +52,7 @@ namespace NuClear.StateInitialization.Core.Factories
             foreach (var accessorType in accessorTypes)
             {
                 var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(_sourceDataConnection));
-                var replaceDataObjectsActorType = typeof(ReplaceDataObjectsInBulkActor<>).MakeGenericType(_dataObjectType);
+                var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(_dataObjectType);
                 var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, _targetDataConnection);
                 actors.Add(replaceDataObjectsActor);
             }

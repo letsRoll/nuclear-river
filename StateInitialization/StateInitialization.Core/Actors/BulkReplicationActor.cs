@@ -125,7 +125,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
 
             commands.Add(new TruncateTableCommand());
-            commands.Add(new ReplaceDataObjectsInBulkCommand(bulkCopyTimeout));
+            commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {

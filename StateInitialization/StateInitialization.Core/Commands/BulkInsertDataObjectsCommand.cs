@@ -4,9 +4,9 @@ using NuClear.Replication.Core;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
-    public sealed class ReplaceDataObjectsInBulkCommand : ICommand
+    internal sealed class BulkInsertDataObjectsCommand : ICommand
     {
-        public ReplaceDataObjectsInBulkCommand(TimeSpan bulkCopyTimeout)
+        public BulkInsertDataObjectsCommand(TimeSpan bulkCopyTimeout)
         {
             BulkCopyTimeout = bulkCopyTimeout;
         }

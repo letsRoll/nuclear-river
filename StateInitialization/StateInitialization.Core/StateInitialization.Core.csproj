@@ -92,7 +92,7 @@
     <Compile Include="Actors\TruncateTableActor.cs" />
     <Compile Include="Actors\SequentialPipelineActor.cs" />
     <Compile Include="Actors\ConstraintsManagementActor.cs" />
-    <Compile Include="Actors\ReplaceDataObjectsInBulkActor.cs" />
+    <Compile Include="Actors\BulkInsertDataObjectsActor.cs" />
     <Compile Include="Actors\UpdateTableStatisticsActor.cs" />
     <Compile Include="Actors\ViewManagementActor.cs" />
     <Compile Include="Commands\DisableConstraintsCommand.cs" />
@@ -109,7 +109,7 @@
     <Compile Include="Events\ConstraintsDisabledEvent.cs" />
     <Compile Include="Events\ViewsDroppedEvent.cs" />
     <Compile Include="Factories\IDataObjectTypesProviderFactory.cs" />
-    <Compile Include="Commands\ReplaceDataObjectsInBulkCommand.cs" />
+    <Compile Include="Commands\BulkInsertDataObjectsCommand.cs" />
     <Compile Include="Factories\ReplaceDataObjectsInBulkActorFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlConnectionExtensions.cs" />

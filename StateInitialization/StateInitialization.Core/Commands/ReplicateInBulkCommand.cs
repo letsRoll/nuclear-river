@@ -14,8 +14,11 @@ namespace NuClear.StateInitialization.Core.Commands
     [Flags]
     public enum DbManagementMode
     {
+        None = 0,
         DropAndRecreateViews = 1,
-        DropAndRecreateConstraints = 2
+        DropAndRecreateConstraints = 2,
+        EnableIndexManagment = 4,
+        UpdateTableStatistics = 8,
     }
 
     public sealed class ReplicateInBulkCommand : ICommand
@@ -25,7 +28,7 @@ namespace NuClear.StateInitialization.Core.Commands
         public ReplicateInBulkCommand(
             StorageDescriptor sourceStorageDescriptor,
             StorageDescriptor targetStorageDescriptor,
-            DbManagementMode databaseManagementMode = DbManagementMode.DropAndRecreateConstraints,
+            DbManagementMode databaseManagementMode = DbManagementMode.DropAndRecreateConstraints | DbManagementMode.EnableIndexManagment | DbManagementMode.UpdateTableStatistics,
             ExecutionMode executionMode = ExecutionMode.Parallel,
             TimeSpan? bulkCopyTimeout = null)
         {

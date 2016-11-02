@@ -29,10 +29,10 @@ namespace NuClear.StateInitialization.Core.Actors
     {
         private static readonly TransactionOptions TransactionOptions =
             new TransactionOptions
-                {
-                    IsolationLevel = IsolationLevel.Serializable,
-                    Timeout = TimeSpan.Zero
-                };
+            {
+                IsolationLevel = IsolationLevel.Serializable,
+                Timeout = TimeSpan.Zero
+            };
 
         private readonly IDataObjectTypesProviderFactory _dataObjectTypesProviderFactory;
         private readonly IConnectionStringSettings _connectionStringSettings;
@@ -91,7 +91,6 @@ namespace NuClear.StateInitialization.Core.Actors
             if (mode.HasFlag(DbManagementMode.DropAndRecreateConstraints))
             {
                 commands.Add(new DisableConstraintsCommand());
-
             }
 
             return commands;
@@ -116,7 +115,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
-        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(MappingSchema mappingSchema, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(MappingSchema mappingSchema, TimeSpan bulkCopyTimeout, DbManagementMode mode, bool needTruncate = true)
         {
             var commands = new List<ICommand>();
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
@@ -124,7 +123,11 @@ namespace NuClear.StateInitialization.Core.Actors
                 commands.Add(new DisableIndexesCommand(mappingSchema));
             }
 
-            commands.Add(new TruncateTableCommand());
+            if (needTruncate)
+            {
+                commands.Add(new TruncateTableCommand());
+            }
+
             commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
@@ -163,8 +166,19 @@ namespace NuClear.StateInitialization.Core.Actors
                     schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
                 });
 
+            var tables = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            var objectTypes = dataObjectTypes as Type[] ?? dataObjectTypes.ToArray();
+            foreach (var dataObjectType in objectTypes)
+            {
+                var tableName = GetTableName(command.TargetStorageDescriptor.MappingSchema, dataObjectType);
+                if (!tables.Add(tableName))
+                {
+                    throw new Exception($"Failed to replicate using parallel strategy {dataObjectType.FullName}: multiple entities replicating in table {tableName}");
+                }
+            }
+
             Parallel.ForEach(
-                    dataObjectTypes,
+                    objectTypes,
                     dataObjectType =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
@@ -195,13 +209,16 @@ namespace NuClear.StateInitialization.Core.Actors
                 command,
                 (targetConnection, schemaManagenentActor) =>
                 {
+                    var tables = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
 
                     foreach (var dataObjectType in dataObjectTypes)
                     {
                         try
                         {
-                            var replicationCommands = CreateReplicationCommands(targetConnection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode);
+                            var needTruncate = tables.Add(GetTableName(targetConnection.MappingSchema, dataObjectType));
+
+                            var replicationCommands = CreateReplicationCommands(targetConnection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode, needTruncate);
                             ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, replicationCommands);
                         }
                         catch (Exception ex)
@@ -212,6 +229,19 @@ namespace NuClear.StateInitialization.Core.Actors
 
                     schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
                 });
+        }
+
+        private string GetTableName(MappingSchema mappingSchema, Type dataObjectType)
+        {
+            var attribute = mappingSchema
+                .GetAttributes<TableAttribute>(dataObjectType)
+                .FirstOrDefault();
+
+            var tableName = attribute?.Name ?? dataObjectType.Name;
+            var schemaName = attribute?.Schema;
+            return string.IsNullOrEmpty(schemaName)
+                               ? $"[{tableName}]"
+                               : $"[{schemaName}].[{tableName}]";
         }
 
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)
@@ -239,6 +269,7 @@ namespace NuClear.StateInitialization.Core.Actors
         private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
         {
             DataConnection sourceConnection;
+
             // Creating connection to source that will NOT be enlisted in transactions
             using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
             {

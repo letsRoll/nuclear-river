@@ -22,12 +22,12 @@ namespace NuClear.StateInitialization.Core.Factories
                 .GroupBy(x => x.GenericArgument, x => x.Type)
                 .ToDictionary(x => x.Key, x => x.ToArray());
 
-        private readonly Type[] _dataObjectTypes;
+        private readonly IReadOnlyCollection<Type> _dataObjectTypes;
         private readonly DataConnection _sourceDataConnection;
         private readonly DataConnection _targetDataConnection;
 
         public ReplaceDataObjectsInBulkActorFactory(
-            Type[] dataObjectTypes,
+            IReadOnlyCollection<Type> dataObjectTypes,
             DataConnection sourceDataConnection,
             DataConnection targetDataConnection)
         {

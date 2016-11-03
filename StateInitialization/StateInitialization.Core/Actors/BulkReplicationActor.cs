@@ -250,7 +250,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return connection;
         }
 
-        private void ReplaceInBulk(Type[] dataObjectTypes, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
+        private void ReplaceInBulk(IReadOnlyCollection<Type> dataObjectTypes, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
         {
             DataConnection sourceConnection;
 

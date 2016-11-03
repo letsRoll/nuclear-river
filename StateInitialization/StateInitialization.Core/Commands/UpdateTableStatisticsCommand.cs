@@ -1,14 +1,15 @@
 ﻿using NuClear.Replication.Core;
+using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class UpdateTableStatisticsCommand : ICommand
     {
-        public UpdateTableStatisticsCommand(string tableName)
+        public UpdateTableStatisticsCommand(Table table)
         {
-            TableName = tableName;
+            Table = table;
         }
 
-        public string TableName { get; }
+        public Table Table { get; }
     }
 }

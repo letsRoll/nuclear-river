@@ -1,14 +1,15 @@
 using NuClear.Replication.Core;
+using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class TruncateTableCommand : ICommand
     {
-        public TruncateTableCommand(string tableName)
+        public TruncateTableCommand(Table table)
         {
-            TableName = tableName;
+            Table = table;
         }
 
-        public string TableName { get; }
+        public Table Table { get; }
     }
 }

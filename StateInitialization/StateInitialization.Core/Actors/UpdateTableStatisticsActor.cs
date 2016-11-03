@@ -30,14 +30,14 @@ namespace NuClear.StateInitialization.Core.Actors
             try
             {
                 var database = _sqlConnection.GetDatabase();
-                var table = database.Tables[command.TableName];
+                var table = string.IsNullOrEmpty(command.Table.SchemaName) ? database.Tables[command.Table.TableName] : database.Tables[command.Table.TableName, command.Table.SchemaName];
                 table.UpdateStatistics();
 
                 return Array.Empty<IEvent>();
             }
             catch (Exception ex)
             {
-                throw new DataException($"Error occured while statistics updating for table {command.TableName}", ex);
+                throw new DataException($"Error occured while statistics updating for table {command.Table}", ex);
             }
         }
     }

@@ -54,8 +54,8 @@ namespace NuClear.StateInitialization.Core.Actors
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
                 var tableTypesDictionary = dataObjectTypes
-                    .GroupBy(t => GetTableName(command.TargetStorageDescriptor.MappingSchema, t))
-                    .ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.InvariantCultureIgnoreCase);
+                    .GroupBy(t => GetTable(command.TargetStorageDescriptor.MappingSchema, t))
+                    .ToDictionary(g => g.Key, g => g.ToArray());
 
                 var executionStrategy = DetermineExecutionStrategy(command);
                 executionStrategy.Invoke(command, tableTypesDictionary);
@@ -119,31 +119,31 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
-        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(string tableName, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(Table table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
             var commands = new List<ICommand>();
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new DisableIndexesCommand(tableName));
+                commands.Add(new DisableIndexesCommand(table));
             }
 
-            commands.Add(new TruncateTableCommand(tableName));
+            commands.Add(new TruncateTableCommand(table));
             commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new EnableIndexesCommand(tableName));
+                commands.Add(new EnableIndexesCommand(table));
             }
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
-                commands.Add(new UpdateTableStatisticsCommand(tableName));
+                commands.Add(new UpdateTableStatisticsCommand(table));
             }
 
             return commands;
         }
 
-        private Action<ReplicateInBulkCommand, IReadOnlyDictionary<string, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
+        private Action<ReplicateInBulkCommand, IReadOnlyDictionary<Table, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
             {
@@ -156,7 +156,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
         }
 
-        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<string, Type[]> tableTypesDictionary)
+        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<Table, Type[]> tableTypesDictionary)
         {
             IReadOnlyCollection<IEvent> schemaChangedEvents = null;
             ExecuteInTransactionScope(
@@ -192,7 +192,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<string, Type[]> tableTypesDictionary)
+        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<Table, Type[]> tableTypesDictionary)
         {
             ExecuteInTransactionScope(
                 command,
@@ -217,7 +217,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private string GetTableName(MappingSchema mappingSchema, Type dataObjectType)
+        private Table GetTable(MappingSchema mappingSchema, Type dataObjectType)
         {
             var attribute = mappingSchema
                 .GetAttributes<TableAttribute>(dataObjectType)
@@ -225,9 +225,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             var tableName = attribute?.Name ?? dataObjectType.Name;
             var schemaName = attribute?.Schema;
-            return string.IsNullOrEmpty(schemaName)
-                               ? $"[{tableName}]"
-                               : $"[{schemaName}].[{tableName}]";
+            return new Table(tableName, schemaName);
         }
 
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)

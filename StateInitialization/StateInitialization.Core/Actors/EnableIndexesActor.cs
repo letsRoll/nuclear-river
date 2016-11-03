@@ -23,7 +23,7 @@ namespace NuClear.StateInitialization.Core.Actors
             var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
             if (enableCommand != null)
             {
-                _indexManager.EnableIndexes(enableCommand.TableName);
+                _indexManager.EnableIndexes(enableCommand.Table);
             }
 
             return Array.Empty<IEvent>();

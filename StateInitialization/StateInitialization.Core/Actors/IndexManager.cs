@@ -16,29 +16,27 @@ namespace NuClear.StateInitialization.Core.Actors
             _sqlConnection = sqlConnection;
         }
 
-        public void DisableIndexes(string tableName)
+        public void DisableIndexes(Storage.Table table)
         {
-            var table = GetTable(tableName);
-            DisableIndexes(table);
+            DisableIndexes(GetTable(table));
         }
 
-        public void EnableIndexes(string tableName)
+        public void EnableIndexes(Storage.Table table)
         {
-            var table = GetTable(tableName);
-            EnableIndexes(table);
+            EnableIndexes(GetTable(table));
         }
 
-        private Table GetTable(string tableName)
+        private Table GetTable(Storage.Table table)
         {
             var database = _sqlConnection.GetDatabase();
-            var table = database.Tables[tableName];
+            var tableInDb = string.IsNullOrEmpty(table.SchemaName) ? database.Tables[table.TableName] : database.Tables[table.TableName, table.SchemaName];
 
-            if (table == null)
+            if (tableInDb == null)
             {
-                throw new ArgumentException($"Table {tableName} was not found", nameof(tableName));
+                throw new ArgumentException($"Table {table} was not found", nameof(table));
             }
 
-            return table;
+            return tableInDb;
         }
 
         private void DisableIndexes(Table tableType)

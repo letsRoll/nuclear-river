@@ -115,6 +115,7 @@
     <Compile Include="SqlConnectionExtensions.cs" />
     <Compile Include="Storage\LinqToDbQuery.cs" />
     <Compile Include="Storage\StorageDescriptor.cs" />
+    <Compile Include="Storage\Table.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

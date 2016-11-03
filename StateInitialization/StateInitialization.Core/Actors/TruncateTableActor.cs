@@ -7,6 +7,7 @@ using LinqToDB.Data;
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.StateInitialization.Core.Commands;
+using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
@@ -24,15 +25,15 @@ namespace NuClear.StateInitialization.Core.Actors
             var command = commands.OfType<TruncateTableCommand>().SingleOrDefault();
             if (command != null)
             {
-                ExecuteTruncate(command.TableName);
+                ExecuteTruncate(command.Table);
             }
 
             return Array.Empty<IEvent>();
         }
 
-        private void ExecuteTruncate(string tableName)
+        private void ExecuteTruncate(Table table)
         {
-            _targetDataConnection.Execute($"TRUNCATE TABLE {tableName}");
+            _targetDataConnection.Execute($"TRUNCATE TABLE {table}");
         }
     }
 }

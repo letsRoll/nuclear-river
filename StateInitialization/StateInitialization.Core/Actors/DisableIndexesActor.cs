@@ -23,7 +23,7 @@ namespace NuClear.StateInitialization.Core.Actors
             var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
             if (disableCommand != null)
             {
-                _indexManager.DisableIndexes(disableCommand.TableName);
+                _indexManager.DisableIndexes(disableCommand.Table);
             }
 
             return Array.Empty<IEvent>();

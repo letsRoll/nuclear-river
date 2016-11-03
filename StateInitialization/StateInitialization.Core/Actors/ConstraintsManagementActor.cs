@@ -52,7 +52,6 @@ namespace NuClear.StateInitialization.Core.Actors
             var enableCommand = commands.OfType<EnableConstraintsCommand>().SingleOrDefault();
             if (enableCommand != null)
             {
-
                 foreach (var check in enableCommand.ChecksToRestore)
                 {
                     foreach (var script in check)

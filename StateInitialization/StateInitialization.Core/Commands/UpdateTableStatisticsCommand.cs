@@ -1,16 +1,15 @@
-﻿using LinqToDB.Mapping;
-
-using NuClear.Replication.Core;
+﻿using NuClear.Replication.Core;
+using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class UpdateTableStatisticsCommand : ICommand
     {
-        public UpdateTableStatisticsCommand(MappingSchema mappingSchema)
+        public UpdateTableStatisticsCommand(TableName table)
         {
-            MappingSchema = mappingSchema;
+            Table = table;
         }
 
-        public MappingSchema MappingSchema { get; }
+        public TableName Table { get; }
     }
 }

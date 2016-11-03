@@ -29,10 +29,10 @@ namespace NuClear.StateInitialization.Core.Actors
     {
         private static readonly TransactionOptions TransactionOptions =
             new TransactionOptions
-                {
-                    IsolationLevel = IsolationLevel.Serializable,
-                    Timeout = TimeSpan.Zero
-                };
+            {
+                IsolationLevel = IsolationLevel.Serializable,
+                Timeout = TimeSpan.Zero
+            };
 
         private readonly IDataObjectTypesProviderFactory _dataObjectTypesProviderFactory;
         private readonly IConnectionStringSettings _connectionStringSettings;
@@ -53,8 +53,12 @@ namespace NuClear.StateInitialization.Core.Actors
 
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
+                var tableTypesDictionary = dataObjectTypes
+                    .GroupBy(t => GetTable(command.TargetStorageDescriptor.MappingSchema, t))
+                    .ToDictionary(g => g.Key, g => g.ToArray());
+
                 var executionStrategy = DetermineExecutionStrategy(command);
-                executionStrategy.Invoke(command, dataObjectTypes);
+                executionStrategy.Invoke(command, tableTypesDictionary);
 
                 commandStopwatch.Stop();
                 Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
@@ -91,7 +95,6 @@ namespace NuClear.StateInitialization.Core.Actors
             if (mode.HasFlag(DbManagementMode.DropAndRecreateConstraints))
             {
                 commands.Add(new DisableConstraintsCommand());
-
             }
 
             return commands;
@@ -116,31 +119,31 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
-        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(MappingSchema mappingSchema, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
             var commands = new List<ICommand>();
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new DisableIndexesCommand(mappingSchema));
+                commands.Add(new DisableIndexesCommand(table));
             }
 
-            commands.Add(new TruncateTableCommand());
+            commands.Add(new TruncateTableCommand(table));
             commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new EnableIndexesCommand(mappingSchema));
+                commands.Add(new EnableIndexesCommand(table));
             }
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
-                commands.Add(new UpdateTableStatisticsCommand(mappingSchema));
+                commands.Add(new UpdateTableStatisticsCommand(table));
             }
 
             return commands;
         }
 
-        private Action<ReplicateInBulkCommand, IEnumerable<Type>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
+        private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
             {
@@ -153,7 +156,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
         }
 
-        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IEnumerable<Type> dataObjectTypes)
+        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
         {
             IReadOnlyCollection<IEvent> schemaChangedEvents = null;
             ExecuteInTransactionScope(
@@ -164,19 +167,19 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
 
             Parallel.ForEach(
-                    dataObjectTypes,
-                    dataObjectType =>
+                    tableTypesDictionary,
+                    tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
                         {
                             try
                             {
-                                var replicationCommands = CreateReplicationCommands(connection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode);
-                                ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, replicationCommands);
+                                var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                                ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, connection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
-                                throw new Exception($"Failed to replicate using parallel strategy {dataObjectType.FullName}", ex);
+                                throw new Exception($"Failed to replicate using parallel strategy {tableTypesPair.Key}", ex);
                             }
                         }
                     });
@@ -189,7 +192,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IEnumerable<Type> dataObjectTypes)
+        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
         {
             ExecuteInTransactionScope(
                 command,
@@ -197,21 +200,32 @@ namespace NuClear.StateInitialization.Core.Actors
                 {
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
 
-                    foreach (var dataObjectType in dataObjectTypes)
+                    foreach (var tableTypesPair in tableTypesDictionary)
                     {
                         try
                         {
-                            var replicationCommands = CreateReplicationCommands(targetConnection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode);
-                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, replicationCommands);
+                            var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                            ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, targetConnection, replicationCommands);
                         }
                         catch (Exception ex)
                         {
-                            throw new Exception($"Failed to replicate using sequential strategy {dataObjectType.FullName}", ex);
+                            throw new Exception($"Failed to replicate using sequential strategy {tableTypesPair.Key}", ex);
                         }
                     }
 
                     schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
                 });
+        }
+
+        private TableName GetTable(MappingSchema mappingSchema, Type dataObjectType)
+        {
+            var attribute = mappingSchema
+                .GetAttributes<TableAttribute>(dataObjectType)
+                .FirstOrDefault();
+
+            var tableName = attribute?.Name ?? dataObjectType.Name;
+            var schemaName = attribute?.Schema;
+            return new TableName(tableName, schemaName);
         }
 
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)
@@ -236,9 +250,10 @@ namespace NuClear.StateInitialization.Core.Actors
             return connection;
         }
 
-        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
+        private void ReplaceInBulk(IReadOnlyCollection<Type> dataObjectTypes, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
         {
             DataConnection sourceConnection;
+
             // Creating connection to source that will NOT be enlisted in transactions
             using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
             {
@@ -253,7 +268,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             using (sourceConnection)
             {
-                var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectType, sourceConnection, targetConnection);
+                var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectTypes, sourceConnection, targetConnection);
                 var actors = actorsFactory.Create();
 
                 foreach (var actor in actors)

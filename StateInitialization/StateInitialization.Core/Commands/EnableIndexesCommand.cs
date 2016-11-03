@@ -1,16 +1,14 @@
-﻿using LinqToDB.Mapping;
-
-using NuClear.Replication.Core;
+﻿using NuClear.Replication.Core;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class EnableIndexesCommand : ICommand
     {
-        public EnableIndexesCommand(MappingSchema mappingSchema)
+        public EnableIndexesCommand(string tableName)
         {
-            MappingSchema = mappingSchema;
+            TableName = tableName;
         }
 
-        public MappingSchema MappingSchema { get; }
+        public string TableName { get; }
     }
 }

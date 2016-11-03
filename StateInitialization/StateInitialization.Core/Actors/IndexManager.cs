@@ -2,8 +2,6 @@
 using System.Data.SqlClient;
 using System.Linq;
 
-using LinqToDB.Mapping;
-
 using Microsoft.SqlServer.Management.Smo;
 
 namespace NuClear.StateInitialization.Core.Actors
@@ -18,30 +16,26 @@ namespace NuClear.StateInitialization.Core.Actors
             _sqlConnection = sqlConnection;
         }
 
-        public void DisableIndexes(MappingSchema mappingSchema, Type tableType)
+        public void DisableIndexes(string tableName)
         {
-            var table = GetTable(mappingSchema, tableType);
+            var table = GetTable(tableName);
             DisableIndexes(table);
         }
 
-        public void EnableIndexes(MappingSchema mappingSchema, Type tableType)
+        public void EnableIndexes(string tableName)
         {
-            var table = GetTable(mappingSchema, tableType);
+            var table = GetTable(tableName);
             EnableIndexes(table);
         }
 
-        private Table GetTable(MappingSchema mappingSchema, Type tableType)
+        private Table GetTable(string tableName)
         {
-            var attributes = mappingSchema.GetAttributes<TableAttribute>(tableType);
-            var tableName = attributes.Select(x => x.Name).FirstOrDefault() ?? tableType.Name;
-            var schemaName = attributes.Select(x => x.Schema).FirstOrDefault();
-
             var database = _sqlConnection.GetDatabase();
-            var table = !string.IsNullOrEmpty(schemaName) ? database.Tables[tableName, schemaName] : database.Tables[tableName];
+            var table = database.Tables[tableName];
 
             if (table == null)
             {
-                throw new ArgumentException($"Table {tableName} in schema {schemaName} for type {tableType.Name} was not found", nameof(tableType));
+                throw new ArgumentException($"Table {tableName} was not found", nameof(tableName));
             }
 
             return table;

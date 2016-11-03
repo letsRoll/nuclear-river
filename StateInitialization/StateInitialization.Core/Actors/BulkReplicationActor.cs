@@ -53,8 +53,12 @@ namespace NuClear.StateInitialization.Core.Actors
 
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
+                var tableTypesDictionary = dataObjectTypes
+                    .GroupBy(t => GetTableName(command.TargetStorageDescriptor.MappingSchema, t))
+                    .ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.InvariantCultureIgnoreCase);
+
                 var executionStrategy = DetermineExecutionStrategy(command);
-                executionStrategy.Invoke(command, dataObjectTypes);
+                executionStrategy.Invoke(command, tableTypesDictionary);
 
                 commandStopwatch.Stop();
                 Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
@@ -115,35 +119,31 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
-        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(MappingSchema mappingSchema, TimeSpan bulkCopyTimeout, DbManagementMode mode, bool needTruncate = true)
+        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(string tableName, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
             var commands = new List<ICommand>();
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new DisableIndexesCommand(mappingSchema));
+                commands.Add(new DisableIndexesCommand(tableName));
             }
 
-            if (needTruncate)
-            {
-                commands.Add(new TruncateTableCommand());
-            }
-
+            commands.Add(new TruncateTableCommand(tableName));
             commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new EnableIndexesCommand(mappingSchema));
+                commands.Add(new EnableIndexesCommand(tableName));
             }
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
-                commands.Add(new UpdateTableStatisticsCommand(mappingSchema));
+                commands.Add(new UpdateTableStatisticsCommand(tableName));
             }
 
             return commands;
         }
 
-        private Action<ReplicateInBulkCommand, IEnumerable<Type>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
+        private Action<ReplicateInBulkCommand, IReadOnlyDictionary<string, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
             {
@@ -156,7 +156,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
         }
 
-        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IEnumerable<Type> dataObjectTypes)
+        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<string, Type[]> tableTypesDictionary)
         {
             IReadOnlyCollection<IEvent> schemaChangedEvents = null;
             ExecuteInTransactionScope(
@@ -166,31 +166,20 @@ namespace NuClear.StateInitialization.Core.Actors
                     schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
                 });
 
-            var tables = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-            var objectTypes = dataObjectTypes as Type[] ?? dataObjectTypes.ToArray();
-            foreach (var dataObjectType in objectTypes)
-            {
-                var tableName = GetTableName(command.TargetStorageDescriptor.MappingSchema, dataObjectType);
-                if (!tables.Add(tableName))
-                {
-                    throw new Exception($"Failed to replicate using parallel strategy {dataObjectType.FullName}: multiple entities replicating in table {tableName}");
-                }
-            }
-
             Parallel.ForEach(
-                    objectTypes,
-                    dataObjectType =>
+                    tableTypesDictionary,
+                    tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
                         {
                             try
                             {
-                                var replicationCommands = CreateReplicationCommands(connection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode);
-                                ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, connection, replicationCommands);
+                                var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                                ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, connection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
-                                throw new Exception($"Failed to replicate using parallel strategy {dataObjectType.FullName}", ex);
+                                throw new Exception($"Failed to replicate using parallel strategy {tableTypesPair.Key}", ex);
                             }
                         }
                     });
@@ -203,27 +192,24 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IEnumerable<Type> dataObjectTypes)
+        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<string, Type[]> tableTypesDictionary)
         {
             ExecuteInTransactionScope(
                 command,
                 (targetConnection, schemaManagenentActor) =>
                 {
-                    var tables = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
 
-                    foreach (var dataObjectType in dataObjectTypes)
+                    foreach (var tableTypesPair in tableTypesDictionary)
                     {
                         try
                         {
-                            var needTruncate = tables.Add(GetTableName(targetConnection.MappingSchema, dataObjectType));
-
-                            var replicationCommands = CreateReplicationCommands(targetConnection.MappingSchema, command.BulkCopyTimeout, command.DbManagementMode, needTruncate);
-                            ReplaceInBulk(dataObjectType, command.SourceStorageDescriptor, targetConnection, replicationCommands);
+                            var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                            ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, targetConnection, replicationCommands);
                         }
                         catch (Exception ex)
                         {
-                            throw new Exception($"Failed to replicate using sequential strategy {dataObjectType.FullName}", ex);
+                            throw new Exception($"Failed to replicate using sequential strategy {tableTypesPair.Key}", ex);
                         }
                     }
 
@@ -266,7 +252,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return connection;
         }
 
-        private void ReplaceInBulk(Type dataObjectType, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
+        private void ReplaceInBulk(Type[] dataObjectTypes, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
         {
             DataConnection sourceConnection;
 
@@ -284,7 +270,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             using (sourceConnection)
             {
-                var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectType, sourceConnection, targetConnection);
+                var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectTypes, sourceConnection, targetConnection);
                 var actors = actorsFactory.Create();
 
                 foreach (var actor in actors)

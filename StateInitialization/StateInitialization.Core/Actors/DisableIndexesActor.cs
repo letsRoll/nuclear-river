@@ -9,7 +9,7 @@ using NuClear.StateInitialization.Core.Commands;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public sealed class DisableIndexesActor<TDataObject> : IActor
+    public sealed class DisableIndexesActor : IActor
     {
         private readonly IndexManager _indexManager;
 
@@ -23,7 +23,7 @@ namespace NuClear.StateInitialization.Core.Actors
             var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
             if (disableCommand != null)
             {
-                _indexManager.DisableIndexes(disableCommand.MappingSchema, typeof(TDataObject));
+                _indexManager.DisableIndexes(disableCommand.TableName);
             }
 
             return Array.Empty<IEvent>();

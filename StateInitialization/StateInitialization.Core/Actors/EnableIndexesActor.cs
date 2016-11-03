@@ -9,7 +9,7 @@ using NuClear.StateInitialization.Core.Commands;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public sealed class EnableIndexesActor<TDataObject> : IActor
+    public sealed class EnableIndexesActor : IActor
     {
         private readonly IndexManager _indexManager;
 
@@ -20,10 +20,10 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
-            if (disableCommand != null)
+            var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
+            if (enableCommand != null)
             {
-                _indexManager.EnableIndexes(disableCommand.MappingSchema, typeof(TDataObject));
+                _indexManager.EnableIndexes(enableCommand.TableName);
             }
 
             return Array.Empty<IEvent>();

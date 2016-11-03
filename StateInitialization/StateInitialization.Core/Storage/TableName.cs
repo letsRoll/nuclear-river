@@ -2,25 +2,25 @@
 
 namespace NuClear.StateInitialization.Core.Storage
 {
-    public sealed class Table
+    public sealed class TableName
     {
         private string _fullName;
 
-        public Table(string tableName, string schemaName = null)
+        public TableName(string tableName, string schemaName = null)
         {
-            TableName = tableName;
-            SchemaName = schemaName;
+            Table = tableName;
+            Schema = schemaName;
         }
 
-        public string TableName { get; }
+        public string Table { get; }
 
-        public string SchemaName { get; }
+        public string Schema { get; }
 
         public override string ToString()
         {
-            return _fullName ?? (_fullName = string.IsNullOrEmpty(SchemaName)
-                                                 ? $"[{TableName}]"
-                                                 : $"[{SchemaName}].[{TableName}]");
+            return _fullName ?? (_fullName = string.IsNullOrEmpty(Schema)
+                                                 ? $"[{Table}]"
+                                                 : $"[{Schema}].[{Table}]");
         }
 
         public override int GetHashCode()

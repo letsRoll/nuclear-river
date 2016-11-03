@@ -5,11 +5,11 @@ namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class TruncateTableCommand : ICommand
     {
-        public TruncateTableCommand(Table table)
+        public TruncateTableCommand(TableName table)
         {
             Table = table;
         }
 
-        public Table Table { get; }
+        public TableName Table { get; }
     }
 }

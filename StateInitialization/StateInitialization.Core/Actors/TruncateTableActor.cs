@@ -31,7 +31,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private void ExecuteTruncate(Table table)
+        private void ExecuteTruncate(TableName table)
         {
             _targetDataConnection.Execute($"TRUNCATE TABLE {table}");
         }

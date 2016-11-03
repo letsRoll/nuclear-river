@@ -4,6 +4,8 @@ using System.Linq;
 
 using Microsoft.SqlServer.Management.Smo;
 
+using NuClear.StateInitialization.Core.Storage;
+
 namespace NuClear.StateInitialization.Core.Actors
 {
     internal sealed class IndexManager
@@ -16,20 +18,20 @@ namespace NuClear.StateInitialization.Core.Actors
             _sqlConnection = sqlConnection;
         }
 
-        public void DisableIndexes(Storage.Table table)
+        public void DisableIndexes(TableName table)
         {
             DisableIndexes(GetTable(table));
         }
 
-        public void EnableIndexes(Storage.Table table)
+        public void EnableIndexes(TableName table)
         {
             EnableIndexes(GetTable(table));
         }
 
-        private Table GetTable(Storage.Table table)
+        private Table GetTable(TableName table)
         {
             var database = _sqlConnection.GetDatabase();
-            var tableInDb = string.IsNullOrEmpty(table.SchemaName) ? database.Tables[table.TableName] : database.Tables[table.TableName, table.SchemaName];
+            var tableInDb = string.IsNullOrEmpty(table.Schema) ? database.Tables[table.Table] : database.Tables[table.Table, table.Schema];
 
             if (tableInDb == null)
             {

@@ -5,11 +5,11 @@ namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class UpdateTableStatisticsCommand : ICommand
     {
-        public UpdateTableStatisticsCommand(Table table)
+        public UpdateTableStatisticsCommand(TableName table)
         {
             Table = table;
         }
 
-        public Table Table { get; }
+        public TableName Table { get; }
     }
 }

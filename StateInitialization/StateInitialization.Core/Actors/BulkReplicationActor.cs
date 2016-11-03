@@ -119,7 +119,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
-        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(Table table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        private static IReadOnlyCollection<ICommand> CreateReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
             var commands = new List<ICommand>();
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
@@ -143,7 +143,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
-        private Action<ReplicateInBulkCommand, IReadOnlyDictionary<Table, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
+        private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
             {
@@ -156,7 +156,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
         }
 
-        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<Table, Type[]> tableTypesDictionary)
+        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
         {
             IReadOnlyCollection<IEvent> schemaChangedEvents = null;
             ExecuteInTransactionScope(
@@ -192,7 +192,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<Table, Type[]> tableTypesDictionary)
+        private void SequentialExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
         {
             ExecuteInTransactionScope(
                 command,
@@ -217,7 +217,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private Table GetTable(MappingSchema mappingSchema, Type dataObjectType)
+        private TableName GetTable(MappingSchema mappingSchema, Type dataObjectType)
         {
             var attribute = mappingSchema
                 .GetAttributes<TableAttribute>(dataObjectType)
@@ -225,7 +225,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             var tableName = attribute?.Name ?? dataObjectType.Name;
             var schemaName = attribute?.Schema;
-            return new Table(tableName, schemaName);
+            return new TableName(tableName, schemaName);
         }
 
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)

@@ -5,11 +5,11 @@ namespace NuClear.StateInitialization.Core.Commands
 {
     public sealed class DisableIndexesCommand : ICommand
     {
-        public DisableIndexesCommand(Table table)
+        public DisableIndexesCommand(TableName table)
         {
             Table = table;
         }
 
-        public Table Table{ get; }
+        public TableName Table { get; }
     }
 }

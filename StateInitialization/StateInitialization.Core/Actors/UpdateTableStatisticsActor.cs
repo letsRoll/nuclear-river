@@ -30,7 +30,7 @@ namespace NuClear.StateInitialization.Core.Actors
             try
             {
                 var database = _sqlConnection.GetDatabase();
-                var table = string.IsNullOrEmpty(command.Table.SchemaName) ? database.Tables[command.Table.TableName] : database.Tables[command.Table.TableName, command.Table.SchemaName];
+                var table = string.IsNullOrEmpty(command.Table.Schema) ? database.Tables[command.Table.Table] : database.Tables[command.Table.Table, command.Table.Schema];
                 table.UpdateStatistics();
 
                 return Array.Empty<IEvent>();

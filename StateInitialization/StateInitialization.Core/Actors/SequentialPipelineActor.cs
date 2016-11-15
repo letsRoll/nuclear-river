@@ -5,6 +5,7 @@ using System.Linq;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
+using NuClear.StateInitialization.Core.Logging;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
@@ -31,7 +32,7 @@ namespace NuClear.StateInitialization.Core.Actors
                         var sw = Stopwatch.StartNew();
                         events.AddRange(actor.ExecuteCommands(commands));
                         sw.Stop();
-                        Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                        CurrentLogger.Instance.Append($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
 
                         return events;
                     });

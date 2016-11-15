@@ -18,6 +18,7 @@ using NuClear.StateInitialization.Core.Commands;
 using NuClear.StateInitialization.Core.DataObjects;
 using NuClear.StateInitialization.Core.Events;
 using NuClear.StateInitialization.Core.Factories;
+using NuClear.StateInitialization.Core.Logging;
 using NuClear.StateInitialization.Core.Storage;
 using NuClear.Storage.API.ConnectionStrings;
 
@@ -49,6 +50,8 @@ namespace NuClear.StateInitialization.Core.Actors
         {
             foreach (var command in commands.Cast<ReplicateInBulkCommand>())
             {
+                CurrentLogger.Instance = command.Logger;
+
                 var commandStopwatch = Stopwatch.StartNew();
 
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
@@ -61,8 +64,8 @@ namespace NuClear.StateInitialization.Core.Actors
                 executionStrategy.Invoke(command, tableTypesDictionary);
 
                 commandStopwatch.Stop();
-                Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
-                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds} seconds");
+                CurrentLogger.Instance.Append($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
+                                      $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds} seconds");
             }
 
             return Array.Empty<IEvent>();
@@ -275,7 +278,7 @@ namespace NuClear.StateInitialization.Core.Actors
                     actor.ExecuteCommands(replicationCommands);
                     sw.Stop();
 
-                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                    CurrentLogger.Instance.Append($"{actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
                 }
             }
         }

@@ -181,6 +181,7 @@
     <Compile Include="Metadata\TunedReferencesEvaluatorProcessor.cs" />
     <Compile Include="OperationIdentityRegistryFactory.cs" />
     <Compile Include="AggregatableMessage.cs" />
+    <Compile Include="Primary\EmptyOperationRegistry.cs" />
     <Compile Include="Primary\IEntityTypeExplicitMapping.cs" />
     <Compile Include="Primary\IOperationRegistry.cs" />
     <Compile Include="Primary\OperationRegistry.cs" />

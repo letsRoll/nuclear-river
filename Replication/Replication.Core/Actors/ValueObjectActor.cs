@@ -6,6 +6,7 @@ using NuClear.Replication.Core.Commands;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.Replication.Core.Equality;
 using NuClear.Storage.API.Readings;
+using NuClear.Telemetry.Probing;
 
 namespace NuClear.Replication.Core.Actors
 {
@@ -45,23 +46,26 @@ namespace NuClear.Replication.Core.Actors
                 return Array.Empty<IEvent>();
             }
 
-            var events = new List<IEvent>();
+            using (Probe.Create("ValueObject", typeof(TDataObject).Name))
+            {
+                var events = new List<IEvent>();
 
-            var changes = DetectChanges(commandsToExecute, _equalityComparerFactory.CreateCompleteComparer<TDataObject>());
+                var changes = DetectChanges(commandsToExecute, _equalityComparerFactory.CreateCompleteComparer<TDataObject>());
 
-            var toDelete = changes.Complement.ToArray();
+                var toDelete = changes.Complement.ToArray();
 
-            events.AddRange(_dataChangesHandler.HandleRelates(toDelete));
-            events.AddRange(_dataChangesHandler.HandleDeletes(toDelete));
-            _bulkRepository.Delete(toDelete);
+                events.AddRange(_dataChangesHandler.HandleRelates(toDelete));
+                events.AddRange(_dataChangesHandler.HandleDeletes(toDelete));
+                _bulkRepository.Delete(toDelete);
 
-            var toCreate = changes.Difference.ToArray();
+                var toCreate = changes.Difference.ToArray();
 
-            _bulkRepository.Create(toCreate);
-            events.AddRange(_dataChangesHandler.HandleCreates(toCreate));
-            events.AddRange(_dataChangesHandler.HandleRelates(toCreate));
+                _bulkRepository.Create(toCreate);
+                events.AddRange(_dataChangesHandler.HandleCreates(toCreate));
+                events.AddRange(_dataChangesHandler.HandleRelates(toCreate));
 
-            return events;
+                return events;
+            }
         }
     }
 }

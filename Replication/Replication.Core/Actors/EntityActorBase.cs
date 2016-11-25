@@ -5,6 +5,7 @@ using System.Linq;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.Replication.Core.Equality;
 using NuClear.Storage.API.Readings;
+using NuClear.Telemetry.Probing;
 
 namespace NuClear.Replication.Core.Actors
 {
@@ -49,18 +50,21 @@ namespace NuClear.Replication.Core.Actors
                 return Array.Empty<IEvent>();
             }
 
-            var events = new List<IEvent>();
+            using (Probe.Create("Entity", typeof(TDataObject).Name))
+            {
+                var events = new List<IEvent>();
 
-            IActor actor = new CreateDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
-            events.AddRange(actor.ExecuteCommands(commands));
+                IActor actor = new CreateDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
+                events.AddRange(actor.ExecuteCommands(commands));
 
-            actor = new SyncDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
-            events.AddRange(actor.ExecuteCommands(commands));
+                actor = new SyncDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
+                events.AddRange(actor.ExecuteCommands(commands));
 
-            actor = new DeleteDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
-            events.AddRange(actor.ExecuteCommands(commands));
+                actor = new DeleteDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
+                events.AddRange(actor.ExecuteCommands(commands));
 
-            return events;
+                return events;
+            }
         }
         public abstract IReadOnlyCollection<IActor> GetValueObjectActors();
     }

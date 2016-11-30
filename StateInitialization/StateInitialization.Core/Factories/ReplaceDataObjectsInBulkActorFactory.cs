@@ -48,7 +48,9 @@ namespace NuClear.StateInitialization.Core.Factories
             var truncateTableActor = (IActor)Activator.CreateInstance(truncateTableActorType, _targetDataConnection);
             actors.Add(truncateTableActor);
 
-#warning Добавить актор по созданию копий таблиц
+            var createTableCopyActorType = typeof(CreateTableCopyActor);
+            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, _targetDataConnection);
+            actors.Add(createTableCopyActor);
 
             foreach (var dataObjectType in _dataObjectTypes)
             {

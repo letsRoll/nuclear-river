@@ -8,13 +8,18 @@ namespace NuClear.StateInitialization.Core.Commands
         public CreateTableCopyCommand(TableName table)
         {
             SourceTable = table;
-            CreatedTable = new TableName(Prefix + table.Table, table.Schema);
+            CopiedTable = GetTableCopyName(table);
         }
+
+        public static string Prefix => "river_";
 
         public TableName SourceTable { get; }
 
-        public TableName CreatedTable { get; }
+        public TableName CopiedTable { get; }
 
-        public static string Prefix => "river_";
+        public static TableName GetTableCopyName(TableName table)
+        {
+            return new TableName(Prefix + table.Table, table.Schema);
+        }
     }
 }

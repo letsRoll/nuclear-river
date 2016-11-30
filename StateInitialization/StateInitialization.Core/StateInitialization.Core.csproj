@@ -86,9 +86,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actors\BulkReplicationActor.cs" />
+    <Compile Include="Actors\CreateTableCopyActor.cs" />
     <Compile Include="Actors\EnableIndexesActor.cs" />
     <Compile Include="Actors\DisableIndexesActor.cs" />
     <Compile Include="Actors\IndexManager.cs" />
+    <Compile Include="Actors\ReplaceTableActor.cs" />
     <Compile Include="Actors\TruncateTableActor.cs" />
     <Compile Include="Actors\SequentialPipelineActor.cs" />
     <Compile Include="Actors\ConstraintsManagementActor.cs" />
@@ -101,6 +103,7 @@
     <Compile Include="Commands\DisableIndexesCommand.cs" />
     <Compile Include="Commands\DropViewsCommand.cs" />
     <Compile Include="Commands\EnableConstraintsCommand.cs" />
+    <Compile Include="Commands\ReplaceTableCommand.cs" />
     <Compile Include="Commands\ReplicateInBulkCommand.cs" />
     <Compile Include="Commands\RestoreViewsCommand.cs" />
     <Compile Include="Commands\TruncateTableCommand.cs" />

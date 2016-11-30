@@ -80,6 +80,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 new IActor[]
                     {
                         new ViewManagementActor(sqlConnection, commandTimeout),
+                        new ReplaceTableActor(sqlConnection),
                         new ConstraintsManagementActor(sqlConnection, commandTimeout)
                     });
         }
@@ -150,15 +151,22 @@ namespace NuClear.StateInitialization.Core.Actors
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new EnableIndexesCommand(createTableCopyCommand.CreatedTable));
+                commands.Add(new EnableIndexesCommand(createTableCopyCommand.CopiedTable));
             }
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
-                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.CreatedTable));
+                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.CopiedTable));
             }
 
             return commands;
+        }
+
+        private static IReadOnlyCollection<ICommand> CreateTablesReplacingCommands(IEnumerable<TableName> tableTypesDictionary)
+        {
+            return tableTypesDictionary
+                .Select(t => new ReplaceTableCommand(t, CreateTableCopyCommand.GetTableCopyName(t)))
+                .ToList();
         }
 
         private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
@@ -201,7 +209,9 @@ namespace NuClear.StateInitialization.Core.Actors
                 (targetConnection, schemaManagenentActor) =>
                 {
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
-#warning Удалить старые таблицы, затем переименовать новые (убрать префикс)
+
+                    // Delete existed tables then rename new ones (remove prefix):
+                    schemaManagenentActor.ExecuteCommands(CreateTablesReplacingCommands(tableTypesDictionary.Keys));
                     schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
                 });
         }

@@ -143,6 +143,24 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
+        private static IReadOnlyCollection<ICommand> CreateShadowReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        {
+            var createTableCopyCommand = new CreateTableCopyCommand(table);
+            var commands = new List<ICommand> { createTableCopyCommand, new BulkInsertDataObjectsCommand(bulkCopyTimeout) };
+
+            if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
+            {
+                commands.Add(new EnableIndexesCommand(createTableCopyCommand.CreatedTable));
+            }
+
+            if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
+            {
+                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.CreatedTable));
+            }
+
+            return commands;
+        }
+
         private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
@@ -151,9 +169,41 @@ namespace NuClear.StateInitialization.Core.Actors
                     return ParallelExecutionStrategy;
                 case ExecutionMode.Sequential:
                     return SequentialExecutionStrategy;
+                case ExecutionMode.ShadowParallel:
+                    return ShadowParallelExecutionStrategy;
                 default:
                     throw new ArgumentException($"Execution mode {command.ExecutionMode} is not supported", nameof(command));
             }
+        }
+
+        private void ShadowParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
+        {
+            Parallel.ForEach(
+                    tableTypesDictionary,
+                    tableTypesPair =>
+                    {
+                        using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                        {
+                            try
+                            {
+                                var replicationCommands = CreateShadowReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                                ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, connection, replicationCommands);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"Failed to replicate using shadow parallel strategy {tableTypesPair.Key}", ex);
+                            }
+                        }
+                    });
+
+            ExecuteInTransactionScope(
+                command,
+                (targetConnection, schemaManagenentActor) =>
+                {
+                    var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
+#warning Удалить старые таблицы, затем переименовать новые (убрать префикс)
+                    schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+                });
         }
 
         private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)

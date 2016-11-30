@@ -48,6 +48,8 @@ namespace NuClear.StateInitialization.Core.Factories
             var truncateTableActor = (IActor)Activator.CreateInstance(truncateTableActorType, _targetDataConnection);
             actors.Add(truncateTableActor);
 
+#warning Добавить актор по созданию копий таблиц
+
             foreach (var dataObjectType in _dataObjectTypes)
             {
                 var accessorTypes = AccessorTypes[dataObjectType];

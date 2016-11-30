@@ -25,6 +25,7 @@ using IsolationLevel = System.Transactions.IsolationLevel;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
+    // ReSharper disable once UnusedMember.Global
     public sealed class BulkReplicationActor : IActor
     {
         private static readonly TransactionOptions TransactionOptions =
@@ -210,7 +211,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 {
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
 
-                    // Delete existed tables then rename new ones (remove prefix):
+                    // Delete existed tables then rename newly created ones (remove prefix):
                     schemaManagenentActor.ExecuteCommands(CreateTablesReplacingCommands(tableTypesDictionary.Keys));
                     schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
                 });

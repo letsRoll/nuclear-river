@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 
-using Microsoft.SqlServer.Management.Smo;
-
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.StateInitialization.Core.Commands;

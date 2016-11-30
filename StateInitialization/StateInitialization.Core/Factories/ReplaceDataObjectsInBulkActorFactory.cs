@@ -49,7 +49,7 @@ namespace NuClear.StateInitialization.Core.Factories
             actors.Add(truncateTableActor);
 
             var createTableCopyActorType = typeof(CreateTableCopyActor);
-            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, _targetDataConnection);
+            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, _targetDataConnection.Connection);
             actors.Add(createTableCopyActor);
 
             foreach (var dataObjectType in _dataObjectTypes)

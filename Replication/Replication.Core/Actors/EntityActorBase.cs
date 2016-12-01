@@ -2,42 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using NuClear.Replication.Core.DataObjects;
-using NuClear.Replication.Core.Equality;
-using NuClear.Storage.API.Readings;
-
 namespace NuClear.Replication.Core.Actors
 {
     public abstract class EntityActorBase<TDataObject> : IEntityActor
         where TDataObject : class
     {
-        private readonly IQuery _query;
-        private readonly IBulkRepository<TDataObject> _bulkRepository;
-        private readonly IEqualityComparerFactory _equalityComparerFactory;
-        private readonly IStorageBasedDataObjectAccessor<TDataObject> _storageBasedDataObjectAccessor;
-        private readonly IDataChangesHandler<TDataObject> _dataChangesHandler;
+        private readonly CreateDataObjectsActor<TDataObject> _createDataObjectsActor;
+        private readonly SyncDataObjectsActor<TDataObject> _syncDataObjectsActor;
+        private readonly DeleteDataObjectsActor<TDataObject> _deleteDataObjectsActor;
 
         protected EntityActorBase(
-            IQuery query,
-            IBulkRepository<TDataObject> bulkRepository,
-            IEqualityComparerFactory equalityComparerFactory,
-            IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor)
-            : this(query, bulkRepository, equalityComparerFactory, storageBasedDataObjectAccessor, new NullDataChangesHandler<TDataObject>())
+            CreateDataObjectsActor<TDataObject> createDataObjectsActor,
+            SyncDataObjectsActor<TDataObject> syncDataObjectsActor,
+            DeleteDataObjectsActor<TDataObject> deleteDataObjectsActorr)
         {
-        }
-
-        protected EntityActorBase(
-           IQuery query,
-           IBulkRepository<TDataObject> bulkRepository,
-           IEqualityComparerFactory equalityComparerFactory,
-           IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor,
-           IDataChangesHandler<TDataObject> dataChangesHandler)
-        {
-            _query = query;
-            _bulkRepository = bulkRepository;
-            _equalityComparerFactory = equalityComparerFactory;
-            _storageBasedDataObjectAccessor = storageBasedDataObjectAccessor;
-            _dataChangesHandler = dataChangesHandler;
+            _createDataObjectsActor = createDataObjectsActor;
+            _syncDataObjectsActor = syncDataObjectsActor;
+            _deleteDataObjectsActor = deleteDataObjectsActorr;
         }
 
         public Type EntityType => typeof(TDataObject);
@@ -51,17 +32,13 @@ namespace NuClear.Replication.Core.Actors
 
             var events = new List<IEvent>();
 
-            IActor actor = new CreateDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
-            events.AddRange(actor.ExecuteCommands(commands));
-
-            actor = new SyncDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
-            events.AddRange(actor.ExecuteCommands(commands));
-
-            actor = new DeleteDataObjectsActor<TDataObject>(_query, _bulkRepository, _equalityComparerFactory, _storageBasedDataObjectAccessor, _dataChangesHandler);
-            events.AddRange(actor.ExecuteCommands(commands));
+            events.AddRange(_createDataObjectsActor.ExecuteCommands(commands));
+            events.AddRange(_syncDataObjectsActor.ExecuteCommands(commands));
+            events.AddRange(_deleteDataObjectsActor.ExecuteCommands(commands));
 
             return events;
         }
+
         public abstract IReadOnlyCollection<IActor> GetValueObjectActors();
     }
 }

@@ -4,6 +4,8 @@ using System.Linq;
 
 using NuClear.Replication.Core.Commands;
 using NuClear.Replication.Core.DataObjects;
+using NuClear.Replication.Core.Equality;
+using NuClear.Storage.API.Readings;
 
 namespace NuClear.Replication.Core.Actors
 {
@@ -12,6 +14,15 @@ namespace NuClear.Replication.Core.Actors
         private readonly ValueObjectChangesProvider<TDataObject> _changesProvider;
         private readonly IBulkRepository<TDataObject> _bulkRepository;
         private readonly IDataChangesHandler<TDataObject> _dataChangesHandler;
+
+        public ValueObjectActor(
+            IQuery query,
+            IBulkRepository<TDataObject> bulkRepository,
+            IEqualityComparerFactory equalityComparerFactory,
+            IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor)
+            : this(new ValueObjectChangesProvider<TDataObject>(query, storageBasedDataObjectAccessor, equalityComparerFactory, new DefaultQueryableEnumerator()), bulkRepository, new NullDataChangesHandler<TDataObject>())
+        {
+        }
 
         public ValueObjectActor(ValueObjectChangesProvider<TDataObject> changesProvider, IBulkRepository<TDataObject> bulkRepository)
             : this(changesProvider, bulkRepository, new NullDataChangesHandler<TDataObject>())

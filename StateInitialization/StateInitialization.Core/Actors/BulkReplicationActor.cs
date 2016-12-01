@@ -62,7 +62,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
                 commandStopwatch.Stop();
                 Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
-                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds} seconds");
+                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds:F3} seconds");
             }
 
             return Array.Empty<IEvent>();
@@ -80,7 +80,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 new IActor[]
                     {
                         new ViewManagementActor(sqlConnection, commandTimeout),
-                        new ReplaceTableActor(sqlConnection),
+                        new ReplaceTableActor(sqlConnection, commandTimeout),
                         new ConstraintsManagementActor(sqlConnection, commandTimeout)
                     });
         }
@@ -148,11 +148,6 @@ namespace NuClear.StateInitialization.Core.Actors
         {
             var createTableCopyCommand = new CreateTableCopyCommand(table);
             var commands = new List<ICommand> { createTableCopyCommand, new BulkInsertDataObjectsCommand(bulkCopyTimeout, createTableCopyCommand.TargetTable) };
-
-            if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
-            {
-                commands.Add(new EnableIndexesCommand(createTableCopyCommand.TargetTable));
-            }
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
@@ -326,7 +321,7 @@ namespace NuClear.StateInitialization.Core.Actors
                     actor.ExecuteCommands(replicationCommands);
                     sw.Stop();
 
-                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds:F3} seconds");
                 }
             }
         }

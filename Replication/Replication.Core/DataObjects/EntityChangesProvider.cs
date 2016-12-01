@@ -2,7 +2,6 @@
 
 using NuClear.Replication.Core.Equality;
 using NuClear.Storage.API.Readings;
-using NuClear.Storage.API.Specifications;
 
 namespace NuClear.Replication.Core.DataObjects
 {
@@ -14,13 +13,13 @@ namespace NuClear.Replication.Core.DataObjects
         private readonly MapToObjectsSpecProvider<TDataObject, TDataObject> _mapSpecificationProviderForTarget;
         private readonly IEqualityComparerFactory _equalityComparerFactory;
 
-        public EntityChangesProvider(IQuery query, IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor, IEqualityComparerFactory equalityComparerFactory)
+        public EntityChangesProvider(IQuery query, IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor, IEqualityComparerFactory equalityComparerFactory, IQueryableEnumerator enumerator)
         {
             _storageBasedDataObjectAccessor = storageBasedDataObjectAccessor;
             _equalityComparerFactory = equalityComparerFactory;
 
-            _mapSpecificationProviderForSource = specification => _storageBasedDataObjectAccessor.GetSource().Where(specification);
-            _mapSpecificationProviderForTarget = specification => query.For<TDataObject>().Where(specification);
+            _mapSpecificationProviderForSource = specification => enumerator.Invoke(_storageBasedDataObjectAccessor.GetSource(), specification);
+            _mapSpecificationProviderForTarget = specification => enumerator.Invoke(query.For<TDataObject>(), specification);
         }
 
         public MergeResult<TDataObject> DetectChanges(IReadOnlyCollection<ICommand> commands)

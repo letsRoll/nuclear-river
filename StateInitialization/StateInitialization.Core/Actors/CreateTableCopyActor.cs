@@ -27,7 +27,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 var table = database.GetTable(command.SourceTable);
 
                 // If table with prefix already exists - drop it:
-                var existedTable = database.GetTable(command.CopiedTable);
+                var existedTable = database.GetTable(command.TargetTable);
                 existedTable?.Drop();
 
                 var scripts = table.Script();

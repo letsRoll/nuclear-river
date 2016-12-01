@@ -9,7 +9,6 @@ using System.Transactions;
 
 using LinqToDB.Data;
 using LinqToDB.DataProvider.SqlServer;
-using LinqToDB.Mapping;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
@@ -55,7 +54,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
                 var tableTypesDictionary = dataObjectTypes
-                    .GroupBy(t => GetTable(command.TargetStorageDescriptor.MappingSchema, t))
+                    .GroupBy(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
                     .ToDictionary(g => g.Key, g => g.ToArray());
 
                 var executionStrategy = DetermineExecutionStrategy(command);
@@ -130,7 +129,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
 
             commands.Add(new TruncateTableCommand(table));
-            commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
+            commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout, table));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
@@ -148,16 +147,16 @@ namespace NuClear.StateInitialization.Core.Actors
         private static IReadOnlyCollection<ICommand> CreateShadowReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
             var createTableCopyCommand = new CreateTableCopyCommand(table);
-            var commands = new List<ICommand> { createTableCopyCommand, new BulkInsertDataObjectsCommand(bulkCopyTimeout) };
+            var commands = new List<ICommand> { createTableCopyCommand, new BulkInsertDataObjectsCommand(bulkCopyTimeout, createTableCopyCommand.TargetTable) };
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
-                commands.Add(new EnableIndexesCommand(createTableCopyCommand.CopiedTable));
+                commands.Add(new EnableIndexesCommand(createTableCopyCommand.TargetTable));
             }
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
-                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.CopiedTable));
+                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.TargetTable));
             }
 
             return commands;
@@ -276,17 +275,6 @@ namespace NuClear.StateInitialization.Core.Actors
 
                     schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
                 });
-        }
-
-        private TableName GetTable(MappingSchema mappingSchema, Type dataObjectType)
-        {
-            var attribute = mappingSchema
-                .GetAttributes<TableAttribute>(dataObjectType)
-                .FirstOrDefault();
-
-            var tableName = attribute?.Name ?? dataObjectType.Name;
-            var schemaName = attribute?.Schema;
-            return new TableName(tableName, schemaName);
         }
 
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)

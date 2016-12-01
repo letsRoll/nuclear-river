@@ -115,6 +115,7 @@
     <Compile Include="Factories\IDataObjectTypesProviderFactory.cs" />
     <Compile Include="Commands\BulkInsertDataObjectsCommand.cs" />
     <Compile Include="Factories\ReplaceDataObjectsInBulkActorFactory.cs" />
+    <Compile Include="MappingSchemaExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlConnectionExtensions.cs" />
     <Compile Include="Storage\LinqToDbQuery.cs" />

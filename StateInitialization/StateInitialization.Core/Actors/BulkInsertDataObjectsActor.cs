@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
+using LinqToDB;
 using LinqToDB.Data;
 using LinqToDB.Linq;
 
@@ -32,18 +33,20 @@ namespace NuClear.StateInitialization.Core.Actors
             var command = commands.OfType<BulkInsertDataObjectsCommand>().SingleOrDefault();
             if (command != null)
             {
-                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds);
+                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds, command.TargetTable.Table);
             }
 
             return Array.Empty<IEvent>();
         }
 
-        private void ExecuteBulkCopy(int timeout)
+        private void ExecuteBulkCopy(int timeout, string tableName)
         {
             try
             {
                 var options = new BulkCopyOptions { BulkCopyTimeout = timeout };
-                _targetDataConnection.BulkCopy(options, _dataObjectsSource);
+                var table = _targetDataConnection.GetTable<TDataObject>();
+                table.TableName(tableName)
+                    .BulkCopy(options, _dataObjectsSource);
             }
             catch (Exception ex)
             {

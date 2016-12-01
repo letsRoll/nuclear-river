@@ -9,30 +9,32 @@ namespace NuClear.Replication.Core.DataObjects
         where TDataObject : class
     {
         private readonly IStorageBasedDataObjectAccessor<TDataObject> _storageBasedDataObjectAccessor;
-        private readonly MapToObjectsSpecProvider<TDataObject, TDataObject> _mapSpecificationProviderForSource;
-        private readonly MapToObjectsSpecProvider<TDataObject, TDataObject> _mapSpecificationProviderForTarget;
-        private readonly IEqualityComparerFactory _equalityComparerFactory;
+        private readonly TwoPhaseDataChangesDetector<TDataObject> _dataChangesDetector;
 
-        public EntityChangesProvider(IQuery query, IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor, IEqualityComparerFactory equalityComparerFactory, IQueryableEnumerator enumerator)
+        public EntityChangesProvider(IQuery query,
+                                     IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor,
+                                     IEqualityComparerFactory equalityComparerFactory)
+            : this(query, storageBasedDataObjectAccessor, equalityComparerFactory, new DefaultQueryableEnumerator())
+        {
+        }
+
+        public EntityChangesProvider(IQuery query,
+                                     IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor,
+                                     IEqualityComparerFactory equalityComparerFactory,
+                                     IQueryableEnumerator enumerator)
         {
             _storageBasedDataObjectAccessor = storageBasedDataObjectAccessor;
-            _equalityComparerFactory = equalityComparerFactory;
-
-            _mapSpecificationProviderForSource = specification => enumerator.Invoke(_storageBasedDataObjectAccessor.GetSource(), specification);
-            _mapSpecificationProviderForTarget = specification => enumerator.Invoke(query.For<TDataObject>(), specification);
+            _dataChangesDetector = new TwoPhaseDataChangesDetector<TDataObject>(
+                specification => enumerator.Invoke(_storageBasedDataObjectAccessor.GetSource(), specification),
+                specification => enumerator.Invoke(query.For<TDataObject>(), specification),
+                equalityComparerFactory.CreateIdentityComparer<TDataObject>(),
+                equalityComparerFactory.CreateCompleteComparer<TDataObject>());
         }
 
         public MergeResult<TDataObject> DetectChanges(IReadOnlyCollection<ICommand> commands)
         {
-            var identityEqualityComparer = _equalityComparerFactory.CreateIdentityComparer<TDataObject>();
-            var completeEqualityComparer = _equalityComparerFactory.CreateCompleteComparer<TDataObject>();
-            var dataChangesDetector = new TwoPhaseDataChangesDetector<TDataObject>(
-                _mapSpecificationProviderForSource,
-                _mapSpecificationProviderForTarget,
-                identityEqualityComparer,
-                completeEqualityComparer);
-
-            return dataChangesDetector.DetectChanges(_storageBasedDataObjectAccessor.GetFindSpecification(commands));
+            var specification = _storageBasedDataObjectAccessor.GetFindSpecification(commands);
+            return _dataChangesDetector.DetectChanges(specification);
         }
     }
 }

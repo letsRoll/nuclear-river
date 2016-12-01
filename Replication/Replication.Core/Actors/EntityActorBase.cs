@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using NuClear.Replication.Core.DataObjects;
+using NuClear.Replication.Core.Equality;
+using NuClear.Storage.API.Readings;
+
 namespace NuClear.Replication.Core.Actors
 {
     public abstract class EntityActorBase<TDataObject> : IEntityActor
@@ -10,6 +14,25 @@ namespace NuClear.Replication.Core.Actors
         private readonly CreateDataObjectsActor<TDataObject> _createDataObjectsActor;
         private readonly SyncDataObjectsActor<TDataObject> _syncDataObjectsActor;
         private readonly DeleteDataObjectsActor<TDataObject> _deleteDataObjectsActor;
+
+        protected EntityActorBase(IQuery query,
+                                  IBulkRepository<TDataObject> bulkRepository,
+                                  IEqualityComparerFactory equalityComparerFactory,
+                                  IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor)
+            : this(query, bulkRepository, equalityComparerFactory, storageBasedDataObjectAccessor, new NullDataChangesHandler<TDataObject>())
+        {
+        }
+
+        protected EntityActorBase(IQuery query,
+                                  IBulkRepository<TDataObject> bulkRepository,
+                                  IEqualityComparerFactory equalityComparerFactory,
+                                  IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor,
+                                  IDataChangesHandler<TDataObject> dataChangesHandler)
+            : this(new CreateDataObjectsActor<TDataObject>(new IdentityChangesProvider<TDataObject>(query, storageBasedDataObjectAccessor, equalityComparerFactory), bulkRepository, dataChangesHandler),
+                   new SyncDataObjectsActor<TDataObject>(new EntityChangesProvider<TDataObject>(query, storageBasedDataObjectAccessor, equalityComparerFactory), bulkRepository, dataChangesHandler),
+                   new DeleteDataObjectsActor<TDataObject>(new IdentityChangesProvider<TDataObject>(query, storageBasedDataObjectAccessor, equalityComparerFactory), bulkRepository, dataChangesHandler))
+        {
+        }
 
         protected EntityActorBase(
             CreateDataObjectsActor<TDataObject> createDataObjectsActor,

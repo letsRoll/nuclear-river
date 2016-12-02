@@ -40,6 +40,10 @@ namespace NuClear.StateInitialization.Core.Factories
         {
             var actors = new List<IActor>();
 
+            var createTableCopyActorType = typeof(CreateTableCopyActor);
+            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, _targetDataConnection.Connection);
+            actors.Add(createTableCopyActor);
+
             var disableIndexesActorType = typeof(DisableIndexesActor);
             var disableIndexesActor = (IActor)Activator.CreateInstance(disableIndexesActorType, _targetDataConnection.Connection);
             actors.Add(disableIndexesActor);
@@ -47,10 +51,6 @@ namespace NuClear.StateInitialization.Core.Factories
             var truncateTableActorType = typeof(TruncateTableActor);
             var truncateTableActor = (IActor)Activator.CreateInstance(truncateTableActorType, _targetDataConnection);
             actors.Add(truncateTableActor);
-
-            var createTableCopyActorType = typeof(CreateTableCopyActor);
-            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, _targetDataConnection.Connection);
-            actors.Add(createTableCopyActor);
 
             foreach (var dataObjectType in _dataObjectTypes)
             {

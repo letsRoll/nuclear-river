@@ -80,7 +80,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 new IActor[]
                     {
                         new ViewManagementActor(sqlConnection, commandTimeout),
-                        new ReplaceTableActor(sqlConnection, commandTimeout),
+                        new ReplaceTableActor(sqlConnection),
                         new ConstraintsManagementActor(sqlConnection, commandTimeout)
                     });
         }
@@ -147,7 +147,13 @@ namespace NuClear.StateInitialization.Core.Actors
         private static IReadOnlyCollection<ICommand> CreateShadowReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
             var createTableCopyCommand = new CreateTableCopyCommand(table);
-            var commands = new List<ICommand> { createTableCopyCommand, new BulkInsertDataObjectsCommand(bulkCopyTimeout, createTableCopyCommand.TargetTable) };
+            var commands = new List<ICommand>
+                               {
+                                   createTableCopyCommand,
+                                   new DisableIndexesCommand(createTableCopyCommand.TargetTable),
+                                   new BulkInsertDataObjectsCommand(bulkCopyTimeout, createTableCopyCommand.TargetTable),
+                                   new EnableIndexesCommand(createTableCopyCommand.TargetTable)
+                               };
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
@@ -183,6 +189,7 @@ namespace NuClear.StateInitialization.Core.Actors
         {
             Parallel.ForEach(
                     tableTypesDictionary,
+                    new ParallelOptions { MaxDegreeOfParallelism = 4 },
                     tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))

@@ -18,10 +18,12 @@ namespace NuClear.StateInitialization.Core.Actors
     public sealed class CreateTableCopyActor : IActor
     {
         private readonly SqlConnection _sqlConnection;
+        private readonly Database _database;
 
         public CreateTableCopyActor(SqlConnection sqlConnection)
         {
             _sqlConnection = sqlConnection;
+            _database = _sqlConnection.GetDatabase();
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
@@ -29,18 +31,17 @@ namespace NuClear.StateInitialization.Core.Actors
             var command = commands.OfType<CreateTableCopyCommand>().SingleOrDefault();
             if (command != null)
             {
-                var database = _sqlConnection.GetDatabase();
-                var sourceTable = database.GetTable(command.SourceTable);
+                var sourceTable = _database.GetTable(command.SourceTable);
 
                 // If table with prefix already exists - drop it:
-                var targetTable = database.GetTable(command.TargetTable);
+                var targetTable = _database.GetTable(command.TargetTable);
                 if (targetTable != null)
                 {
                     targetTable.Drop();
                     Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] Dropped old shadow copy table {command.TargetTable}");
                 }
 
-                CopyTable(sourceTable);
+                CopyTable(sourceTable, command.TargetTable);
                 CopyIndexes(sourceTable, command.TargetTable);
 
                 Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] Created shadow copy of table {command.SourceTable} named {command.TargetTable} with {sourceTable.Indexes.Count} indexes");
@@ -49,20 +50,34 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private void CopyTable(Table sourceTable)
+        private void CopyTable(Table sourceTable, TableName targetTable)
         {
-            var scripts = sourceTable.Script();
-            foreach (var script in scripts)
+            var newTable = string.IsNullOrEmpty(targetTable.Schema)
+                ? new Table(_database, targetTable.Table)
+                : new Table(_database, targetTable.Table, targetTable.Schema ?? "dbo");
+
+            foreach (Column col in sourceTable.Columns)
             {
-                if (script.IndexOf("CREATE TABLE", StringComparison.OrdinalIgnoreCase) > -1)
+                var newCol = new Column(newTable, col.Name, col.DataType, col.IsFileStream)
                 {
-                    var index = script.IndexOf(sourceTable.Name, StringComparison.OrdinalIgnoreCase);
-                    var newScript = script.Insert(index, CreateTableCopyCommand.Prefix);
-                    Debug.WriteLine(newScript);
-                    var createTableCommand = new SqlCommand(newScript, _sqlConnection);
-                    createTableCommand.ExecuteNonQuery();
-                }
+                    Collation = col.Collation,
+                    Computed = col.Computed,
+                    ComputedText = col.ComputedText,
+                    Identity = col.Identity,
+                    IdentityIncrement = col.IdentityIncrement,
+                    IdentitySeed = col.IdentitySeed,
+                    IsColumnSet = col.IsColumnSet,
+                    IsPersisted = col.IsPersisted,
+                    IsSparse = col.IsSparse,
+                    NotForReplication = col.NotForReplication,
+                    Nullable = col.Nullable,
+                    RowGuidCol = col.RowGuidCol
+                };
+
+                newTable.Columns.Add(newCol);
             }
+
+            newTable.Create();
         }
 
         private void CopyIndexes(Table sourceTable, TableName targetTable)

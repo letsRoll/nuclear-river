@@ -3,7 +3,7 @@ using NuClear.Model.Common.Operations.Identity;
 
 namespace NuClear.Replication.OperationsProcessing.Primary
 {
-    public sealed class EmptyOperationRegistry<TSubDomain> : IOperationRegistry<TSubDomain>
+    public sealed class NullOperationRegistry<TSubDomain> : IOperationRegistry<TSubDomain>
         where TSubDomain : ISubDomain
     {
         public bool IsAllowedOperation(StrictOperationIdentity operationIdentity)

@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using Microsoft.SqlServer.Management.Smo;
 
@@ -17,13 +15,11 @@ namespace NuClear.StateInitialization.Core.Actors
 {
     public sealed class CreateTableCopyActor : IActor
     {
-        private readonly SqlConnection _sqlConnection;
         private readonly Database _database;
 
         public CreateTableCopyActor(SqlConnection sqlConnection)
         {
-            _sqlConnection = sqlConnection;
-            _database = _sqlConnection.GetDatabase();
+            _database = sqlConnection.GetDatabase();
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
@@ -41,8 +37,8 @@ namespace NuClear.StateInitialization.Core.Actors
                     Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] Dropped old shadow copy table {command.TargetTable}");
                 }
 
-                CopyTable(sourceTable, command.TargetTable);
-                CopyIndexes(sourceTable, command.TargetTable);
+                var createdTableCopy = CopyTable(sourceTable, command.TargetTable);
+                CopyIndexes(sourceTable, createdTableCopy);
 
                 Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] Created shadow copy of table {command.SourceTable} named {command.TargetTable} with {sourceTable.Indexes.Count} indexes");
             }
@@ -50,7 +46,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private void CopyTable(Table sourceTable, TableName targetTable)
+        private Table CopyTable(Table sourceTable, TableName targetTable)
         {
             var newTable = string.IsNullOrEmpty(targetTable.Schema)
                 ? new Table(_database, targetTable.Table)
@@ -63,10 +59,12 @@ namespace NuClear.StateInitialization.Core.Actors
                     Collation = col.Collation,
                     Computed = col.Computed,
                     ComputedText = col.ComputedText,
+                    DefaultSchema = col.DefaultSchema,
                     Identity = col.Identity,
                     IdentityIncrement = col.IdentityIncrement,
                     IdentitySeed = col.IdentitySeed,
                     IsColumnSet = col.IsColumnSet,
+                    IsFileStream = col.IsFileStream,
                     IsPersisted = col.IsPersisted,
                     IsSparse = col.IsSparse,
                     NotForReplication = col.NotForReplication,
@@ -78,56 +76,79 @@ namespace NuClear.StateInitialization.Core.Actors
             }
 
             newTable.Create();
+
+            return newTable;
         }
 
-        private void CopyIndexes(Table sourceTable, TableName targetTable)
+        private void CopyIndexes(Table sourceTable, Table targetTable)
         {
             foreach (Index index in sourceTable.Indexes)
             {
-                foreach (var script in index.Script())
+                try
                 {
-                    var updatedScript = GetIndexCopyCreationScript(script, sourceTable.Name, targetTable.Table, index.Name);
-                    try
-                    {
-                        Debug.WriteLine(updatedScript);
-                        var createIndexCommand = new SqlCommand(updatedScript, _sqlConnection);
-                        createIndexCommand.ExecuteNonQuery();
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new DataException(
-                                  $"Error occured while creating shadow copy of index {index.Name} from table {sourceTable.Name} in table {targetTable} with script:{Environment.NewLine}{updatedScript}",
-                                  ex);
-                    }
+                    var newIndex = CreateIndexCopy(targetTable, index);
+                    newIndex.Create();
+                }
+                catch (Exception ex)
+                {
+                    throw new DataException($"Error occured while creating shadow copy of index {index.Name} from table {sourceTable.Name} in table {targetTable.Name}", ex);
                 }
             }
         }
 
-        private string GetIndexCopyCreationScript(string createIndexScript, string sourceTableName, string targetTableName, string indexName)
+        private Index CreateIndexCopy(Table targetTable, Index index)
         {
-            var tableNamePosition = createIndexScript.IndexOf($"[{sourceTableName}]", StringComparison.OrdinalIgnoreCase);
-            var indexNamePosition = createIndexScript.IndexOf($"[{indexName}]", StringComparison.OrdinalIgnoreCase);
-
-            if (tableNamePosition < 0 || indexNamePosition < 0)
+            var newIndex = new Index(targetTable, CreateTableCopyCommand.Prefix + index.Name)
             {
-                return createIndexScript;
-            }
+                BoundingBoxXMax = index.BoundingBoxXMax,
+                BoundingBoxXMin = index.BoundingBoxXMin,
+                BoundingBoxYMax = index.BoundingBoxYMax,
+                BoundingBoxYMin = index.BoundingBoxYMin,
+                BucketCount = index.BucketCount,
+                CellsPerObject = index.CellsPerObject,
+                CompactLargeObjects = index.CompactLargeObjects,
+                DisallowPageLocks = index.DisallowPageLocks,
+                DisallowRowLocks = index.DisallowRowLocks,
+                FileGroup = index.FileGroup,
+                FileStreamFileGroup = index.FileStreamFileGroup,
+                FileStreamPartitionScheme = index.FileStreamPartitionScheme,
+                FillFactor = index.FillFactor,
+                FilterDefinition = index.FilterDefinition,
+                IgnoreDuplicateKeys = index.IgnoreDuplicateKeys,
+                IndexKeyType = index.IndexKeyType,
+                IndexType = index.IndexType,
+                IndexedXmlPathName = index.IndexedXmlPathName,
+                IsClustered = index.IsClustered,
+                IsFullTextKey = index.IsFullTextKey,
+                IsMemoryOptimized = index.IsMemoryOptimized,
+                IsUnique = index.IsUnique,
+                Level1Grid = index.Level1Grid,
+                Level2Grid = index.Level2Grid,
+                Level3Grid = index.Level3Grid,
+                Level4Grid = index.Level4Grid,
+                LowPriorityAbortAfterWait = index.LowPriorityAbortAfterWait,
+                LowPriorityMaxDuration = index.LowPriorityMaxDuration,
+                MaximumDegreeOfParallelism = index.MaximumDegreeOfParallelism,
+                NoAutomaticRecomputation = index.NoAutomaticRecomputation,
+                OnlineIndexOperation = index.OnlineIndexOperation,
+                PadIndex = index.PadIndex,
+                ParentXmlIndex = index.ParentXmlIndex,
+                PartitionScheme = index.PartitionScheme,
+                SecondaryXmlIndexType = index.SecondaryXmlIndexType,
+                SortInTempdb = index.SortInTempdb,
+                SpatialIndexType = index.SpatialIndexType
+            };
 
-            var sb = new StringBuilder(createIndexScript);
-            if (tableNamePosition > indexNamePosition)
+            foreach (IndexedColumn column in index.IndexedColumns)
             {
-                sb.Remove(tableNamePosition, sourceTableName.Length + 2)
-                  .Insert(tableNamePosition, $"[{targetTableName}]")
-                  .Insert(indexNamePosition + 1, CreateTableCopyCommand.Prefix);    // Change index name at the end
-            }
-            else
-            {
-                sb.Insert(indexNamePosition + 1, CreateTableCopyCommand.Prefix) // Change index name at the beginning
-                  .Remove(tableNamePosition, sourceTableName.Length + 2)
-                  .Insert(tableNamePosition, $"[{targetTableName}]");
-            }
+                var newColumn = new IndexedColumn(newIndex, column.Name, column.Descending)
+                {
+                    IsIncluded = column.IsIncluded
+                };
 
-            return sb.ToString();
+                newIndex.IndexedColumns.Add(newColumn);
+            }
+            return newIndex;
         }
     }
 }

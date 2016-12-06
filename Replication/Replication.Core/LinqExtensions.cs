@@ -1,4 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+
+using NuClear.Replication.Core.Specs;
+using NuClear.Storage.API.Specifications;
 
 namespace NuClear.Replication.Core
 {
@@ -23,6 +27,17 @@ namespace NuClear.Replication.Core
             {
                 yield return buffer;
             }
+        }
+
+        public static IEnumerable<T> WhereMatched<T>(this IQueryable<T> queryable, FindSpecification<T> specification)
+        {
+            var spec = specification as FindSpecificationCollection<T>;
+            return spec?.WrappedSpecs.SelectMany(queryable.Where) ?? queryable.Where(specification);
+        }
+
+        public static IEnumerable<T> Where<T>(this IQueryable<T> queryable, FindSpecificationCollection<T> specifications)
+        {
+            return specifications.WrappedSpecs.SelectMany(queryable.Where);
         }
     }
 }

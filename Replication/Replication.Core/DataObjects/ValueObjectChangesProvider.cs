@@ -14,23 +14,15 @@ namespace NuClear.Replication.Core.DataObjects
         public ValueObjectChangesProvider(IQuery query,
                                           IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor,
                                           IEqualityComparerFactory equalityComparerFactory)
-            : this(query, storageBasedDataObjectAccessor, equalityComparerFactory, new DefaultQueryableEnumerator())
-        {
-        }
-
-        public ValueObjectChangesProvider(IQuery query,
-                                          IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor,
-                                          IEqualityComparerFactory equalityComparerFactory,
-                                          IQueryableEnumerator enumerator)
         {
             _storageBasedDataObjectAccessor = storageBasedDataObjectAccessor;
             _dataChangesDetector = new DataChangesDetector<TDataObject>(
-                specification => enumerator.Invoke(storageBasedDataObjectAccessor.GetSource(), specification),
-                specification => enumerator.Invoke(query.For<TDataObject>(), specification),
-                equalityComparerFactory.CreateCompleteComparer<TDataObject>());
+                                       specification => storageBasedDataObjectAccessor.GetSource().WhereMatched(specification),
+                                       specification => query.For<TDataObject>().WhereMatched(specification),
+                                       equalityComparerFactory.CreateCompleteComparer<TDataObject>());
         }
 
-        public MergeResult<TDataObject> DetectChanges(IReadOnlyCollection<ICommand> commands)
+        public MergeResult<TDataObject> GetChanges(IReadOnlyCollection<ICommand> commands)
         {
             var specification = _storageBasedDataObjectAccessor.GetFindSpecification(commands);
             return _dataChangesDetector.DetectChanges(specification);

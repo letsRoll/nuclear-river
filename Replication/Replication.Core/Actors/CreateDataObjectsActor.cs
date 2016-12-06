@@ -38,7 +38,7 @@ namespace NuClear.Replication.Core.Actors
 
             var events = new List<IEvent>();
 
-            var changes = _changesProvider.DetectChanges(commandsToExecute);
+            var changes = _changesProvider.GetChanges(commandsToExecute);
 
             var toCreate = changes.Difference.ToArray();
 

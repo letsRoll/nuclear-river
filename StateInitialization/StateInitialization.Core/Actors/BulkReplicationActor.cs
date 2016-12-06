@@ -108,7 +108,7 @@ namespace NuClear.StateInitialization.Core.Actors
             var constraintsDisabledEvent = events.OfType<ConstraintsDisabledEvent>().SingleOrDefault();
             if (constraintsDisabledEvent != null)
             {
-                commands.Add(new EnableConstraintsCommand(constraintsDisabledEvent.Checks, constraintsDisabledEvent.ForeignKeys));
+                commands.Add(new EnableConstraintsCommand(constraintsDisabledEvent.Checks, constraintsDisabledEvent.Defaults, constraintsDisabledEvent.ForeignKeys));
             }
 
             var viewsDroppedEvent = events.OfType<ViewsDroppedEvent>().SingleOrDefault();

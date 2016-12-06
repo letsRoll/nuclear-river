@@ -33,19 +33,20 @@ namespace NuClear.StateInitialization.Core.Actors
             var command = commands.OfType<BulkInsertDataObjectsCommand>().SingleOrDefault();
             if (command != null)
             {
-                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds, command.TargetTable.Table);
+                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds, command.TargetTablePrefix);
             }
 
             return Array.Empty<IEvent>();
         }
 
-        private void ExecuteBulkCopy(int timeout, string tableName)
+        private void ExecuteBulkCopy(int timeout, string tableNamePrefix)
         {
             try
             {
                 var options = new BulkCopyOptions { BulkCopyTimeout = timeout };
                 var table = _targetDataConnection.GetTable<TDataObject>();
-                table.TableName(tableName)
+                var tableName = _targetDataConnection.MappingSchema.GetTableName(typeof(TDataObject));
+                table.TableName(tableNamePrefix + tableName.Table)
                     .BulkCopy(options, _dataObjectsSource);
             }
             catch (Exception ex)

@@ -129,7 +129,7 @@ namespace NuClear.StateInitialization.Core.Actors
             }
 
             commands.Add(new TruncateTableCommand(table));
-            commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout, table));
+            commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
             {
@@ -151,7 +151,7 @@ namespace NuClear.StateInitialization.Core.Actors
                                {
                                    createTableCopyCommand,
                                    new DisableIndexesCommand(createTableCopyCommand.TargetTable),
-                                   new BulkInsertDataObjectsCommand(bulkCopyTimeout, createTableCopyCommand.TargetTable),
+                                   new BulkInsertDataObjectsCommand(bulkCopyTimeout, CreateTableCopyCommand.Prefix),
                                    new EnableIndexesCommand(createTableCopyCommand.TargetTable)
                                };
 

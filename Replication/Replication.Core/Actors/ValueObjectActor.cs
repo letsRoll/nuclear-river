@@ -20,7 +20,7 @@ namespace NuClear.Replication.Core.Actors
             IBulkRepository<TDataObject> bulkRepository,
             IEqualityComparerFactory equalityComparerFactory,
             IStorageBasedDataObjectAccessor<TDataObject> storageBasedDataObjectAccessor)
-            : this(new ValueObjectChangesProvider<TDataObject>(query, storageBasedDataObjectAccessor, equalityComparerFactory, new DefaultQueryableEnumerator()), bulkRepository, new NullDataChangesHandler<TDataObject>())
+            : this(new ValueObjectChangesProvider<TDataObject>(query, storageBasedDataObjectAccessor, equalityComparerFactory), bulkRepository, new NullDataChangesHandler<TDataObject>())
         {
         }
 
@@ -46,7 +46,7 @@ namespace NuClear.Replication.Core.Actors
 
             var events = new List<IEvent>();
 
-            var changes = _changesProvider.DetectChanges(commandsToExecute);
+            var changes = _changesProvider.GetChanges(commandsToExecute);
 
             var toDelete = changes.Complement.ToArray();
 

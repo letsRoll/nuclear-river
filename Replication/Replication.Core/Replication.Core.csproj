@@ -93,7 +93,6 @@
     <Compile Include="Commands\IReplaceValueObjectCommand.cs" />
     <Compile Include="Commands\ISyncDataObjectCommand.cs" />
     <Compile Include="DataObjects\DataChangesDetector.cs" />
-    <Compile Include="DataObjects\DefaultQueryableEnumerator.cs" />
     <Compile Include="DataObjects\EntityChangesProvider.cs" />
     <Compile Include="DataObjects\IBulkRepository.cs" />
     <Compile Include="DataObjects\IChangesProvider.cs" />
@@ -101,7 +100,6 @@
     <Compile Include="DataObjects\IDataObjectTypesProvider.cs" />
     <Compile Include="DataObjects\IdentityChangesProvider.cs" />
     <Compile Include="DataObjects\IMemoryBasedDataObjectAccessor.cs" />
-    <Compile Include="DataObjects\IQueryableEnumerator.cs" />
     <Compile Include="DataObjects\IStorageBasedDataObjectAccessor.cs" />
     <Compile Include="DataObjects\NullDataChangesHandler.cs" />
     <Compile Include="DataObjects\TwoPhaseDataChangesDetector.cs" />
@@ -120,6 +118,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\IReplicationSettings.cs" />
     <Compile Include="Settings\ISqlStoreSettingsAspect.cs" />
+    <Compile Include="Specs\SpecificationFactory.cs" />
+    <Compile Include="Specs\FindSpecificationCollection.cs" />
     <Compile Include="TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

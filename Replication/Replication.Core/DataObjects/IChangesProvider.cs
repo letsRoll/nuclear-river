@@ -4,6 +4,6 @@ namespace NuClear.Replication.Core.DataObjects
 {
     public interface IChangesProvider<TDataObject>
     {
-        MergeResult<TDataObject> DetectChanges(IReadOnlyCollection<ICommand> commands);
+        MergeResult<TDataObject> GetChanges(IReadOnlyCollection<ICommand> commands);
     }
 }

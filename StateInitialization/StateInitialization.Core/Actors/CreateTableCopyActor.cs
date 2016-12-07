@@ -50,7 +50,7 @@ namespace NuClear.StateInitialization.Core.Actors
         {
             var newTable = string.IsNullOrEmpty(targetTable.Schema)
                 ? new Table(_database, targetTable.Table)
-                : new Table(_database, targetTable.Table, targetTable.Schema ?? "dbo");
+                : new Table(_database, targetTable.Table, targetTable.Schema);
 
             foreach (Column col in sourceTable.Columns)
             {

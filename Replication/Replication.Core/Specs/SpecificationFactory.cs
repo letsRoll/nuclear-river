@@ -7,7 +7,7 @@ using NuClear.Storage.API.Specifications;
 
 namespace NuClear.Replication.Core.Specs
 {
-    public static class Specification<TDataObject>
+    public static class SpecificationFactory<TDataObject>
     {
         private const int MsSqlInExpressionLimit = 5000;
 

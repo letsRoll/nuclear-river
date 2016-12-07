@@ -61,7 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SpecificationTests.cs" />
+    <Compile Include="SpecificationFactoryTests.cs" />
     <Compile Include="EqualityComparerFactoryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

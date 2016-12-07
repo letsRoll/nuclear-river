@@ -7,39 +7,45 @@ using NuClear.Storage.API.Specifications;
 
 namespace NuClear.Replication.Core.Specs
 {
-    public static class ExpressionExtensions
+    public static class Specification<TDataObject>
     {
         private const int MsSqlInExpressionLimit = 5000;
 
-        public static FindSpecificationCollection<T> In<T, TKey>(
-            this Expression<Func<T, TKey>> keyProperyExpression,
+        public static FindSpecificationCollection<TDataObject> Create<TKey>(
+            Expression<Func<TDataObject, TKey>> keyProperyExpression,
             IReadOnlyCollection<TKey> keys)
         {
-            return In(keyProperyExpression, keys, MsSqlInExpressionLimit);
+            return Create(keyProperyExpression, keys, MsSqlInExpressionLimit);
         }
 
-        public static FindSpecificationCollection<T> In<T, TKey>(
-            this Expression<Func<T, TKey>> keyProperyExpression,
+        public static FindSpecificationCollection<TDataObject> Create<TKey>(
+            Expression<Func<TDataObject, TKey>> keyProperyExpression,
             IReadOnlyCollection<TKey> keys,
             int limit)
         {
-            Func<IEnumerable<TKey>, TKey, bool> contains = Enumerable.Contains;
             var specs = Enumerable.Range(0, (limit + keys.Count - 1) / limit)
-                                  .Select(
-                                      x =>
+                                  .Select(x =>
                                       {
                                           var batch = keys.Skip(x * limit).Take(limit);
-
-                                          // x => batch.Contains(x.KeyProperty)
-                                          var containsCall = Expression.Call(
-                                              null,
-                                              contains.Method,
-                                              Expression.Constant(batch),
-                                              keyProperyExpression.Body);
-                                          return new FindSpecification<T>(Expression.Lambda<Func<T, bool>>(containsCall, keyProperyExpression.Parameters[0]));
+                                          var expression = Containment<TKey>.Create(keyProperyExpression, batch);
+                                          return new FindSpecification<TDataObject>(expression);
                                       })
                                   .ToArray();
-            return new FindSpecificationCollection<T>(specs);
+
+            return new FindSpecificationCollection<TDataObject>(specs);
+        }
+
+        private static class Containment<TKey>
+        {
+            private static readonly Func<IEnumerable<TKey>, TKey, bool> Contains = Enumerable.Contains;
+
+            public static Expression<Func<TDataObject, bool>> Create(Expression<Func<TDataObject, TKey>> keyProperty, IEnumerable<TKey> batch)
+            {
+                // x => batch.Contains(x.KeyProperty)
+                var containsCall = Expression.Call(null, Contains.Method, Expression.Constant(batch), keyProperty.Body);
+                var expression = Expression.Lambda<Func<TDataObject, bool>>(containsCall, keyProperty.Parameters[0]);
+                return expression;
+            }
         }
     }
 }

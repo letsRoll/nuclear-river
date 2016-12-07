@@ -13,29 +13,31 @@ namespace NuClear.Replication.Core.Specs
 
         public static FindSpecificationCollection<T> In<T, TKey>(
             this Expression<Func<T, TKey>> keyProperyExpression,
-            IReadOnlyCollection<TKey> keys,
-            int? limit = MsSqlInExpressionLimit)
+            IReadOnlyCollection<TKey> keys)
         {
-            if (!limit.HasValue)
-            {
-                throw new ArgumentException("Limit must be set", nameof(limit));
-            }
+            return In(keyProperyExpression, keys, MsSqlInExpressionLimit);
+        }
 
+        public static FindSpecificationCollection<T> In<T, TKey>(
+            this Expression<Func<T, TKey>> keyProperyExpression,
+            IReadOnlyCollection<TKey> keys,
+            int limit)
+        {
             Func<IEnumerable<TKey>, TKey, bool> contains = Enumerable.Contains;
-            var specs = Enumerable.Range(0, (limit.Value + keys.Count - 1) / limit.Value)
+            var specs = Enumerable.Range(0, (limit + keys.Count - 1) / limit)
                                   .Select(
                                       x =>
-                                          {
-                                              var batch = keys.Skip(x * limit.Value).Take(limit.Value);
+                                      {
+                                          var batch = keys.Skip(x * limit).Take(limit);
 
-                                              // x => batch.Contains(x.KeyProperty)
-                                              var containsCall = Expression.Call(
-                                                  null,
-                                                  contains.Method,
-                                                  Expression.Constant(batch),
-                                                  keyProperyExpression.Body);
-                                              return new FindSpecification<T>(Expression.Lambda<Func<T, bool>>(containsCall, keyProperyExpression.Parameters[0]));
-                                          })
+                                          // x => batch.Contains(x.KeyProperty)
+                                          var containsCall = Expression.Call(
+                                              null,
+                                              contains.Method,
+                                              Expression.Constant(batch),
+                                              keyProperyExpression.Body);
+                                          return new FindSpecification<T>(Expression.Lambda<Func<T, bool>>(containsCall, keyProperyExpression.Parameters[0]));
+                                      })
                                   .ToArray();
             return new FindSpecificationCollection<T>(specs);
         }

@@ -5,7 +5,7 @@ using NuClear.Storage.API.Readings;
 
 namespace NuClear.Replication.Core.DataObjects
 {
-    public class EntityChangesProvider<TDataObject> : IChangesProvider<TDataObject>
+    public sealed class EntityChangesProvider<TDataObject> : IChangesProvider<TDataObject>
         where TDataObject : class
     {
         private readonly IStorageBasedDataObjectAccessor<TDataObject> _storageBasedDataObjectAccessor;

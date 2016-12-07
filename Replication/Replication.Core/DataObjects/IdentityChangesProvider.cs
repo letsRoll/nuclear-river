@@ -5,7 +5,7 @@ using NuClear.Storage.API.Readings;
 
 namespace NuClear.Replication.Core.DataObjects
 {
-    public class IdentityChangesProvider<TDataObject> : IChangesProvider<TDataObject>
+    public sealed class IdentityChangesProvider<TDataObject> : IChangesProvider<TDataObject>
         where TDataObject : class
     {
         private readonly IStorageBasedDataObjectAccessor<TDataObject> _storageBasedDataObjectAccessor;

@@ -34,10 +34,5 @@ namespace NuClear.Replication.Core
             var spec = specification as FindSpecificationCollection<T>;
             return spec?.WrappedSpecs.SelectMany(queryable.Where) ?? queryable.Where(specification);
         }
-
-        public static IEnumerable<T> Where<T>(this IQueryable<T> queryable, FindSpecificationCollection<T> specifications)
-        {
-            return specifications.WrappedSpecs.SelectMany(queryable.Where);
-        }
     }
 }

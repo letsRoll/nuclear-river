@@ -11,14 +11,14 @@ namespace NuClear.Replication.Core.Specs
     {
         private const int MsSqlInExpressionLimit = 5000;
 
-        public static FindSpecificationCollection<TDataObject> Create<TKey>(
+        public static FindSpecificationCollection<TDataObject> Contains<TKey>(
             Expression<Func<TDataObject, TKey>> keyProperyExpression,
             IReadOnlyCollection<TKey> keys)
         {
-            return Create(keyProperyExpression, keys, MsSqlInExpressionLimit);
+            return Contains(keyProperyExpression, keys, MsSqlInExpressionLimit);
         }
 
-        public static FindSpecificationCollection<TDataObject> Create<TKey>(
+        public static FindSpecificationCollection<TDataObject> Contains<TKey>(
             Expression<Func<TDataObject, TKey>> keyProperyExpression,
             IReadOnlyCollection<TKey> keys,
             int limit)

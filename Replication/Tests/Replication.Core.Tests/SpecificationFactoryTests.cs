@@ -18,7 +18,7 @@ namespace NuClear.Replication.Core.Tests
         [TestCase(MsSqlBatchLimitation + 1, 2)]
         public void TestBatches(int idCount, int batchCount)
         {
-            var spec = SpecificationFactory<Foo>.Create(foo => foo.Id, Enumerable.Repeat(0, idCount).ToArray());
+            var spec = SpecificationFactory<Foo>.Contains(foo => foo.Id, Enumerable.Repeat(0, idCount).ToArray());
             var batchSpecs = spec.WrappedSpecs;
             Assert.AreEqual(batchCount, batchSpecs.Count);
         }
@@ -26,7 +26,7 @@ namespace NuClear.Replication.Core.Tests
         [Test]
         public void TestFilter()
         {
-            var spec = SpecificationFactory<Foo>.Create(foo => foo.Id, Enumerable.Range(0, MsSqlBatchLimitation).ToArray());
+            var spec = SpecificationFactory<Foo>.Contains(foo => foo.Id, Enumerable.Range(0, MsSqlBatchLimitation).ToArray());
             var batchSpec = spec.WrappedSpecs.Single();
             var items = new[]
                 {

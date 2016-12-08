@@ -1,7 +1,6 @@
 ﻿using System;
 
 using NuClear.Replication.Core;
-using NuClear.StateInitialization.Core.Logging;
 using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
@@ -25,15 +24,13 @@ namespace NuClear.StateInitialization.Core.Commands
             StorageDescriptor targetStorageDescriptor,
             DbManagementMode databaseManagementMode = DbManagementMode.DropAndRecreateConstraints | DbManagementMode.EnableIndexManagment | DbManagementMode.UpdateTableStatistics,
             ExecutionMode executionMode = null,
-            TimeSpan? bulkCopyTimeout = null,
-            ILogger logger = null)
+            TimeSpan? bulkCopyTimeout = null)
         {
             SourceStorageDescriptor = sourceStorageDescriptor;
             TargetStorageDescriptor = targetStorageDescriptor;
             DbManagementMode = databaseManagementMode;
             ExecutionMode = executionMode ?? ExecutionMode.Parallel;
             BulkCopyTimeout = bulkCopyTimeout ?? DefaultBulkCopyTimeout;
-            Logger = logger ?? ConsoleLogger.Instance;
         }
 
         public StorageDescriptor SourceStorageDescriptor { get; }
@@ -41,6 +38,5 @@ namespace NuClear.StateInitialization.Core.Commands
         public DbManagementMode DbManagementMode { get; }
         public ExecutionMode ExecutionMode { get; }
         public TimeSpan BulkCopyTimeout { get; }
-        public ILogger Logger { get; }
     }
 }

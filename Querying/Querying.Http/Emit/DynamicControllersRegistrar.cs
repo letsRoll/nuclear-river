@@ -95,7 +95,7 @@ namespace NuClear.Querying.Http.Emit
 
         private static void AddContainmentEntitiesMethod(TypeBuilder typeBuilder, Type parentType, PropertyInfo propertyInfo)
         {
-            var methodBuilder = typeBuilder.DefineMethod("Get" + propertyInfo.Name, MethodAttributes.Public , typeof(IHttpActionResult), new[] { typeof(long) });
+            var methodBuilder = typeBuilder.DefineMethod("Get" + propertyInfo.Name, MethodAttributes.Public, typeof(IHttpActionResult), new[] { typeof(long) });
             var keyParameter = methodBuilder.DefineParameter(1, ParameterAttributes.None, "key");
 
             var dynamicEnableQueryAttribute = typeof(DynamicEnableQueryAttribute).GetConstructor(Type.EmptyTypes);
@@ -103,6 +103,7 @@ namespace NuClear.Querying.Http.Emit
             {
                 throw new ArgumentException();
             }
+
             methodBuilder.SetCustomAttribute(new CustomAttributeBuilder(dynamicEnableQueryAttribute, new object[0]));
 
             var fromODataUriAttribute = typeof(FromODataUriAttribute).GetConstructor(Type.EmptyTypes);
@@ -110,6 +111,7 @@ namespace NuClear.Querying.Http.Emit
             {
                 throw new ArgumentException();
             }
+
             keyParameter.SetCustomAttribute(new CustomAttributeBuilder(fromODataUriAttribute, new object[0]));
 
             var getContainedEntityMethodInfo = parentType.GetMethod("GetContainedEntity", BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(propertyInfo.PropertyType.GetGenericArguments());

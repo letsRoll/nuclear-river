@@ -32,6 +32,7 @@ namespace NuClear.Querying.Metadata.Elements
             {
                 throw new NotSupportedException("The specified primitive type is not supported.");
             }
+
             return element;
         }
 

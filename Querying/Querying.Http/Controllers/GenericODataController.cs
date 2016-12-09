@@ -7,7 +7,6 @@ using NuClear.Storage.API.Readings;
 
 namespace NuClear.Querying.Http.Controllers
 {
-
     public abstract class GenericODataController<TEntity> : ODataController where TEntity : class
     {
         private readonly IQuery _query;

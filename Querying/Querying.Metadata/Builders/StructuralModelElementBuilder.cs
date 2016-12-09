@@ -56,7 +56,7 @@ namespace NuClear.Querying.Metadata.Builders
 
         private void ProcessElements(out IEnumerable<EntityElement> roots, out IEnumerable<IMetadataElement> types)
         {
-            var typesById = _types.ToDictionary(x => x.Identity.Id, x => (IMetadataElement) x);
+            var typesById = _types.ToDictionary(x => x.Identity.Id, x => (IMetadataElement)x);
             var rootEntities = new List<EntityElement>();
 
             foreach (var rootElement in _elements)
@@ -91,6 +91,7 @@ namespace NuClear.Querying.Metadata.Builders
             {
                 Visit(relation.TargetEntityElementConfig, visitor);
             }
+
             visitor(entityConfig);
         }
 
@@ -102,6 +103,7 @@ namespace NuClear.Querying.Metadata.Builders
             {
                 dictionary.Add(entityId, element = builder());
             }
+
             return (TElement)element;
         }
     }

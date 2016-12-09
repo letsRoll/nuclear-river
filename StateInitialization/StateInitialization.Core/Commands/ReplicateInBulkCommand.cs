@@ -8,7 +8,8 @@ namespace NuClear.StateInitialization.Core.Commands
     public enum ExecutionMode
     {
         Sequential = 1,
-        Parallel
+        Parallel,
+        ShadowParallel
     }
 
     [Flags]
@@ -21,6 +22,7 @@ namespace NuClear.StateInitialization.Core.Commands
         UpdateTableStatistics = 8,
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class ReplicateInBulkCommand : ICommand
     {
         private static readonly TimeSpan DefaultBulkCopyTimeout = TimeSpan.FromMinutes(30);

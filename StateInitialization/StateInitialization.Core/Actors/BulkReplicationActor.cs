@@ -9,7 +9,6 @@ using System.Transactions;
 
 using LinqToDB.Data;
 using LinqToDB.DataProvider.SqlServer;
-using LinqToDB.Mapping;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
@@ -25,6 +24,7 @@ using IsolationLevel = System.Transactions.IsolationLevel;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
+    // ReSharper disable once UnusedMember.Global
     public sealed class BulkReplicationActor : IActor
     {
         private static readonly TransactionOptions TransactionOptions =
@@ -54,7 +54,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
 
                 var tableTypesDictionary = dataObjectTypes
-                    .GroupBy(t => GetTable(command.TargetStorageDescriptor.MappingSchema, t))
+                    .GroupBy(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
                     .ToDictionary(g => g.Key, g => g.ToArray());
 
                 var executionStrategy = DetermineExecutionStrategy(command);
@@ -62,7 +62,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
                 commandStopwatch.Stop();
                 Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
-                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds} seconds");
+                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds:F3} seconds");
             }
 
             return Array.Empty<IEvent>();
@@ -80,6 +80,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 new IActor[]
                     {
                         new ViewManagementActor(sqlConnection, commandTimeout),
+                        new ReplaceTableActor(sqlConnection),
                         new ConstraintsManagementActor(sqlConnection, commandTimeout)
                     });
         }
@@ -107,7 +108,7 @@ namespace NuClear.StateInitialization.Core.Actors
             var constraintsDisabledEvent = events.OfType<ConstraintsDisabledEvent>().SingleOrDefault();
             if (constraintsDisabledEvent != null)
             {
-                commands.Add(new EnableConstraintsCommand(constraintsDisabledEvent.Checks, constraintsDisabledEvent.ForeignKeys));
+                commands.Add(new EnableConstraintsCommand(constraintsDisabledEvent.Checks, constraintsDisabledEvent.Defaults, constraintsDisabledEvent.ForeignKeys));
             }
 
             var viewsDroppedEvent = events.OfType<ViewsDroppedEvent>().SingleOrDefault();
@@ -143,6 +144,32 @@ namespace NuClear.StateInitialization.Core.Actors
             return commands;
         }
 
+        private static IReadOnlyCollection<ICommand> CreateShadowReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
+        {
+            var createTableCopyCommand = new CreateTableCopyCommand(table);
+            var commands = new List<ICommand>
+                               {
+                                   createTableCopyCommand,
+                                   new DisableIndexesCommand(createTableCopyCommand.TargetTable),
+                                   new BulkInsertDataObjectsCommand(bulkCopyTimeout, CreateTableCopyCommand.Prefix),
+                                   new EnableIndexesCommand(createTableCopyCommand.TargetTable)
+                               };
+
+            if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
+            {
+                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.TargetTable));
+            }
+
+            return commands;
+        }
+
+        private static IReadOnlyCollection<ICommand> CreateTablesReplacingCommands(IEnumerable<TableName> tableTypesDictionary)
+        {
+            return tableTypesDictionary
+                .Select(t => new ReplaceTableCommand(t, CreateTableCopyCommand.GetTableCopyName(t)))
+                .ToList();
+        }
+
         private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
             switch (command.ExecutionMode)
@@ -151,9 +178,44 @@ namespace NuClear.StateInitialization.Core.Actors
                     return ParallelExecutionStrategy;
                 case ExecutionMode.Sequential:
                     return SequentialExecutionStrategy;
+                case ExecutionMode.ShadowParallel:
+                    return ShadowParallelExecutionStrategy;
                 default:
                     throw new ArgumentException($"Execution mode {command.ExecutionMode} is not supported", nameof(command));
             }
+        }
+
+        private void ShadowParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
+        {
+            Parallel.ForEach(
+                    tableTypesDictionary,
+                    new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                    tableTypesPair =>
+                    {
+                        using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                        {
+                            try
+                            {
+                                var replicationCommands = CreateShadowReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                                ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, connection, replicationCommands);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"Failed to replicate using shadow parallel strategy {tableTypesPair.Key}", ex);
+                            }
+                        }
+                    });
+
+            ExecuteInTransactionScope(
+                command,
+                (targetConnection, schemaManagenentActor) =>
+                {
+                    var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
+
+                    // Delete existed tables then rename newly created ones (remove prefix):
+                    schemaManagenentActor.ExecuteCommands(CreateTablesReplacingCommands(tableTypesDictionary.Keys));
+                    schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+                });
         }
 
         private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
@@ -217,17 +279,6 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private TableName GetTable(MappingSchema mappingSchema, Type dataObjectType)
-        {
-            var attribute = mappingSchema
-                .GetAttributes<TableAttribute>(dataObjectType)
-                .FirstOrDefault();
-
-            var tableName = attribute?.Name ?? dataObjectType.Name;
-            var schemaName = attribute?.Schema;
-            return new TableName(tableName, schemaName);
-        }
-
         private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)
         {
             using (var transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions))
@@ -277,7 +328,7 @@ namespace NuClear.StateInitialization.Core.Actors
                     actor.ExecuteCommands(replicationCommands);
                     sw.Stop();
 
-                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds} seconds");
+                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds:F3} seconds");
                 }
             }
         }

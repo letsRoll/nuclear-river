@@ -31,7 +31,7 @@ namespace NuClear.StateInitialization.Core.Actors
         private Table GetTable(TableName table)
         {
             var database = _sqlConnection.GetDatabase();
-            var tableInDb = string.IsNullOrEmpty(table.Schema) ? database.Tables[table.Table] : database.Tables[table.Table, table.Schema];
+            var tableInDb = database.GetTable(table);
 
             if (tableInDb == null)
             {

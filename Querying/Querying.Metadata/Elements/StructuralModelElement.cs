@@ -17,6 +17,7 @@ namespace NuClear.Querying.Metadata.Elements
             {
                 throw new ArgumentNullException(nameof(rootEntities));
             }
+
             RootEntities = rootEntities;
         }
 

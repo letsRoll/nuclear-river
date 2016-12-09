@@ -23,10 +23,12 @@ namespace NuClear.Querying.Metadata.Builders
                 {
                     return _targetEntityElement.Identity.Id;
                 }
+
                 if (_targetEntityElementConfig != null)
                 {
                     return _targetEntityElementConfig.EntityId;
                 }
+
                 throw new InvalidOperationException("The reference is not set.");
             }
         }
@@ -89,10 +91,12 @@ namespace NuClear.Querying.Metadata.Builders
             {
                 throw new InvalidOperationException("The relation name was not specified.");
             }
+
             if (!_cardinality.HasValue)
             {
                 throw new InvalidOperationException("The relation cardinality was not specified.");
             }
+
             if (_targetEntityElement == null && _targetEntityElementConfig == null)
             {
                 throw new InvalidOperationException("The relation target was not specified.");

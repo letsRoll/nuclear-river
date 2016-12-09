@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
@@ -16,10 +15,12 @@ namespace NuClear.StateInitialization.Core.Actors
     public sealed class CreateTableCopyActor : IActor
     {
         private readonly Database _database;
+        private readonly IndexManager _indexManager;
 
         public CreateTableCopyActor(SqlConnection sqlConnection)
         {
             _database = sqlConnection.GetDatabase();
+            _indexManager = new IndexManager(sqlConnection);
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
@@ -38,7 +39,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 }
 
                 var createdTableCopy = CopyTable(sourceTable, command.TargetTable);
-                CopyIndexes(sourceTable, createdTableCopy);
+                _indexManager.CopyIndexes(sourceTable, createdTableCopy, CreateTableCopyCommand.Prefix);
 
                 Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] Created shadow copy of table {command.SourceTable} named {command.TargetTable} with {sourceTable.Indexes.Count} indexes");
             }
@@ -78,77 +79,6 @@ namespace NuClear.StateInitialization.Core.Actors
             newTable.Create();
 
             return newTable;
-        }
-
-        private void CopyIndexes(Table sourceTable, Table targetTable)
-        {
-            foreach (Index index in sourceTable.Indexes)
-            {
-                try
-                {
-                    var newIndex = CreateIndexCopy(targetTable, index);
-                    newIndex.Create();
-                }
-                catch (Exception ex)
-                {
-                    throw new DataException($"Error occured while creating shadow copy of index {index.Name} from table {sourceTable.Name} in table {targetTable.Name}", ex);
-                }
-            }
-        }
-
-        private Index CreateIndexCopy(Table targetTable, Index index)
-        {
-            var newIndex = new Index(targetTable, CreateTableCopyCommand.Prefix + index.Name)
-            {
-                BoundingBoxXMax = index.BoundingBoxXMax,
-                BoundingBoxXMin = index.BoundingBoxXMin,
-                BoundingBoxYMax = index.BoundingBoxYMax,
-                BoundingBoxYMin = index.BoundingBoxYMin,
-                BucketCount = index.BucketCount,
-                CellsPerObject = index.CellsPerObject,
-                CompactLargeObjects = index.CompactLargeObjects,
-                DisallowPageLocks = index.DisallowPageLocks,
-                DisallowRowLocks = index.DisallowRowLocks,
-                FileGroup = index.FileGroup,
-                FileStreamFileGroup = index.FileStreamFileGroup,
-                FileStreamPartitionScheme = index.FileStreamPartitionScheme,
-                FillFactor = index.FillFactor,
-                FilterDefinition = index.FilterDefinition,
-                IgnoreDuplicateKeys = index.IgnoreDuplicateKeys,
-                IndexKeyType = index.IndexKeyType,
-                IndexType = index.IndexType,
-                IndexedXmlPathName = index.IndexedXmlPathName,
-                IsClustered = index.IsClustered,
-                IsFullTextKey = index.IsFullTextKey,
-                IsMemoryOptimized = index.IsMemoryOptimized,
-                IsUnique = index.IsUnique,
-                Level1Grid = index.Level1Grid,
-                Level2Grid = index.Level2Grid,
-                Level3Grid = index.Level3Grid,
-                Level4Grid = index.Level4Grid,
-                LowPriorityAbortAfterWait = index.LowPriorityAbortAfterWait,
-                LowPriorityMaxDuration = index.LowPriorityMaxDuration,
-                MaximumDegreeOfParallelism = index.MaximumDegreeOfParallelism,
-                NoAutomaticRecomputation = index.NoAutomaticRecomputation,
-                OnlineIndexOperation = index.OnlineIndexOperation,
-                PadIndex = index.PadIndex,
-                ParentXmlIndex = index.ParentXmlIndex,
-                PartitionScheme = index.PartitionScheme,
-                SecondaryXmlIndexType = index.SecondaryXmlIndexType,
-                SortInTempdb = index.SortInTempdb,
-                SpatialIndexType = index.SpatialIndexType
-            };
-
-            foreach (IndexedColumn column in index.IndexedColumns)
-            {
-                var newColumn = new IndexedColumn(newIndex, column.Name, column.Descending)
-                {
-                    IsIncluded = column.IsIncluded
-                };
-
-                newIndex.IndexedColumns.Add(newColumn);
-            }
-            return newIndex;
         }
     }
 }

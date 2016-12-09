@@ -12,6 +12,7 @@ namespace NuClear.Querying.Metadata.Features
             {
                 throw new ArgumentException("The entity set name should be specified.", "entitySetName");
             }
+
             EntitySetName = entitySetName;
         }
 

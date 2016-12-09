@@ -17,8 +17,9 @@ namespace NuClear.Querying.Metadata.Elements
         {
             if (typeElement == null)
             {
-                throw new ArgumentNullException("typeElement");
+                throw new ArgumentNullException(nameof(typeElement));
             }
+
             _typeElement = typeElement;
         }
 

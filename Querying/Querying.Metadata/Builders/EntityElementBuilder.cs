@@ -26,6 +26,7 @@ namespace NuClear.Querying.Metadata.Builders
                 {
                     throw new InvalidOperationException("The id was not set.");
                 }
+
                 return _entityId;
             }
         }
@@ -64,6 +65,7 @@ namespace NuClear.Querying.Metadata.Builders
             {
                 _keyNames.Add(UriExtensions.AsUri(propertyName));
             }
+
             return this;
         }
 

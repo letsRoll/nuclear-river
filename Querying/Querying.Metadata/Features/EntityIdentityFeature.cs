@@ -16,6 +16,7 @@ namespace NuClear.Querying.Metadata.Features
             {
                 throw new ArgumentNullException("identifyingProperties");
             }
+
             if (identifyingProperties.Count == 0)
             {
                 throw new ArgumentException("The properties should be provided.", "identifyingProperties");

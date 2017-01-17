@@ -40,6 +40,10 @@ namespace NuClear.StateInitialization.Core.Factories
         {
             var actors = new List<IActor>();
 
+            var createTableCopyActorType = typeof(CreateTableCopyActor);
+            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, _targetDataConnection.Connection);
+            actors.Add(createTableCopyActor);
+
             var disableIndexesActorType = typeof(DisableIndexesActor);
             var disableIndexesActor = (IActor)Activator.CreateInstance(disableIndexesActorType, _targetDataConnection.Connection);
             actors.Add(disableIndexesActor);

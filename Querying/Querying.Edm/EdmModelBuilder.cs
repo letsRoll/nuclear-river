@@ -257,7 +257,6 @@ namespace NuClear.Querying.Edm
                 return (IEdmEnumType)enumType;
             }
 
-
             private IEdmEnumType BuildEdmEnumType(EnumTypeElement enumTypeElement)
             {
                 var enumType = new EdmEnumType(_namespaceName, enumTypeElement.ResolveName(), Convert(enumTypeElement.UnderlyingType), false);

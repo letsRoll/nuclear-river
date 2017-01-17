@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
@@ -28,10 +29,85 @@ namespace NuClear.StateInitialization.Core.Actors
             EnableIndexes(GetTable(table));
         }
 
+        public void CopyIndexes(Table sourceTable, Table targetTable, string prefix)
+        {
+            lock (IndexLock)
+            {
+                foreach (Index index in sourceTable.Indexes)
+                {
+                    try
+                    {
+                        var newIndex = CreateIndexCopy(targetTable, index, prefix);
+                        newIndex.Create();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new DataException($"Error occured while creating copy of index {index.Name} from table {sourceTable.Name} in table {targetTable.Name}", ex);
+                    }
+                }
+            }
+        }
+
+        private Index CreateIndexCopy(Table targetTable, Index index, string prefix)
+        {
+            var newIndex = new Index(targetTable, prefix + index.Name)
+            {
+                BoundingBoxXMax = index.BoundingBoxXMax,
+                BoundingBoxXMin = index.BoundingBoxXMin,
+                BoundingBoxYMax = index.BoundingBoxYMax,
+                BoundingBoxYMin = index.BoundingBoxYMin,
+                BucketCount = index.BucketCount,
+                CellsPerObject = index.CellsPerObject,
+                CompactLargeObjects = index.CompactLargeObjects,
+                DisallowPageLocks = index.DisallowPageLocks,
+                DisallowRowLocks = index.DisallowRowLocks,
+                FileGroup = index.FileGroup,
+                FileStreamFileGroup = index.FileStreamFileGroup,
+                FileStreamPartitionScheme = index.FileStreamPartitionScheme,
+                FillFactor = index.FillFactor,
+                FilterDefinition = index.FilterDefinition,
+                IgnoreDuplicateKeys = index.IgnoreDuplicateKeys,
+                IndexKeyType = index.IndexKeyType,
+                IndexType = index.IndexType,
+                IndexedXmlPathName = index.IndexedXmlPathName,
+                IsClustered = index.IsClustered,
+                IsFullTextKey = index.IsFullTextKey,
+                IsMemoryOptimized = index.IsMemoryOptimized,
+                IsUnique = index.IsUnique,
+                Level1Grid = index.Level1Grid,
+                Level2Grid = index.Level2Grid,
+                Level3Grid = index.Level3Grid,
+                Level4Grid = index.Level4Grid,
+                LowPriorityAbortAfterWait = index.LowPriorityAbortAfterWait,
+                LowPriorityMaxDuration = index.LowPriorityMaxDuration,
+                MaximumDegreeOfParallelism = index.MaximumDegreeOfParallelism,
+                NoAutomaticRecomputation = index.NoAutomaticRecomputation,
+                OnlineIndexOperation = index.OnlineIndexOperation,
+                PadIndex = index.PadIndex,
+                ParentXmlIndex = index.ParentXmlIndex,
+                PartitionScheme = index.PartitionScheme,
+                SecondaryXmlIndexType = index.SecondaryXmlIndexType,
+                SortInTempdb = index.SortInTempdb,
+                SpatialIndexType = index.SpatialIndexType
+            };
+
+            foreach (IndexedColumn column in index.IndexedColumns)
+            {
+                var newColumn = new IndexedColumn(newIndex, column.Name, column.Descending)
+                {
+                    IsIncluded = column.IsIncluded
+                };
+
+                newIndex.IndexedColumns.Add(newColumn);
+            }
+
+            return newIndex;
+        }
+
         private Table GetTable(TableName table)
         {
             var database = _sqlConnection.GetDatabase();
-            var tableInDb = string.IsNullOrEmpty(table.Schema) ? database.Tables[table.Table] : database.Tables[table.Table, table.Schema];
+            var tableInDb = database.GetTable(table);
 
             if (tableInDb == null)
             {

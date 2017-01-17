@@ -83,24 +83,29 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actors\BulkReplicationActor.cs" />
+    <Compile Include="Actors\CreateTableCopyActor.cs" />
     <Compile Include="Actors\EnableIndexesActor.cs" />
     <Compile Include="Actors\DisableIndexesActor.cs" />
     <Compile Include="Actors\IndexManager.cs" />
+    <Compile Include="Actors\ReplaceTableActor.cs" />
     <Compile Include="Actors\TruncateTableActor.cs" />
     <Compile Include="Actors\SequentialPipelineActor.cs" />
     <Compile Include="Actors\ConstraintsManagementActor.cs" />
     <Compile Include="Actors\BulkInsertDataObjectsActor.cs" />
     <Compile Include="Actors\UpdateTableStatisticsActor.cs" />
     <Compile Include="Actors\ViewManagementActor.cs" />
+    <Compile Include="Commands\CreateTableCopyCommand.cs" />
     <Compile Include="Commands\DisableConstraintsCommand.cs" />
     <Compile Include="Commands\EnableIndexesCommand.cs" />
     <Compile Include="Commands\DisableIndexesCommand.cs" />
     <Compile Include="Commands\DropViewsCommand.cs" />
     <Compile Include="Commands\EnableConstraintsCommand.cs" />
     <Compile Include="Commands\ExecutionMode.cs" />
+    <Compile Include="Commands\ReplaceTableCommand.cs" />
     <Compile Include="Commands\ReplicateInBulkCommand.cs" />
     <Compile Include="Commands\RestoreViewsCommand.cs" />
     <Compile Include="Commands\TruncateTableCommand.cs" />
@@ -112,6 +117,7 @@
     <Compile Include="Factories\IDataObjectTypesProviderFactory.cs" />
     <Compile Include="Commands\BulkInsertDataObjectsCommand.cs" />
     <Compile Include="Factories\ReplaceDataObjectsInBulkActorFactory.cs" />
+    <Compile Include="MappingSchemaExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlConnectionExtensions.cs" />
     <Compile Include="Storage\LinqToDbQuery.cs" />

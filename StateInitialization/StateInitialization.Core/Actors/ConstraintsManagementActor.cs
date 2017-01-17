@@ -30,6 +30,16 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 var tables = GetTables();
 
+                var defaults = tables.SelectMany(t => t.Columns.Cast<Column>().Select(c => c.DefaultConstraint))
+                    .Where(d => d != null)
+                    .ToArray();
+                var defaultsToRestore = new List<StringCollection>();
+                foreach (var defaultConstraint in defaults)
+                {
+                    defaultsToRestore.Add(defaultConstraint.Script());
+                    defaultConstraint.Drop();
+                }
+
                 var checks = tables.SelectMany(x => x.Checks.Cast<Check>()).ToArray();
                 var checksToRestore = new List<StringCollection>();
                 foreach (var check in checks)
@@ -46,7 +56,7 @@ namespace NuClear.StateInitialization.Core.Actors
                     foreignKey.Drop();
                 }
 
-                return new[] { new ConstraintsDisabledEvent(checksToRestore, foreignKeysToRestore) };
+                return new[] { new ConstraintsDisabledEvent(checksToRestore, defaultsToRestore, foreignKeysToRestore) };
             }
 
             var enableCommand = commands.OfType<EnableConstraintsCommand>().SingleOrDefault();
@@ -61,9 +71,18 @@ namespace NuClear.StateInitialization.Core.Actors
                     }
                 }
 
-                foreach (var foreinKey in enableCommand.ForeignKeysToRestore)
+                foreach (var defaultToRestore in enableCommand.DefaultsToRestore)
                 {
-                    foreach (var script in foreinKey)
+                    foreach (var script in defaultToRestore)
+                    {
+                        var command = new SqlCommand(script, _sqlConnection) { CommandTimeout = _commandTimeout };
+                        command.ExecuteNonQuery();
+                    }
+                }
+
+                foreach (var foreignKey in enableCommand.ForeignKeysToRestore)
+                {
+                    foreach (var script in foreignKey)
                     {
                         var command = new SqlCommand(script, _sqlConnection) { CommandTimeout = _commandTimeout };
                         command.ExecuteNonQuery();

@@ -43,7 +43,7 @@ namespace NuClear.Querying.Edm.Emit
             getMethodIL.Emit(OpCodes.Ret);
 
             // define the "set" accessor method
-            var setMethodBuilder = typeBuilder.DefineMethod("set_" + propertyName, PropertyAccessorAttributes, null, new [] { propertyType });
+            var setMethodBuilder = typeBuilder.DefineMethod("set_" + propertyName, PropertyAccessorAttributes, null, new[] { propertyType });
             var setMethodIL = setMethodBuilder.GetILGenerator();
             setMethodIL.Emit(OpCodes.Ldarg_0);
             setMethodIL.Emit(OpCodes.Ldarg_1);

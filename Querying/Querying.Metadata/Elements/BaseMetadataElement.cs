@@ -43,10 +43,12 @@ namespace NuClear.Querying.Metadata.Elements
             {
                 throw new ArgumentNullException(nameof(projector));
             }
+
             if (getDefault == null)
             {
                 throw new ArgumentNullException(nameof(getDefault));
             }
+
             var feature = LookupFeature<TFeature>();
             return feature == null ? getDefault() : projector(feature);
         }

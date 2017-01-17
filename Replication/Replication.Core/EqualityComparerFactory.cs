@@ -20,6 +20,11 @@ namespace NuClear.Replication.Core
         {
         }
 
+        /// <summary>
+        /// Инициализирует экземпляр
+        /// </summary>
+        /// <param name="propertyProvider">Используется для получения свойств сущностей, участвующих в сравнении</param>
+        /// <param name="equalityComparers">Опциональные пользовательнские IEqualityComparer<T> для нестандартного поведения при сравнения полей сущностей</param>
         public EqualityComparerFactory(IObjectPropertyProvider propertyProvider, params object[] equalityComparers)
         {
             _propertyProvider = propertyProvider;

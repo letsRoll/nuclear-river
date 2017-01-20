@@ -29,7 +29,7 @@ namespace NuClear.StateInitialization.Core.Actors
             EnableIndexes(GetTable(table));
         }
 
-        public void CopyIndexes(Table sourceTable, Table targetTable, string prefix)
+        public void CopyIndexes(Table sourceTable, Table targetTable)
         {
             lock (IndexLock)
             {
@@ -37,7 +37,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 {
                     try
                     {
-                        var newIndex = CreateIndexCopy(targetTable, index, prefix);
+                        var newIndex = CreateIndexCopy(targetTable, index);
                         newIndex.Create();
                     }
                     catch (Exception ex)
@@ -48,9 +48,9 @@ namespace NuClear.StateInitialization.Core.Actors
             }
         }
 
-        private Index CreateIndexCopy(Table targetTable, Index index, string prefix)
+        private Index CreateIndexCopy(Table targetTable, Index index)
         {
-            var newIndex = new Index(targetTable, prefix + index.Name)
+            var newIndex = new Index(targetTable, Guid.NewGuid().ToString("N"))
             {
                 BoundingBoxXMax = index.BoundingBoxXMax,
                 BoundingBoxXMin = index.BoundingBoxXMin,
@@ -90,6 +90,8 @@ namespace NuClear.StateInitialization.Core.Actors
                 SortInTempdb = index.SortInTempdb,
                 SpatialIndexType = index.SpatialIndexType
             };
+
+            newIndex.ExtendedProperties.Add(new ExtendedProperty(newIndex, "CopyOf", index.Name));
 
             foreach (IndexedColumn column in index.IndexedColumns)
             {

@@ -146,29 +146,32 @@ namespace NuClear.StateInitialization.Core.Actors
 
         private static IReadOnlyCollection<ICommand> CreateShadowReplicationCommands(TableName table, TimeSpan bulkCopyTimeout, DbManagementMode mode)
         {
-            var createTableCopyCommand = new CreateTableCopyCommand(table);
+            var targetTable = ShadowCopyTableName(table);
             var commands = new List<ICommand>
                                {
-                                   createTableCopyCommand,
-                                   new DisableIndexesCommand(createTableCopyCommand.TargetTable),
-                                   new BulkInsertDataObjectsCommand(bulkCopyTimeout, CreateTableCopyCommand.Prefix),
-                                   new EnableIndexesCommand(createTableCopyCommand.TargetTable)
+                                   new CreateTableCopyCommand(table, targetTable),
+                                   new DisableIndexesCommand(targetTable),
+                                   new BulkInsertDataObjectsCommand(bulkCopyTimeout, targetTable),
+                                   new EnableIndexesCommand(targetTable)
                                };
 
             if (mode.HasFlag(DbManagementMode.UpdateTableStatistics))
             {
-                commands.Add(new UpdateTableStatisticsCommand(createTableCopyCommand.TargetTable));
+                commands.Add(new UpdateTableStatisticsCommand(targetTable));
             }
 
             return commands;
         }
 
-        private static IReadOnlyCollection<ICommand> CreateTablesReplacingCommands(IEnumerable<TableName> tableTypesDictionary)
+        private static IReadOnlyCollection<ICommand> CreateTablesReplacingCommands(IEnumerable<TableName> tables)
         {
-            return tableTypesDictionary
-                .Select(t => new ReplaceTableCommand(t, CreateTableCopyCommand.GetTableCopyName(t)))
+            return tables
+                .Select(t => new ReplaceTableCommand(t, ShadowCopyTableName(t)))
                 .ToList();
         }
+
+        private static TableName ShadowCopyTableName(TableName table)
+            => new TableName("river_" + table.Table, table.Schema);
 
         private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {

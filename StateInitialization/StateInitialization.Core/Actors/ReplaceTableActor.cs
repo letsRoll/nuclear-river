@@ -38,7 +38,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
                         tableToReplace.Drop();
 
-                        var indexesCount = RenameIndexes(replacementTable);
+                        var indexesCount = RenameIndexesBack(replacementTable);
 
                         replacementTable.Rename(tableToReplace.Name);
 
@@ -54,15 +54,16 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private static int RenameIndexes(Table replacementTable)
+        private static int RenameIndexesBack(Table table)
         {
-            var indexes = replacementTable.Indexes.OfType<Index>().ToArray();
+            var indexes = table.Indexes.OfType<Index>().ToArray();
             foreach (var index in indexes)
             {
-                if (index.Name.StartsWith(CreateTableCopyCommand.Prefix))
+                if (index.ExtendedProperties.Contains("CopyOf"))
                 {
-                    var newName = index.Name.Remove(0, CreateTableCopyCommand.Prefix.Length);
-                    index.Rename(newName);
+                    var newName = index.ExtendedProperties["CopyOf"];
+                    index.Rename((string)newName.Value);
+                    index.ExtendedProperties.Remove(newName);
                 }
             }
 

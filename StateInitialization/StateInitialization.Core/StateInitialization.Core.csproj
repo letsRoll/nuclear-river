@@ -86,6 +86,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\CopyTablesActor.cs" />
     <Compile Include="Actors\BulkReplicationActor.cs" />
     <Compile Include="Actors\CreateTableCopyActor.cs" />
     <Compile Include="Actors\EnableIndexesActor.cs" />

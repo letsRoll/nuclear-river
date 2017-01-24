@@ -18,7 +18,7 @@ namespace NuClear.Replication.Core
 
         public void Create(IEnumerable<TDataObject> objects)
         {
-            using (Probe.Create("Inserting", typeof(TDataObject).Name))
+            using (Probe.Create("Insert"))
             {
                 _repository.AddRange(objects);
                 _repository.Save();
@@ -27,7 +27,7 @@ namespace NuClear.Replication.Core
 
         public void Update(IEnumerable<TDataObject> objects)
         {
-            using (Probe.Create("Updating", typeof(TDataObject).Name))
+            using (Probe.Create("Update"))
             {
                 foreach (var obj in objects)
                 {
@@ -40,7 +40,7 @@ namespace NuClear.Replication.Core
 
         public void Delete(IEnumerable<TDataObject> objects)
         {
-            using (Probe.Create("Deleting", typeof(TDataObject).Name))
+            using (Probe.Create("Delete"))
             {
                 _repository.DeleteRange(objects);
                 _repository.Save();

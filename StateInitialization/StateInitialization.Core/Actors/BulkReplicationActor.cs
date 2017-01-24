@@ -172,24 +172,24 @@ namespace NuClear.StateInitialization.Core.Actors
 
         private Action<ReplicateInBulkCommand, IReadOnlyDictionary<TableName, Type[]>> DetermineExecutionStrategy(ReplicateInBulkCommand command)
         {
-            switch (command.ExecutionMode)
+            if (command.ExecutionMode == ExecutionMode.Sequential)
             {
-                case ExecutionMode.Parallel:
-                    return ParallelExecutionStrategy;
-                case ExecutionMode.Sequential:
-                    return SequentialExecutionStrategy;
-                case ExecutionMode.ShadowParallel:
-                    return ShadowParallelExecutionStrategy;
-                default:
-                    throw new ArgumentException($"Execution mode {command.ExecutionMode} is not supported", nameof(command));
+                return SequentialExecutionStrategy;
             }
+
+            if (command.ExecutionMode.Shadow)
+            {
+                return (cmd, types) => ShadowParallelExecutionStrategy(cmd, types, command.ExecutionMode.ParallelOptions);
+            }
+
+            return (cmd, types) => ParallelExecutionStrategy(cmd, types, command.ExecutionMode.ParallelOptions);
         }
 
-        private void ShadowParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
+        private void ShadowParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary, ParallelOptions options)
         {
             Parallel.ForEach(
                     tableTypesDictionary,
-                    new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                    options,
                     tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
@@ -218,7 +218,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
+        private void ParallelExecutionStrategy(ReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary, ParallelOptions options)
         {
             IReadOnlyCollection<IEvent> schemaChangedEvents = null;
             ExecuteInTransactionScope(
@@ -230,6 +230,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
             Parallel.ForEach(
                     tableTypesDictionary,
+                    options,
                     tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))

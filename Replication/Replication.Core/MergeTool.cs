@@ -17,20 +17,20 @@ namespace NuClear.Replication.Core
                 throw new ArgumentNullException(nameof(comparer));
             }
 
-            using (Probe.Create("Merging", typeof(T).Name))
+            HashSet<T> set1;
+            using (Probe.Create("Query source"))
             {
-                HashSet<T> set1;
-                using (Probe.Create("Query source"))
-                {
-                    set1 = new HashSet<T>(data1, comparer);
-                }
+                set1 = new HashSet<T>(data1, comparer);
+            }
 
-                HashSet<T> set2;
-                using (Probe.Create("Query target"))
-                {
-                    set2 = new HashSet<T>(data2, comparer);
-                }
+            HashSet<T> set2;
+            using (Probe.Create("Query target"))
+            {
+                set2 = new HashSet<T>(data2, comparer);
+            }
 
+            using (Probe.Create("Merge"))
+            {
                 // NOTE: avoiding enumerable extensions to reuse hashset performance
                 var difference = set1.Where(x => !set2.Contains(x));
                 var intersection = set1.Where(x => set2.Contains(x));

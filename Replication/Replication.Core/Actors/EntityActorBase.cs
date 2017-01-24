@@ -5,6 +5,7 @@ using System.Linq;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.Replication.Core.Equality;
 using NuClear.Storage.API.Readings;
+using NuClear.Telemetry.Probing;
 
 namespace NuClear.Replication.Core.Actors
 {
@@ -53,15 +54,17 @@ namespace NuClear.Replication.Core.Actors
                 return Array.Empty<IEvent>();
             }
 
-            var events = new List<IEvent>();
+            using (Probe.Create("Entity", typeof(TDataObject).Name))
+            {
+                var events = new List<IEvent>();
 
-            events.AddRange(_createDataObjectsActor.ExecuteCommands(commands));
-            events.AddRange(_syncDataObjectsActor.ExecuteCommands(commands));
-            events.AddRange(_deleteDataObjectsActor.ExecuteCommands(commands));
+                events.AddRange(_createDataObjectsActor.ExecuteCommands(commands));
+                events.AddRange(_syncDataObjectsActor.ExecuteCommands(commands));
+                events.AddRange(_deleteDataObjectsActor.ExecuteCommands(commands));
 
-            return events;
+                return events;
+            }
         }
-
         public abstract IReadOnlyCollection<IActor> GetValueObjectActors();
     }
 }

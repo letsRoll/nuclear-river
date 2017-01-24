@@ -104,6 +104,7 @@
     <Compile Include="Commands\DisableIndexesCommand.cs" />
     <Compile Include="Commands\DropViewsCommand.cs" />
     <Compile Include="Commands\EnableConstraintsCommand.cs" />
+    <Compile Include="Commands\ExecutionMode.cs" />
     <Compile Include="Commands\ReplaceTableCommand.cs" />
     <Compile Include="Commands\ReplicateInBulkCommand.cs" />
     <Compile Include="Commands\RestoreViewsCommand.cs" />

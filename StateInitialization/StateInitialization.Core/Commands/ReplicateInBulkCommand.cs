@@ -5,13 +5,6 @@ using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Commands
 {
-    public enum ExecutionMode
-    {
-        Sequential = 1,
-        Parallel,
-        ShadowParallel
-    }
-
     [Flags]
     public enum DbManagementMode
     {
@@ -31,13 +24,13 @@ namespace NuClear.StateInitialization.Core.Commands
             StorageDescriptor sourceStorageDescriptor,
             StorageDescriptor targetStorageDescriptor,
             DbManagementMode databaseManagementMode = DbManagementMode.DropAndRecreateConstraints | DbManagementMode.EnableIndexManagment | DbManagementMode.UpdateTableStatistics,
-            ExecutionMode executionMode = ExecutionMode.Parallel,
+            ExecutionMode executionMode = null,
             TimeSpan? bulkCopyTimeout = null)
         {
             SourceStorageDescriptor = sourceStorageDescriptor;
             TargetStorageDescriptor = targetStorageDescriptor;
             DbManagementMode = databaseManagementMode;
-            ExecutionMode = executionMode;
+            ExecutionMode = executionMode ?? ExecutionMode.Parallel;
             BulkCopyTimeout = bulkCopyTimeout ?? DefaultBulkCopyTimeout;
         }
 

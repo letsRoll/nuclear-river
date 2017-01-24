@@ -11,14 +11,37 @@ namespace NuClear.Replication.Core
     public sealed class EqualityComparerFactory : IEqualityComparerFactory
     {
         private readonly IObjectPropertyProvider _propertyProvider;
+        private readonly IDictionary<Type, EqualityComparerProxy> _equalityComparers;
         private readonly IDictionary<Type, object> _identityComparerCache;
         private readonly IDictionary<Type, object> _completeComparerCache;
 
         public EqualityComparerFactory(IObjectPropertyProvider propertyProvider)
+            : this(propertyProvider, null)
+        {
+        }
+
+        /// <summary>
+        /// Инициализирует экземпляр
+        /// </summary>
+        /// <param name="propertyProvider">Используется для получения свойств сущностей, участвующих в сравнении</param>
+        /// <param name="equalityComparers">Опциональные пользовательские IEqualityComparer<T> для нестандартного поведения при сравнения полей сущностей</param>
+        public EqualityComparerFactory(IObjectPropertyProvider propertyProvider, params object[] equalityComparers)
         {
             _propertyProvider = propertyProvider;
+            _equalityComparers = CreateComparersDictionary(equalityComparers ?? Array.Empty<object>());
             _identityComparerCache = new Dictionary<Type, object>();
             _completeComparerCache = new Dictionary<Type, object>();
+        }
+
+        private static IDictionary<Type, EqualityComparerProxy> CreateComparersDictionary(IEnumerable<object> equalityComparers)
+        {
+            var proxies =
+                from comparer in equalityComparers
+                from interfaceType in comparer.GetType().GetInterfaces()
+                where interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IEqualityComparer<>)
+                select new EqualityComparerProxy(interfaceType, comparer);
+
+            return proxies.ToDictionary(x => x.ValueType, x => x);
         }
 
         public IEqualityComparer<T> CreateIdentityComparer<T>()
@@ -62,13 +85,25 @@ namespace NuClear.Replication.Core
                 (acc, property) =>
                 {
                     var propertyAccess = Expression.Property((Expression)parameter, (PropertyInfo)property);
-                    var propertyHashCode = IntrospectionExtensions.GetTypeInfo(property.PropertyType).IsValueType
-                                               ? (Expression)Expression.Call(propertyAccess, hashCodeMethod)
-                                               : Expression.Condition(
-                                                   Expression.ReferenceNotEqual(propertyAccess, Expression.Constant(null, property.PropertyType)),
-                                                   Expression.Call(propertyAccess, hashCodeMethod),
-                                                   Expression.Constant(0, typeof(int)));
-                    return Expression.ExclusiveOr(Expression.Multiply(acc, constPrimeNumber), propertyHashCode);
+                    Expression hashCodeCall;
+                    EqualityComparerProxy comparer;
+                    if (_equalityComparers.TryGetValue(property.PropertyType, out comparer))
+                    {
+                        hashCodeCall = comparer.CreateHashCodeCall(propertyAccess);
+                    }
+                    else if (property.PropertyType.GetTypeInfo().IsValueType)
+                    {
+                        hashCodeCall = Expression.Call(propertyAccess, hashCodeMethod);
+                    }
+                    else
+                    {
+                        hashCodeCall = Expression.Condition(
+                            Expression.ReferenceNotEqual(propertyAccess, Expression.Constant(null, property.PropertyType)),
+                            Expression.Call(propertyAccess, hashCodeMethod),
+                            Expression.Constant(0, typeof(int)));
+                    }
+
+                    return Expression.ExclusiveOr(Expression.Multiply(acc, constPrimeNumber), hashCodeCall);
                 });
 
             return Expression.Lambda<Func<T, int>>(hashCode, parameter).Compile();
@@ -80,10 +115,46 @@ namespace NuClear.Replication.Core
 
             var left = Expression.Parameter(typeof(T));
             var right = Expression.Parameter(typeof(T));
-            var compare = properties.Select(p => Expression.Equal(Expression.Property(left, p), Expression.Property(right, p)))
+            var compare = properties.Select(p => CreateEqualityExpression(p, left, right))
                                     .Aggregate((Expression)Expression.Constant(true), Expression.And);
 
             return Expression.Lambda<Func<T, T, bool>>(compare, left, right).Compile();
+        }
+
+        private Expression CreateEqualityExpression(PropertyInfo property, ParameterExpression left, ParameterExpression right)
+        {
+            EqualityComparerProxy comparer;
+            return _equalityComparers.TryGetValue(property.PropertyType, out comparer)
+                       ? comparer.CreateEqualsCall(Expression.Property(left, property), Expression.Property(right, property))
+                       : Expression.Equal(Expression.Property(left, property), Expression.Property(right, property));
+        }
+
+        private sealed class EqualityComparerProxy
+        {
+            private readonly object _comparerInstance;
+            private readonly MethodInfo _getHashCodeMethod;
+            private readonly MethodInfo _equalsMethod;
+
+            public EqualityComparerProxy(Type interfaceType, object comparerInstance)
+            {
+                ValueType = interfaceType.GetGenericArguments().Single();
+
+                _comparerInstance = comparerInstance;
+                _getHashCodeMethod = interfaceType.GetMethod("GetHashCode", BindingFlags.Instance | BindingFlags.Public);
+                _equalsMethod = interfaceType.GetMethod("Equals", BindingFlags.Instance | BindingFlags.Public);
+            }
+
+            public Type ValueType { get; }
+
+            public Expression CreateHashCodeCall(Expression value)
+            {
+                return Expression.Call(Expression.Constant(_comparerInstance), _getHashCodeMethod, value);
+            }
+
+            public Expression CreateEqualsCall(Expression left, Expression right)
+            {
+                return Expression.Call(Expression.Constant(_comparerInstance), _equalsMethod, left, right);
+            }
         }
     }
 }

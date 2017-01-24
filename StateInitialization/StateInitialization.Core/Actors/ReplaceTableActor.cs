@@ -61,9 +61,9 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 if (index.ExtendedProperties.Contains("CopyOf"))
                 {
-                    var newName = index.ExtendedProperties["CopyOf"];
-                    index.Rename((string)newName.Value);
-                    index.ExtendedProperties.Remove(newName);
+                    var oldNameProperty = index.ExtendedProperties["CopyOf"];
+                    index.Rename((string)oldNameProperty.Value);
+                    index.ExtendedProperties.Remove(oldNameProperty);
                 }
             }
 

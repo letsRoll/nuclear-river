@@ -56,9 +56,13 @@ namespace NuClear.StateInitialization.Core.Actors
         private SqlConnection CreateSqlConnection(StorageDescriptor storageDescriptor)
             => new SqlConnection(_connectionStringSettings.GetConnectionString(storageDescriptor.ConnectionStringIdentity));
 
-        public class TableNameComparer : IEqualityComparer<TableName>
+        private sealed class TableNameComparer : IEqualityComparer<TableName>
         {
             public static readonly TableNameComparer Instance = new TableNameComparer();
+
+            private TableNameComparer()
+            {
+            }
 
             public bool Equals(TableName x, TableName y)
                 => string.Equals(x.Schema, y.Schema, StringComparison.InvariantCultureIgnoreCase)

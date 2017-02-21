@@ -58,11 +58,18 @@ namespace NuClear.StateInitialization.Core.Actors
 
         private sealed class TableNameComparer : IEqualityComparer<TableName>
         {
-            public static readonly TableNameComparer Instance = new TableNameComparer();
+            private static readonly Lazy<TableNameComparer> _instance
+                = new Lazy<TableNameComparer>(Create);
 
             private TableNameComparer()
             {
             }
+
+            public static IEqualityComparer<TableName> Instance
+                => _instance.Value;
+
+            private static TableNameComparer Create()
+                => new TableNameComparer();
 
             public bool Equals(TableName x, TableName y)
                 => string.Equals(x.Schema, y.Schema, StringComparison.InvariantCultureIgnoreCase)

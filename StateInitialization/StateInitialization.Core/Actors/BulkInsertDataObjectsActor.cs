@@ -11,6 +11,7 @@ using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.StateInitialization.Core.Commands;
+using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
@@ -33,21 +34,21 @@ namespace NuClear.StateInitialization.Core.Actors
             var command = commands.OfType<BulkInsertDataObjectsCommand>().SingleOrDefault();
             if (command != null)
             {
-                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds, command.TargetTablePrefix);
+                ExecuteBulkCopy((int)command.BulkCopyTimeout.TotalSeconds, command.TargetTable);
             }
 
             return Array.Empty<IEvent>();
         }
 
-        private void ExecuteBulkCopy(int timeout, string tableNamePrefix)
+        private void ExecuteBulkCopy(int timeout, TableName targetTable)
         {
             try
             {
                 var options = new BulkCopyOptions { BulkCopyTimeout = timeout };
-                var table = _targetDataConnection.GetTable<TDataObject>();
-                var tableName = _targetDataConnection.MappingSchema.GetTableName(typeof(TDataObject));
-                table.TableName(tableNamePrefix + tableName.Table)
-                    .BulkCopy(options, _dataObjectsSource);
+                var table = targetTable != null
+                    ? _targetDataConnection.GetTable<TDataObject>().TableName(targetTable.Table)
+                    : _targetDataConnection.GetTable<TDataObject>();
+                table.BulkCopy(options, _dataObjectsSource);
             }
             catch (Exception ex)
             {

@@ -25,8 +25,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var command = commands.OfType<CreateTableCopyCommand>().SingleOrDefault();
-            if (command != null)
+            foreach (var command in commands.OfType<CreateTableCopyCommand>())
             {
                 var sourceTable = _database.GetTable(command.SourceTable);
 
@@ -39,7 +38,7 @@ namespace NuClear.StateInitialization.Core.Actors
                 }
 
                 var createdTableCopy = CopyTable(sourceTable, command.TargetTable);
-                _indexManager.CopyIndexes(sourceTable, createdTableCopy, CreateTableCopyCommand.Prefix);
+                _indexManager.CopyIndexes(sourceTable, createdTableCopy);
 
                 Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] Created shadow copy of table {command.SourceTable} named {command.TargetTable} with {sourceTable.Indexes.Count} indexes");
             }

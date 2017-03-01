@@ -5,21 +5,14 @@ namespace NuClear.StateInitialization.Core.Commands
 {
     internal sealed class CreateTableCopyCommand : ICommand
     {
-        public CreateTableCopyCommand(TableName table)
+        public CreateTableCopyCommand(TableName source, TableName target)
         {
-            SourceTable = table;
-            TargetTable = GetTableCopyName(table);
+            SourceTable = source;
+            TargetTable = target;
         }
-
-        public static string Prefix => "river_";
 
         public TableName SourceTable { get; }
 
         public TableName TargetTable { get; }
-
-        public static TableName GetTableCopyName(TableName table)
-        {
-            return new TableName(Prefix + table.Table, table.Schema);
-        }
     }
 }

@@ -1,10 +1,10 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 
 namespace NuClear.StateInitialization.Core.Factories
 {
     /// <summary>
-    /// Позволяет управлять соответствием между типами объектов данных и IStorageBasedDataObjectAccessor, выполняющими копирование этих объектов
+    /// РџРѕР·РІРѕР»СЏРµС‚ СѓРїСЂР°РІР»СЏС‚СЊ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµРј РјРµР¶РґСѓ С‚РёРїР°РјРё РѕР±СЉРµРєС‚РѕРІ РґР°РЅРЅС‹С… Рё IStorageBasedDataObjectAccessor, РІС‹РїРѕР»РЅСЏСЋС‰РёРјРё РєРѕРїРёСЂРѕРІР°РЅРёРµ СЌС‚РёС… РѕР±СЉРµРєС‚РѕРІ
     /// </summary>
     public interface IAccessorTypesProvider
     {

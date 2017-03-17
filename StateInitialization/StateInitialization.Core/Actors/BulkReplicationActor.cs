@@ -36,13 +36,23 @@ namespace NuClear.StateInitialization.Core.Actors
 
         private readonly IDataObjectTypesProviderFactory _dataObjectTypesProviderFactory;
         private readonly IConnectionStringSettings _connectionStringSettings;
+        private readonly BulkReplicator _bulkReplicator;
 
         public BulkReplicationActor(
             IDataObjectTypesProviderFactory dataObjectTypesProviderFactory,
             IConnectionStringSettings connectionStringSettings)
+            : this(dataObjectTypesProviderFactory, connectionStringSettings, new StaticAccessorTypesProvider())
+        {
+        }
+
+        public BulkReplicationActor(
+            IDataObjectTypesProviderFactory dataObjectTypesProviderFactory,
+            IConnectionStringSettings connectionStringSettings,
+            IAccessorTypesProvider accessorTypesProvider)
         {
             _dataObjectTypesProviderFactory = dataObjectTypesProviderFactory;
             _connectionStringSettings = connectionStringSettings;
+            _bulkReplicator = new BulkReplicator(accessorTypesProvider);
         }
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
@@ -196,11 +206,12 @@ namespace NuClear.StateInitialization.Core.Actors
                     tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                        using (var sourceConnection = CreateTransactionlessDataConnection(command.SourceStorageDescriptor))
                         {
                             try
                             {
                                 var replicationCommands = CreateShadowReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                                ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, connection, replicationCommands);
+                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, connection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
@@ -237,11 +248,12 @@ namespace NuClear.StateInitialization.Core.Actors
                     tableTypesPair =>
                     {
                         using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                        using (var sourceConnection = CreateTransactionlessDataConnection(command.SourceStorageDescriptor))
                         {
                             try
                             {
                                 var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                                ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, connection, replicationCommands);
+                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, connection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
@@ -265,17 +277,19 @@ namespace NuClear.StateInitialization.Core.Actors
                 (targetConnection, schemaManagenentActor) =>
                 {
                     var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
-
-                    foreach (var tableTypesPair in tableTypesDictionary)
+                    using (var sourceConnection = CreateTransactionlessDataConnection(command.SourceStorageDescriptor))
                     {
-                        try
+                        foreach (var tableTypesPair in tableTypesDictionary)
                         {
-                            var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                            ReplaceInBulk(tableTypesPair.Value, command.SourceStorageDescriptor, targetConnection, replicationCommands);
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new Exception($"Failed to replicate using sequential strategy {tableTypesPair.Key}", ex);
+                            try
+                            {
+                                var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"Failed to replicate using sequential strategy {tableTypesPair.Key}", ex);
+                            }
                         }
                     }
 
@@ -296,6 +310,23 @@ namespace NuClear.StateInitialization.Core.Actors
             }
         }
 
+        private DataConnection CreateTransactionlessDataConnection(StorageDescriptor storageDescriptor)
+        {
+            // Creating connection to source that will NOT be enlisted in transactions
+            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
+            {
+               var connection = CreateDataConnection(storageDescriptor);
+                if (connection.Connection.State != ConnectionState.Open)
+                {
+                    connection.Connection.Open();
+                }
+
+                scope.Complete();
+
+                return connection;
+            }
+        }
+
         private DataConnection CreateDataConnection(StorageDescriptor storageDescriptor)
         {
             var connectionString = _connectionStringSettings.GetConnectionString(storageDescriptor.ConnectionStringIdentity);
@@ -303,38 +334,6 @@ namespace NuClear.StateInitialization.Core.Actors
             connection.AddMappingSchema(storageDescriptor.MappingSchema);
             connection.CommandTimeout = (int)storageDescriptor.CommandTimeout.TotalMilliseconds;
             return connection;
-        }
-
-        private void ReplaceInBulk(IReadOnlyCollection<Type> dataObjectTypes, StorageDescriptor sourceStorageDescriptor, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
-        {
-            DataConnection sourceConnection;
-
-            // Creating connection to source that will NOT be enlisted in transactions
-            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
-            {
-                sourceConnection = CreateDataConnection(sourceStorageDescriptor);
-                if (sourceConnection.Connection.State != ConnectionState.Open)
-                {
-                    sourceConnection.Connection.Open();
-                }
-
-                scope.Complete();
-            }
-
-            using (sourceConnection)
-            {
-                var actorsFactory = new ReplaceDataObjectsInBulkActorFactory(dataObjectTypes, sourceConnection, targetConnection);
-                var actors = actorsFactory.Create();
-
-                foreach (var actor in actors)
-                {
-                    var sw = Stopwatch.StartNew();
-                    actor.ExecuteCommands(replicationCommands);
-                    sw.Stop();
-
-                    Console.WriteLine($"[{DateTime.Now}] [{Environment.CurrentManagedThreadId}] {actor.GetType().GetFriendlyName()}: {sw.Elapsed.TotalSeconds:F3} seconds");
-                }
-            }
         }
     }
 }

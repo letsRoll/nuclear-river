@@ -10,7 +10,7 @@ using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
-    public sealed class BulkReplicator
+    internal sealed class BulkReplicator
     {
         private readonly IAccessorTypesProvider _accessorTypesProvider;
 

@@ -110,7 +110,6 @@
     <Compile Include="Equality\IObjectPropertyProvider.cs" />
     <Compile Include="IAggregateActorFactory.cs" />
     <Compile Include="ICommand.cs" />
-    <Compile Include="IDataObjectsActorFactory.cs" />
     <Compile Include="IEvent.cs" />
     <Compile Include="LinqExtensions.cs" />
     <Compile Include="MapToObjectsSpecProvider.cs" />

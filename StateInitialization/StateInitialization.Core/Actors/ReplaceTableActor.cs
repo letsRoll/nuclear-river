@@ -41,6 +41,7 @@ namespace NuClear.StateInitialization.Core.Actors
                         var indexesCount = RenameIndexesBack(replacementTable);
 
                         replacementTable.Rename(tableToReplace.Name);
+                        replacementTable.Alter();
 
                         Console.WriteLine($"[{DateTime.Now}] Replaced table {command.TableToReplace} with table {command.ReplacementTable} ({indexesCount} indexes)");
                     }
@@ -64,6 +65,7 @@ namespace NuClear.StateInitialization.Core.Actors
                     var oldNameProperty = index.ExtendedProperties["CopyOf"];
                     index.Rename((string)oldNameProperty.Value);
                     index.ExtendedProperties.Remove(oldNameProperty);
+                    index.Alter();
                 }
             }
 

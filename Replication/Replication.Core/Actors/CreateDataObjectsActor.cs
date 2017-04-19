@@ -41,10 +41,12 @@ namespace NuClear.Replication.Core.Actors
             var changes = _changesProvider.GetChanges(commandsToExecute);
 
             var toCreate = changes.Difference.ToArray();
-
-            _bulkRepository.Create(toCreate);
-            events.AddRange(_dataChangesHandler.HandleCreates(toCreate));
-            events.AddRange(_dataChangesHandler.HandleRelates(toCreate));
+            if (toCreate.Length != 0)
+            {
+                _bulkRepository.Create(toCreate);
+                events.AddRange(_dataChangesHandler.HandleCreates(toCreate));
+                events.AddRange(_dataChangesHandler.HandleRelates(toCreate));
+            }
 
             return events;
         }

@@ -41,23 +41,29 @@ namespace NuClear.Replication.Core.Actors
             var changes = _changesProvider.GetChanges(commandsToExecute);
 
             var toDelete = changes.Complement.ToArray();
-
-            events.AddRange(_dataChangesHandler.HandleRelates(toDelete));
-            events.AddRange(_dataChangesHandler.HandleDeletes(toDelete));
-            _bulkRepository.Delete(toDelete);
+            if (toDelete.Length != 0)
+            {
+                events.AddRange(_dataChangesHandler.HandleRelates(toDelete));
+                events.AddRange(_dataChangesHandler.HandleDeletes(toDelete));
+                _bulkRepository.Delete(toDelete);
+            }
 
             var toCreate = changes.Difference.ToArray();
-
-            _bulkRepository.Create(toCreate);
-            events.AddRange(_dataChangesHandler.HandleCreates(toCreate));
-            events.AddRange(_dataChangesHandler.HandleRelates(toCreate));
+            if (toCreate.Length != 0)
+            {
+                _bulkRepository.Create(toCreate);
+                events.AddRange(_dataChangesHandler.HandleCreates(toCreate));
+                events.AddRange(_dataChangesHandler.HandleRelates(toCreate));
+            }
 
             var toUpdate = changes.Intersection.ToArray();
-
-            events.AddRange(_dataChangesHandler.HandleRelates(toUpdate));
-            _bulkRepository.Update(toUpdate);
-            events.AddRange(_dataChangesHandler.HandleRelates(toUpdate));
-            events.AddRange(_dataChangesHandler.HandleUpdates(toUpdate));
+            if (toUpdate.Length != 0)
+            {
+                events.AddRange(_dataChangesHandler.HandleRelates(toUpdate));
+                _bulkRepository.Update(toUpdate);
+                events.AddRange(_dataChangesHandler.HandleRelates(toUpdate));
+                events.AddRange(_dataChangesHandler.HandleUpdates(toUpdate));
+            }
 
             return events;
         }

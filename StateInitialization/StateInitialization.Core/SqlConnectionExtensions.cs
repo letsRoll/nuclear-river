@@ -17,7 +17,7 @@ namespace NuClear.StateInitialization.Core
                 sqlConnection.Open();
             }
 
-            var connection = new ServerConnection(sqlConnection);
+            var connection = new ServerConnection(sqlConnection) { StatementTimeout = 0 };
             var server = new Server(connection);
 
             var connectionStringBuilder = new SqlConnectionStringBuilder(sqlConnection.ConnectionString);

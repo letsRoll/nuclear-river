@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Transactions;
 
 using NuClear.Storage.API.Specifications;
@@ -23,16 +24,32 @@ namespace NuClear.Replication.Core.DataObjects
 
         public MergeResult<T> DetectChanges(FindSpecification<T> specification)
         {
-            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
+            var sourceObjects = new TransactionIsolator(_sourceProvider.Invoke(specification));
+            var targetObjects = _targetProvider.Invoke(specification);
+            var result = MergeTool.Merge(sourceObjects, targetObjects, _comparer);
+            return result;
+        }
+
+        private class TransactionIsolator : IEnumerable<T>
+        {
+            private readonly IEnumerable<T> _queryable;
+
+            public TransactionIsolator(IEnumerable<T> queryable)
             {
-                var sourceObjects = _sourceProvider.Invoke(specification);
-                var targetObjects = _targetProvider.Invoke(specification);
+                _queryable = queryable;
+            }
 
-                var result = MergeTool.Merge(sourceObjects, targetObjects, _comparer);
+            public IEnumerator<T> GetEnumerator()
+            {
+                using (new TransactionScope(TransactionScopeOption.RequiresNew))
+                {
+                    return _queryable.GetEnumerator();
+                }
+            }
 
-                scope.Complete();
-
-                return result;
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
             }
         }
     }

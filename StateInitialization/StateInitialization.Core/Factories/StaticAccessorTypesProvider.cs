@@ -35,7 +35,8 @@ namespace NuClear.StateInitialization.Core.Factories
 
         public IReadOnlyCollection<Type> GetAccessorsFor(Type dataObjectType)
         {
-            return AccessorTypes.Value[dataObjectType];
+	        Type[] result;
+	        return AccessorTypes.Value.TryGetValue(dataObjectType, out result) ? result : Array.Empty<Type>();;
         }
     }
 }

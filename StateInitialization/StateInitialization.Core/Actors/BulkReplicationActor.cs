@@ -57,7 +57,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            foreach (var command in commands.Cast<ReplicateInBulkCommand>())
+            foreach (var command in commands.OfType<ReplicateInBulkCommand>())
             {
                 var commandStopwatch = Stopwatch.StartNew();
 

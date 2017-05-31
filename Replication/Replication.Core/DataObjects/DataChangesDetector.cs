@@ -72,7 +72,10 @@ namespace NuClear.Replication.Core.DataObjects
                     return _enumerator.MoveNext();
                 }
 
-                public void Reset() => throw new NotSupportedException();
+                public void Reset()
+                {
+                    throw new NotSupportedException();
+                }
 
                 public T Current => _enumerator.Current;
 

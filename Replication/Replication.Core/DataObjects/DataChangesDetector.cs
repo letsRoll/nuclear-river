@@ -41,25 +41,26 @@ namespace NuClear.Replication.Core.DataObjects
             }
 
             public IEnumerator<T> GetEnumerator()
-                => new EnumeratorDecorator(_queryable.GetEnumerator());
+                => new EnumeratorDecorator(_queryable);
 
             IEnumerator IEnumerable.GetEnumerator()
                 => GetEnumerator();
 
             private class EnumeratorDecorator : IEnumerator<T>
             {
-                private readonly IEnumerator<T> _enumerator;
+                private readonly IEnumerable<T> _queryable;
+                private IEnumerator<T> _enumerator;
                 private TransactionScope _transaction;
 
-                public EnumeratorDecorator(IEnumerator<T> enumerator)
+                public EnumeratorDecorator(IEnumerable<T> queryable)
                 {
-                    _enumerator = enumerator;
+                    _queryable = queryable;
                 }
 
                 public void Dispose()
                 {
-                    _transaction.Dispose();
-                    _enumerator.Dispose();
+                    _transaction?.Dispose();
+                    _enumerator?.Dispose();
                 }
 
                 public bool MoveNext()
@@ -67,6 +68,7 @@ namespace NuClear.Replication.Core.DataObjects
                     if (_transaction == null)
                     {
                         _transaction = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted });
+                        _enumerator = _queryable.GetEnumerator();
                     }
 
                     return _enumerator.MoveNext();

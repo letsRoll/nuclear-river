@@ -25,7 +25,7 @@ namespace NuClear.Replication.Core.DataObjects
 
         public MergeResult<T> DetectChanges(FindSpecification<T> specification)
         {
-            var sourceObjects = new EnumerableDecorator(_sourceProvider.Invoke(specification));
+            var sourceObjects = new EnumerableDecorator(() => _sourceProvider.Invoke(specification));
             var targetObjects = _targetProvider.Invoke(specification);
             var result = MergeTool.Merge(sourceObjects, targetObjects, _comparer);
             return result;
@@ -33,28 +33,28 @@ namespace NuClear.Replication.Core.DataObjects
 
         private class EnumerableDecorator : IEnumerable<T>
         {
-            private readonly IEnumerable<T> _queryable;
+            private readonly Func<IEnumerable<T>> _queryableFactory;
 
-            public EnumerableDecorator(IEnumerable<T> queryable)
+            public EnumerableDecorator(Func<IEnumerable<T>> queryableFactory)
             {
-                _queryable = queryable;
+                _queryableFactory = queryableFactory;
             }
 
             public IEnumerator<T> GetEnumerator()
-                => new EnumeratorDecorator(_queryable);
+                => new EnumeratorDecorator(_queryableFactory);
 
             IEnumerator IEnumerable.GetEnumerator()
                 => GetEnumerator();
 
             private class EnumeratorDecorator : IEnumerator<T>
             {
-                private readonly IEnumerable<T> _queryable;
                 private IEnumerator<T> _enumerator;
                 private TransactionScope _transaction;
+                private readonly Func<IEnumerable<T>> _queryableFactory;
 
-                public EnumeratorDecorator(IEnumerable<T> queryable)
+                public EnumeratorDecorator(Func<IEnumerable<T>> queryableFactory)
                 {
-                    _queryable = queryable;
+                    _queryableFactory = queryableFactory;
                 }
 
                 public void Dispose()
@@ -68,7 +68,7 @@ namespace NuClear.Replication.Core.DataObjects
                     if (_transaction == null)
                     {
                         _transaction = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted });
-                        _enumerator = _queryable.GetEnumerator();
+                        _enumerator = _queryableFactory.Invoke().GetEnumerator();
                     }
 
                     return _enumerator.MoveNext();

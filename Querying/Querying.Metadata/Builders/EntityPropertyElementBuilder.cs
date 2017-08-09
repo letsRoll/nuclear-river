@@ -11,24 +11,10 @@ namespace NuClear.Querying.Metadata.Builders
     {
         private string _name;
         private bool _isNullable;
-        private IStructuralModelTypeElement _typeElement;
-        private Uri _typeReference;
 
-        public IStructuralModelTypeElement TypeElement
-        {
-            get
-            {
-                return _typeElement;
-            }
-        }
+        public IStructuralModelTypeElement TypeElement { get; private set; }
 
-        public Uri TypeReference
-        {
-            get
-            {
-                return _typeReference;
-            }
-        }
+        public Uri TypeReference { get; private set; }
 
         public EntityPropertyElementBuilder Name(string name)
         {
@@ -38,15 +24,15 @@ namespace NuClear.Querying.Metadata.Builders
 
         public EntityPropertyElementBuilder OfType(ElementaryTypeKind elementaryTypeKind)
         {
-            _typeElement = PrimitiveTypeElement.OfKind(elementaryTypeKind);
-            _typeReference = TypeElement.Identity.Id;
+            TypeElement = PrimitiveTypeElement.OfKind(elementaryTypeKind);
+            TypeReference = TypeElement.Identity.Id;
             return this;
         }
 
         public EntityPropertyElementBuilder OfType<T>(T typeElement) where T : IStructuralModelTypeElement
         {
-            _typeElement = typeElement;
-            _typeReference = TypeElement.Identity.Id;
+            TypeElement = typeElement;
+            TypeReference = TypeElement.Identity.Id;
             return this;
         }
 
@@ -56,14 +42,14 @@ namespace NuClear.Querying.Metadata.Builders
             return this;
         }
 
-        protected override EntityPropertyElement Create()
+        protected override EntityPropertyElement BuildInternal()
         {
             if (string.IsNullOrEmpty(_name))
             {
                 throw new InvalidOperationException("The property name was not specified.");
             }
-            
-            if (_typeElement == null)
+
+            if (TypeElement == null)
             {
                 throw new InvalidOperationException("The property type was not specified");
             }
@@ -73,7 +59,7 @@ namespace NuClear.Querying.Metadata.Builders
                 AddFeatures(new EntityPropertyNullableFeature(true));
             }
 
-            return new EntityPropertyElement(UriExtensions.AsUri(_name).AsIdentity(), _typeElement, Features);
+            return new EntityPropertyElement(_name.AsUri().AsIdentity(), TypeElement, Features);
         }
-   }
+    }
 }

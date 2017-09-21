@@ -53,10 +53,10 @@ namespace NuClear.StateInitialization.Core.Actors
                 var accessorTypes = _accessorTypesProvider.GetAccessorsFor(dataObjectType);
                 foreach (var accessorType in accessorTypes)
                 {
-                    var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
-                    var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
-                    var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, targetDataConnection);
-                    actors.Add(replaceDataObjectsActor);
+                    var accessor = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
+                    var actorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
+                    var actor = (IActor)Activator.CreateInstance(actorType, accessor, targetDataConnection);
+                    actors.Add(actor);
                 }
             }
 

@@ -14,7 +14,6 @@ using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.StateInitialization.Core.Commands;
-using NuClear.StateInitialization.Core.DataObjects;
 using NuClear.StateInitialization.Core.Events;
 using NuClear.StateInitialization.Core.Factories;
 using NuClear.StateInitialization.Core.Storage;
@@ -34,23 +33,23 @@ namespace NuClear.StateInitialization.Core.Actors
                 Timeout = TimeSpan.Zero
             };
 
-        private readonly IDataObjectTypesProviderFactory _dataObjectTypesProviderFactory;
+        private readonly IDataObjectTypesProvider _dataObjectTypesProvider;
         private readonly IConnectionStringSettings _connectionStringSettings;
         private readonly BulkReplicator _bulkReplicator;
 
         public BulkReplicationActor(
-            IDataObjectTypesProviderFactory dataObjectTypesProviderFactory,
+            IDataObjectTypesProvider dataObjectTypesProvider,
             IConnectionStringSettings connectionStringSettings)
-            : this(dataObjectTypesProviderFactory, connectionStringSettings, new StaticAccessorTypesProvider())
+            : this(dataObjectTypesProvider, connectionStringSettings, new StaticAccessorTypesProvider())
         {
         }
 
         public BulkReplicationActor(
-            IDataObjectTypesProviderFactory dataObjectTypesProviderFactory,
+            IDataObjectTypesProvider dataObjectTypesProvider,
             IConnectionStringSettings connectionStringSettings,
             IAccessorTypesProvider accessorTypesProvider)
         {
-            _dataObjectTypesProviderFactory = dataObjectTypesProviderFactory;
+            _dataObjectTypesProvider = dataObjectTypesProvider;
             _connectionStringSettings = connectionStringSettings;
             _bulkReplicator = new BulkReplicator(accessorTypesProvider);
         }
@@ -61,7 +60,7 @@ namespace NuClear.StateInitialization.Core.Actors
             {
                 var commandStopwatch = Stopwatch.StartNew();
 
-                var dataObjectTypes = GetDataObjectTypes(_dataObjectTypesProviderFactory.Create(command));
+                var dataObjectTypes = _dataObjectTypesProvider.Get(command);
 
                 var tableTypesDictionary = dataObjectTypes
                     .GroupBy(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
@@ -78,11 +77,6 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private static IEnumerable<Type> GetDataObjectTypes(IDataObjectTypesProvider dataObjectTypesProvider)
-        {
-            var commandRegardlessProvider = (ICommandRegardlessDataObjectTypesProvider)dataObjectTypesProvider;
-            return commandRegardlessProvider.Get();
-        }
 
         private static SequentialPipelineActor CreateDbSchemaManagementActor(SqlConnection sqlConnection, TimeSpan commandTimeout)
         {

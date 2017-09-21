@@ -5,9 +5,8 @@ using System.Linq;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
+using NuClear.Replication.Core.DataObjects;
 using NuClear.StateInitialization.Core.Commands;
-using NuClear.StateInitialization.Core.DataObjects;
-using NuClear.StateInitialization.Core.Factories;
 using NuClear.StateInitialization.Core.Storage;
 using NuClear.Storage.API.ConnectionStrings;
 
@@ -15,14 +14,14 @@ namespace NuClear.StateInitialization.Core.Actors
 {
     public sealed class CopyTablesActor : IActor
     {
-        private readonly IDataObjectTypesProviderFactory _dataObjectTypesProviderFactory;
+        private readonly IDataObjectTypesProvider _dataObjectTypesProvider;
         private readonly IConnectionStringSettings _connectionStringSettings;
 
         public CopyTablesActor(
-            IDataObjectTypesProviderFactory dataObjectTypesProviderFactory,
+            IDataObjectTypesProvider dataObjectTypesProvider,
             IConnectionStringSettings connectionStringSettings)
         {
-            _dataObjectTypesProviderFactory = dataObjectTypesProviderFactory;
+            _dataObjectTypesProvider = dataObjectTypesProvider;
             _connectionStringSettings = connectionStringSettings;
         }
 
@@ -41,14 +40,11 @@ namespace NuClear.StateInitialization.Core.Actors
         }
 
         private IReadOnlyCollection<CreateTableCopyCommand> CreateCopyTableCommands(ReplicateInBulkCommand command)
-            => GetDataObjectTypes(command)
+            => _dataObjectTypesProvider.Get(command)
                 .Select(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
                 .Distinct(TableNameComparer.Instance)
                 .Select(CreateCopyCommand)
                 .ToArray();
-
-        private IReadOnlyCollection<Type> GetDataObjectTypes(ReplicateInBulkCommand command)
-            => ((ICommandRegardlessDataObjectTypesProvider)_dataObjectTypesProviderFactory.Create(command)).Get();
 
         private CreateTableCopyCommand CreateCopyCommand(TableName t)
             => new CreateTableCopyCommand(t, new TableName($"{t.Schema}_{t.Table}", "dbo"));

@@ -3,8 +3,6 @@
 using NuClear.Messaging.API;
 using NuClear.Messaging.API.Receivers;
 using NuClear.OperationsProcessing.Transports.ServiceBus;
-using NuClear.Replication.OperationsProcessing.Telemetry;
-using NuClear.Telemetry;
 using NuClear.Telemetry.Probing;
 
 namespace NuClear.Replication.OperationsProcessing.Transports.ServiceBus

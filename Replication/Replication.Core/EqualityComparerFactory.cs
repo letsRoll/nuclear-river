@@ -85,21 +85,17 @@ namespace NuClear.Replication.Core
                 (acc, property) =>
                 {
                     var propertyAccess = Expression.Property((Expression)parameter, (PropertyInfo)property);
-                    Expression hashCodeCall;
                     EqualityComparerProxy comparer;
-                    if (_equalityComparers.TryGetValue(property.PropertyType, out comparer))
-                    {
-                        hashCodeCall = comparer.CreateHashCodeCall(propertyAccess);
-                    }
-                    else if (property.PropertyType.GetTypeInfo().IsValueType)
-                    {
-                        hashCodeCall = Expression.Call(propertyAccess, hashCodeMethod);
-                    }
-                    else
+                    var hashCodeCall =
+                        _equalityComparers.TryGetValue(property.PropertyType, out comparer)
+                            ? comparer.CreateHashCodeCall(propertyAccess)
+                            : Expression.Call(propertyAccess, hashCodeMethod);
+
+                    if (!property.PropertyType.IsValueType)
                     {
                         hashCodeCall = Expression.Condition(
                             Expression.ReferenceNotEqual(propertyAccess, Expression.Constant(null, property.PropertyType)),
-                            Expression.Call(propertyAccess, hashCodeMethod),
+                            hashCodeCall,
                             Expression.Constant(0, typeof(int)));
                     }
 

@@ -205,13 +205,13 @@ namespace NuClear.StateInitialization.Core.Actors
                     options,
                     tableTypesPair =>
                     {
-                        using (var connection = CreateDataConnection(command.TargetStorageDescriptor))
+                        using (var targetConnection = CreateDataConnection(command.TargetStorageDescriptor))
                         using (var sourceConnection = CreateTransactionlessDataConnection(command.SourceStorageDescriptor))
                         {
                             try
                             {
                                 var replicationCommands = CreateShadowReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, connection, replicationCommands);
+                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
                             }
                             catch (Exception ex)
                             {

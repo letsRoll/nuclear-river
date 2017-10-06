@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Transactions;
 
 using NuClear.Storage.API.Specifications;
@@ -23,16 +25,63 @@ namespace NuClear.Replication.Core.DataObjects
 
         public MergeResult<T> DetectChanges(FindSpecification<T> specification)
         {
-            using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
+            var sourceObjects = new EnumerableDecorator(() => _sourceProvider.Invoke(specification));
+            var targetObjects = _targetProvider.Invoke(specification);
+            var result = MergeTool.Merge(sourceObjects, targetObjects, _comparer);
+            return result;
+        }
+
+        private class EnumerableDecorator : IEnumerable<T>
+        {
+            private readonly Func<IEnumerable<T>> _queryableFactory;
+
+            public EnumerableDecorator(Func<IEnumerable<T>> queryableFactory)
             {
-                var sourceObjects = _sourceProvider.Invoke(specification);
-                var targetObjects = _targetProvider.Invoke(specification);
+                _queryableFactory = queryableFactory;
+            }
 
-                var result = MergeTool.Merge(sourceObjects, targetObjects, _comparer);
+            public IEnumerator<T> GetEnumerator()
+                => new EnumeratorDecorator(_queryableFactory);
 
-                scope.Complete();
+            IEnumerator IEnumerable.GetEnumerator()
+                => GetEnumerator();
 
-                return result;
+            private class EnumeratorDecorator : IEnumerator<T>
+            {
+                private IEnumerator<T> _enumerator;
+                private TransactionScope _transaction;
+                private readonly Func<IEnumerable<T>> _queryableFactory;
+
+                public EnumeratorDecorator(Func<IEnumerable<T>> queryableFactory)
+                {
+                    _queryableFactory = queryableFactory;
+                }
+
+                public void Dispose()
+                {
+                    _transaction?.Dispose();
+                    _enumerator?.Dispose();
+                }
+
+                public bool MoveNext()
+                {
+                    if (_transaction == null)
+                    {
+                        _transaction = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted });
+                        _enumerator = _queryableFactory.Invoke().GetEnumerator();
+                    }
+
+                    return _enumerator.MoveNext();
+                }
+
+                public void Reset()
+                {
+                    throw new NotSupportedException();
+                }
+
+                public T Current => _enumerator.Current;
+
+                object IEnumerator.Current => Current;
             }
         }
     }

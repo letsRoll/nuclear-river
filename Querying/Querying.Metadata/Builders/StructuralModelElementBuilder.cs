@@ -38,18 +38,16 @@ namespace NuClear.Querying.Metadata.Builders
             return this;
         }
 
-        protected override StructuralModelElement Create()
+        protected override StructuralModelElement BuildInternal()
         {
             if (string.IsNullOrEmpty(_name))
             {
                 throw new InvalidOperationException("The model name was not specified.");
             }
 
-            IEnumerable<EntityElement> entities;
-            IEnumerable<IMetadataElement> types;
-            ProcessElements(out entities, out types);
+            ProcessElements(out IEnumerable<EntityElement> entities, out IEnumerable<IMetadataElement> types);
 
-            Childs(types.ToArray());
+            Children(types.ToArray());
 
             return new StructuralModelElement(_name.AsUri().AsIdentity(), entities, Features);
         }
@@ -63,19 +61,19 @@ namespace NuClear.Querying.Metadata.Builders
             {
                 Visit(rootElement,
                       entityConfig =>
-                      {
-                          foreach (var propertyConfig in entityConfig.PropertyConfigs)
                           {
-                              propertyConfig.OfType(LookupOrCreateElement(typesById, propertyConfig.TypeReference, () => propertyConfig.TypeElement));
-                          }
+                              foreach (var propertyConfig in entityConfig.PropertyConfigs)
+                              {
+                                  propertyConfig.OfType(LookupOrCreateElement(typesById, propertyConfig.TypeReference, () => propertyConfig.TypeElement));
+                              }
 
-                          foreach (var relationConfig in entityConfig.RelationConfigs)
-                          {
-                              relationConfig.DirectTo(LookupOrCreateElement(typesById, relationConfig.TargetEntityReference, () => (EntityElement)relationConfig.TargetEntityElementConfig));
-                          }
+                              foreach (var relationConfig in entityConfig.RelationConfigs)
+                              {
+                                  relationConfig.DirectTo(LookupOrCreateElement(typesById, relationConfig.TargetEntityReference, () => (EntityElement)relationConfig.TargetEntityElementConfig));
+                              }
 
-                          LookupOrCreateElement(typesById, entityConfig.EntityId, () => (EntityElement)entityConfig);
-                      });
+                              LookupOrCreateElement(typesById, entityConfig.EntityId, () => (EntityElement)entityConfig);
+                          });
 
                 var rootId = rootElement.EntityId;
                 rootEntities.Add(LookupOrCreateElement(typesById, rootId, () => (EntityElement)rootElement));
@@ -98,8 +96,7 @@ namespace NuClear.Querying.Metadata.Builders
         private static TElement LookupOrCreateElement<TElement>(IDictionary<Uri, IMetadataElement> dictionary, Uri entityId, Func<TElement> builder)
             where TElement : IMetadataElement
         {
-            IMetadataElement element;
-            if (!dictionary.TryGetValue(entityId, out element))
+            if (!dictionary.TryGetValue(entityId, out IMetadataElement element))
             {
                 dictionary.Add(entityId, element = builder());
             }

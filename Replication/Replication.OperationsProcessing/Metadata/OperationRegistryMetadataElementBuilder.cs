@@ -10,7 +10,7 @@ namespace NuClear.Replication.OperationsProcessing.Metadata
     {
         private string[] _segments;
 
-        protected override OperationRegistryMetadataElement Create()
+        protected override OperationRegistryMetadataElement BuildInternal()
         {
             var identity = Metamodeling.Elements.Identities.Builder.Metadata.Id.For<OperationRegistryMetadataIdentity>(_segments).Build().AsIdentity();
 
@@ -33,8 +33,8 @@ namespace NuClear.Replication.OperationsProcessing.Metadata
         }
 
         public OperationRegistryMetadataElementBuilder Allow<TOperation, TEntity>()
-           where TOperation : OperationIdentityBase<TOperation>, IEntitySpecificOperationIdentity, new()
-           where TEntity : EntityTypeBase<TEntity>, IEntityType, new()
+            where TOperation : OperationIdentityBase<TOperation>, IEntitySpecificOperationIdentity, new()
+            where TEntity : EntityTypeBase<TEntity>, IEntityType, new()
         {
             var operationIdentity = OperationIdentityBase<TOperation>.Instance.SpecificFor(EntityTypeBase<TEntity>.Instance);
             AddFeatures(new OperationRegistryMetadataElement.AllowedOperationFeature(operationIdentity));
@@ -42,9 +42,9 @@ namespace NuClear.Replication.OperationsProcessing.Metadata
         }
 
         public OperationRegistryMetadataElementBuilder Allow<TOperation, TEntity1, TEntity2>()
-           where TOperation : OperationIdentityBase<TOperation>, IEntitySpecificOperationIdentity, new()
-           where TEntity1 : EntityTypeBase<TEntity1>, IEntityType, new()
-           where TEntity2 : EntityTypeBase<TEntity2>, IEntityType, new()
+            where TOperation : OperationIdentityBase<TOperation>, IEntitySpecificOperationIdentity, new()
+            where TEntity1 : EntityTypeBase<TEntity1>, IEntityType, new()
+            where TEntity2 : EntityTypeBase<TEntity2>, IEntityType, new()
         {
             var operationIdentity = OperationIdentityBase<TOperation>.Instance.SpecificFor(EntityTypeBase<TEntity1>.Instance, EntityTypeBase<TEntity2>.Instance);
             AddFeatures(new OperationRegistryMetadataElement.AllowedOperationFeature(operationIdentity));

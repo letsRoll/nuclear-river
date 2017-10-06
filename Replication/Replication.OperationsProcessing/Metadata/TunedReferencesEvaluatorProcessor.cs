@@ -21,7 +21,7 @@ namespace NuClear.Replication.OperationsProcessing.Metadata
             MetadataSet concreteKindMetadata,
             IMetadataElement element)
         {
-            bool hasReferences = false;
+            var hasReferences = false;
             var dereferencedChilds = new List<IMetadataElement>();
             foreach (var child in element.Elements)
             {
@@ -32,12 +32,11 @@ namespace NuClear.Replication.OperationsProcessing.Metadata
                     continue;
                 }
 
-                IMetadataElement metadataElement;
                 var absoluteId = reference.ReferencedElementId.IsAbsoluteUri
                                      ? reference.ReferencedElementId
                                      : element.Identity.Id.WithRelative(reference.ReferencedElementId);
 
-                if (!flattenedMetadata.Metadata.TryGetValue(absoluteId, out metadataElement))
+                if (!flattenedMetadata.Metadata.TryGetValue(absoluteId, out IMetadataElement metadataElement))
                 {
                     throw new InvalidOperationException($"Can't resolve metadata for referenced element: {reference.ReferencedElementId}. " +
                                                         $"References is ecounterred in {reference.Parent.Identity.Id} childs list");
@@ -55,7 +54,7 @@ namespace NuClear.Replication.OperationsProcessing.Metadata
                 return;
             }
 
-            ((IMetadataElementUpdater)element).ReplaceChilds(dereferencedChilds);
+            ((IMetadataElementUpdater)element).ReplaceChildren(dereferencedChilds);
         }
     }
 }

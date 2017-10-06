@@ -31,25 +31,13 @@ namespace NuClear.Querying.Metadata.Builders
             }
         }
 
-        public IReadOnlyCollection<EntityPropertyElementBuilder> PropertyConfigs
-        {
-            get
-            {
-                return _propertyConfigs;
-            }
-        }
+        public IReadOnlyCollection<EntityPropertyElementBuilder> PropertyConfigs => _propertyConfigs;
 
-        public IReadOnlyCollection<EntityRelationElementBuilder> RelationConfigs
-        {
-            get
-            {
-                return _relationConfigs;
-            }
-        }
+        public IReadOnlyCollection<EntityRelationElementBuilder> RelationConfigs => _relationConfigs;
 
         public EntityElementBuilder Name(string name)
         {
-            _entityId = UriExtensions.AsUri(name);
+            _entityId = name.AsUri();
             return this;
         }
 
@@ -63,7 +51,7 @@ namespace NuClear.Querying.Metadata.Builders
         {
             foreach (var propertyName in propertyNames)
             {
-                _keyNames.Add(UriExtensions.AsUri(propertyName));
+                _keyNames.Add(propertyName.AsUri());
             }
 
             return this;
@@ -81,7 +69,7 @@ namespace NuClear.Querying.Metadata.Builders
             return this;
         }
 
-        protected override EntityElement Create()
+        protected override EntityElement BuildInternal()
         {
             if (_entityId == null)
             {
@@ -105,7 +93,7 @@ namespace NuClear.Querying.Metadata.Builders
 
             foreach (var propertyElement in _propertyConfigs.Select(x => (EntityPropertyElement)x))
             {
-                Childs(propertyElement);
+                Children(propertyElement);
 
                 if (_keyNames.Contains(propertyElement.Identity.Id))
                 {
@@ -121,7 +109,7 @@ namespace NuClear.Querying.Metadata.Builders
 
         private void ProcessRelations()
         {
-            Childs(_relationConfigs.Select(x => (IMetadataElement)(EntityRelationElement)x).ToArray());
+            Children(_relationConfigs.Select(x => (IMetadataElement)(EntityRelationElement)x).ToArray());
         }
     }
 }

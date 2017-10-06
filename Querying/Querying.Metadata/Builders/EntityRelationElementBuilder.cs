@@ -12,7 +12,6 @@ namespace NuClear.Querying.Metadata.Builders
         private string _name;
         private EntityRelationCardinality? _cardinality;
         private EntityElement _targetEntityElement;
-        private EntityElementBuilder _targetEntityElementConfig;
         private bool _containsTarget;
 
         internal Uri TargetEntityReference
@@ -24,22 +23,16 @@ namespace NuClear.Querying.Metadata.Builders
                     return _targetEntityElement.Identity.Id;
                 }
 
-                if (_targetEntityElementConfig != null)
+                if (TargetEntityElementConfig != null)
                 {
-                    return _targetEntityElementConfig.EntityId;
+                    return TargetEntityElementConfig.EntityId;
                 }
 
                 throw new InvalidOperationException("The reference is not set.");
             }
         }
 
-        internal EntityElementBuilder TargetEntityElementConfig
-        {
-            get
-            {
-                return _targetEntityElementConfig;
-            }
-        }
+        internal EntityElementBuilder TargetEntityElementConfig { get; private set; }
 
         public EntityRelationElementBuilder Name(string name)
         {
@@ -50,14 +43,14 @@ namespace NuClear.Querying.Metadata.Builders
         public EntityRelationElementBuilder DirectTo(EntityElement entityElement)
         {
             _targetEntityElement = entityElement;
-            _targetEntityElementConfig = null;
+            TargetEntityElementConfig = null;
             return this;
         }
 
         public EntityRelationElementBuilder DirectTo(EntityElementBuilder entityElementBuilder)
         {
             _targetEntityElement = null;
-            _targetEntityElementConfig = entityElementBuilder;
+            TargetEntityElementConfig = entityElementBuilder;
             return this;
         }
 
@@ -85,7 +78,7 @@ namespace NuClear.Querying.Metadata.Builders
             return this;
         }
 
-        protected override EntityRelationElement Create()
+        protected override EntityRelationElement BuildInternal()
         {
             if (string.IsNullOrEmpty(_name))
             {
@@ -97,19 +90,19 @@ namespace NuClear.Querying.Metadata.Builders
                 throw new InvalidOperationException("The relation cardinality was not specified.");
             }
 
-            if (_targetEntityElement == null && _targetEntityElementConfig == null)
+            if (_targetEntityElement == null && TargetEntityElementConfig == null)
             {
                 throw new InvalidOperationException("The relation target was not specified.");
             }
 
-            AddFeatures(new EntityRelationCardinalityFeature(_cardinality.Value, _targetEntityElement ?? _targetEntityElementConfig));
-            
+            AddFeatures(new EntityRelationCardinalityFeature(_cardinality.Value, _targetEntityElement ?? TargetEntityElementConfig));
+
             if (_containsTarget)
             {
                 AddFeatures(new EntityRelationContainmentFeature());
             }
 
-            return new EntityRelationElement(UriExtensions.AsUri(_name).AsIdentity(), Features);
+            return new EntityRelationElement(_name.AsUri().AsIdentity(), Features);
         }
     }
 }

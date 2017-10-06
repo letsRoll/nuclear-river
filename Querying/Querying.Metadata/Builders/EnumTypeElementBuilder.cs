@@ -24,7 +24,7 @@ namespace NuClear.Querying.Metadata.Builders
             return this;
         }
 
-        protected override EnumTypeElement Create()
+        protected override EnumTypeElement BuildInternal()
         {
             if (string.IsNullOrEmpty(_name))
             {

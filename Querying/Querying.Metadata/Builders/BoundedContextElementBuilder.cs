@@ -45,7 +45,7 @@ namespace NuClear.Querying.Metadata.Builders
             return this;
         }
 
-        protected override BoundedContextElement Create()
+        protected override BoundedContextElement BuildInternal()
         {
             if (string.IsNullOrEmpty(_name))
             {
@@ -61,13 +61,13 @@ namespace NuClear.Querying.Metadata.Builders
             if (_conceptualModel != null)
             {
                 conceptualModel = _conceptualModel;
-                Childs(conceptualModel);
+                Children(conceptualModel);
             }
 
             if (_storeModel != null)
             {
                 storeModel = _storeModel;
-                Childs(storeModel);
+                Children(storeModel);
             }
 
             ProcessMappings(conceptualModel, storeModel);

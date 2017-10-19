@@ -27,7 +27,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            foreach (var command in commands.Cast<ReplicateInBulkCommand>())
+            foreach (var command in commands.Cast<ReplicateInBulkCommandBase>())
             {
                 using (var db = CreateSqlConnection(command.TargetStorageDescriptor))
                 {
@@ -39,7 +39,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private IReadOnlyCollection<CreateTableCopyCommand> CreateCopyTableCommands(ReplicateInBulkCommand command)
+        private IReadOnlyCollection<CreateTableCopyCommand> CreateCopyTableCommands(ReplicateInBulkCommandBase command)
             => _dataObjectTypesProvider.Get(command)
                 .Select(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
                 .Distinct(TableNameComparer.Instance)

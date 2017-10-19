@@ -56,7 +56,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            foreach (var command in commands.OfType<ReplicateInBulkCommand>())
+            foreach (var command in commands.OfType<ReplicateInBulkCommandBase>())
             {
                 var commandStopwatch = Stopwatch.StartNew();
 
@@ -66,12 +66,31 @@ namespace NuClear.StateInitialization.Core.Actors
                     .GroupBy(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
                     .ToDictionary(g => g.Key, g => g.ToArray());
 
-                var executionStrategy = DetermineExecutionStrategy(command);
-                executionStrategy.Invoke(command, tableTypesDictionary);
+                switch (command)
+                {
+                    case ReplicateInBulkCommand replicateInBulkCommand:
+                    {
+                        var executionStrategy = DetermineExecutionStrategy(replicateInBulkCommand);
+                        executionStrategy.Invoke(replicateInBulkCommand, tableTypesDictionary);
 
-                commandStopwatch.Stop();
-                Console.WriteLine($"[{command.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
-                                  $"[{command.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds:F3} seconds");
+                        commandStopwatch.Stop();
+                        Console.WriteLine($"[{replicateInBulkCommand.SourceStorageDescriptor.ConnectionStringIdentity}] -> " +
+                                          $"[{replicateInBulkCommand.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds:F3} seconds");
+                        break;
+                    }
+
+                    case MemoryReplicateInBulkCommand memoryReplicateInBulkCommand:
+                    {
+                        MemorySequentialExecutionStrategy(memoryReplicateInBulkCommand, tableTypesDictionary);
+                        commandStopwatch.Stop();
+                        Console.WriteLine("[Memory] -> " +
+                                          $"[{memoryReplicateInBulkCommand.TargetStorageDescriptor.ConnectionStringIdentity}]: {commandStopwatch.Elapsed.TotalSeconds:F3} seconds");
+                        break;
+                    }
+
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
 
             return Array.Empty<IEvent>();
@@ -132,7 +151,11 @@ namespace NuClear.StateInitialization.Core.Actors
                 commands.Add(new DisableIndexesCommand(table));
             }
 
-            commands.Add(new TruncateTableCommand(table));
+            if (mode.HasFlag(DbManagementMode.TruncateTable))
+            {
+                commands.Add(new TruncateTableCommand(table));
+            }
+
             commands.Add(new BulkInsertDataObjectsCommand(bulkCopyTimeout));
 
             if (mode.HasFlag(DbManagementMode.EnableIndexManagment))
@@ -205,7 +228,7 @@ namespace NuClear.StateInitialization.Core.Actors
                             try
                             {
                                 var replicationCommands = CreateShadowReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
+                                _bulkReplicator.ReplicateStorage(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
@@ -247,7 +270,7 @@ namespace NuClear.StateInitialization.Core.Actors
                             try
                             {
                                 var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
+                                _bulkReplicator.ReplicateStorage(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
@@ -278,7 +301,7 @@ namespace NuClear.StateInitialization.Core.Actors
                             try
                             {
                                 var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
-                                _bulkReplicator.Replicate(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
+                                _bulkReplicator.ReplicateStorage(tableTypesPair.Value, sourceConnection, targetConnection, replicationCommands);
                             }
                             catch (Exception ex)
                             {
@@ -291,7 +314,31 @@ namespace NuClear.StateInitialization.Core.Actors
                 });
         }
 
-        private void ExecuteInTransactionScope(ReplicateInBulkCommand command, Action<DataConnection, SequentialPipelineActor> action)
+        private void MemorySequentialExecutionStrategy(MemoryReplicateInBulkCommand command, IReadOnlyDictionary<TableName, Type[]> tableTypesDictionary)
+        {
+            ExecuteInTransactionScope(command,
+            (targetConnection, schemaManagenentActor) =>
+            {
+                var schemaChangedEvents = schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCommands(command.DbManagementMode));
+
+                foreach (var tableTypesPair in tableTypesDictionary)
+                {
+                    try
+                    {
+                        var replicationCommands = CreateReplicationCommands(tableTypesPair.Key, command.BulkCopyTimeout, command.DbManagementMode);
+                        _bulkReplicator.ReplicateMemory(tableTypesPair.Value, command.ReplicationCommands, targetConnection, replicationCommands);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to replicate using sequential strategy {tableTypesPair.Key}", ex);
+                    }
+                }
+
+                schemaManagenentActor.ExecuteCommands(CreateSchemaChangesCompensationalCommands(schemaChangedEvents));
+            });
+        }
+
+        private void ExecuteInTransactionScope(ReplicateInBulkCommandBase command, Action<DataConnection, SequentialPipelineActor> action)
         {
             using (var transation = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionOptions))
             {

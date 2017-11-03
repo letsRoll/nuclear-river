@@ -16,7 +16,7 @@ namespace NuClear.StateInitialization.Core.Factories
                         .Where(x => !x.IsDynamic)
                         .SelectMany(SafeGetAssemblyExportedTypes)
                         .SelectMany(type => type.GetInterfaces(), (type, @interface) => new { type, @interface })
-                        .Where(x => !x.type.IsAbstract && x.@interface.IsGenericType && x.@interface.GetGenericTypeDefinition() == typeof(IStorageBasedDataObjectAccessor<>))
+                        .Where(x => !x.type.IsAbstract && IsAccessor(x.@interface))
                         .Select(x => new { GenericArgument = x.@interface.GetGenericArguments()[0], Type = x.type })
                         .GroupBy(x => x.GenericArgument, x => x.Type)
                         .ToDictionary(x => x.Key, x => x.ToArray());
@@ -33,10 +33,15 @@ namespace NuClear.StateInitialization.Core.Factories
             }
         }
 
+        private static bool IsAccessor(Type interfaceType)
+            => interfaceType.IsGenericType &&
+               (interfaceType.GetGenericTypeDefinition() == typeof(IStorageBasedDataObjectAccessor<>) ||
+                interfaceType.GetGenericTypeDefinition() == typeof(IMemoryBasedDataObjectAccessor<>));
+
         public IReadOnlyCollection<Type> GetAccessorsFor(Type dataObjectType)
         {
-	        Type[] result;
-	        return AccessorTypes.Value.TryGetValue(dataObjectType, out result) ? result : Array.Empty<Type>();;
+            Type[] result;
+            return AccessorTypes.Value.TryGetValue(dataObjectType, out result) ? result : Array.Empty<Type>();
         }
     }
 }

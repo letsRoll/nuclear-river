@@ -84,6 +84,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\FlowReplicator.cs" />
     <Compile Include="Actors\BulkReplicator.cs" />
     <Compile Include="Actors\CopyTablesActor.cs" />
     <Compile Include="Actors\BulkReplicationActor.cs" />
@@ -110,7 +111,6 @@
     <Compile Include="Commands\RestoreViewsCommand.cs" />
     <Compile Include="Commands\TruncateTableCommand.cs" />
     <Compile Include="Commands\UpdateTableStatisticsCommand.cs" />
-    <Compile Include="DataObjects\CommandRegardlessDataObjectTypesProvider.cs" />
     <Compile Include="DataObjects\ICommandRegardlessDataObjectTypesProvider.cs" />
     <Compile Include="Events\ConstraintsDisabledEvent.cs" />
     <Compile Include="Events\ViewsDroppedEvent.cs" />

@@ -22,8 +22,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var command = commands.OfType<TruncateTableCommand>().SingleOrDefault();
-            if (command != null)
+            foreach (var command in commands.OfType<TruncateTableCommand>())
             {
                 ExecuteTruncate(command.Table);
             }

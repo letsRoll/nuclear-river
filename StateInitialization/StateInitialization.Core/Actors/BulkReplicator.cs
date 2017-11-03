@@ -48,17 +48,7 @@ namespace NuClear.StateInitialization.Core.Actors
             var truncateTableActor = (IActor)Activator.CreateInstance(truncateTableActorType, targetDataConnection);
             actors.Add(truncateTableActor);
 
-            foreach (var dataObjectType in dataObjectTypes)
-            {
-                var accessorTypes = _accessorTypesProvider.GetAccessorsFor(dataObjectType);
-                foreach (var accessorType in accessorTypes)
-                {
-                    var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
-                    var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
-                    var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, targetDataConnection);
-                    actors.Add(replaceDataObjectsActor);
-                }
-            }
+            actors.AddRange(CreateBulkInsertDataObjectsActors(dataObjectTypes, sourceDataConnection, targetDataConnection));
 
             var enableIndexesActorType = typeof(EnableIndexesActor);
             var enableIndexesActor = (IActor)Activator.CreateInstance(enableIndexesActorType, targetDataConnection.Connection);
@@ -69,6 +59,21 @@ namespace NuClear.StateInitialization.Core.Actors
             actors.Add(updateStatisticsActor);
 
             return actors;
+        }
+
+        private IEnumerable<IActor> CreateBulkInsertDataObjectsActors(IReadOnlyCollection<Type> dataObjectTypes, DataConnection sourceDataConnection, DataConnection targetDataConnection)
+        {
+            foreach (var dataObjectType in dataObjectTypes)
+            {
+                var accessorTypes = _accessorTypesProvider.GetAccessorsFor(dataObjectType);
+                foreach (var accessorType in accessorTypes)
+                {
+                    var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
+                    var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
+                    var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, targetDataConnection);
+                    yield return replaceDataObjectsActor;
+                }
+            }
         }
     }
 }

@@ -18,14 +18,12 @@ namespace NuClear.StateInitialization.Core.Actors
     internal sealed class BulkInsertDataObjectsActor<TDataObject> : IActor
         where TDataObject : class
     {
-        private readonly IQueryable<TDataObject> _dataObjectsSource;
+        private readonly IStorageBasedDataObjectAccessor<TDataObject> _dataObjectAccessor;
         private readonly DataConnection _targetDataConnection;
-        private readonly string _dataObjectAccessorName;
 
         public BulkInsertDataObjectsActor(IStorageBasedDataObjectAccessor<TDataObject> dataObjectAccessor, DataConnection targetDataConnection)
         {
-            _dataObjectAccessorName = dataObjectAccessor.GetType().Name;
-            _dataObjectsSource = dataObjectAccessor.GetSource();
+            _dataObjectAccessor = dataObjectAccessor;
             _targetDataConnection = targetDataConnection;
         }
 
@@ -40,22 +38,24 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private void ExecuteBulkCopy(int timeout, TableName targetTable)
+        private void ExecuteBulkCopy(int timeout, TableName targetTableName)
         {
+            var source = _dataObjectAccessor.GetSource();
+
+            var target = targetTableName != null
+                            ? _targetDataConnection.GetTable<TDataObject>().TableName(targetTableName.Table)
+                            : _targetDataConnection.GetTable<TDataObject>();
             try
             {
                 var options = new BulkCopyOptions { BulkCopyTimeout = timeout };
-                var table = targetTable != null
-                    ? _targetDataConnection.GetTable<TDataObject>().TableName(targetTable.Table)
-                    : _targetDataConnection.GetTable<TDataObject>();
-                table.BulkCopy(options, _dataObjectsSource);
+                target.BulkCopy(options, source);
             }
             catch (Exception ex)
             {
                 string sqlText;
                 try
                 {
-                    var linq2DBQuery = _dataObjectsSource as IExpressionQuery<TDataObject>;
+                    var linq2DBQuery = source as IExpressionQuery<TDataObject>;
                     sqlText = linq2DBQuery?.SqlText;
                 }
                 catch (Exception innerException)
@@ -63,7 +63,7 @@ namespace NuClear.StateInitialization.Core.Actors
                     sqlText = $"can not build sql query: {innerException.Message}";
                 }
 
-                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name} using {_dataObjectAccessorName}{Environment.NewLine}{sqlText}{Environment.NewLine}", ex);
+                throw new DataException($"Error occured while bulk replacing data for dataobject of type {typeof(TDataObject).Name} using {_dataObjectAccessor.GetType().Name}{Environment.NewLine}{sqlText}{Environment.NewLine}", ex);
             }
         }
     }

@@ -111,11 +111,9 @@
     <Compile Include="Commands\RestoreViewsCommand.cs" />
     <Compile Include="Commands\TruncateTableCommand.cs" />
     <Compile Include="Commands\UpdateTableStatisticsCommand.cs" />
-    <Compile Include="DataObjects\ICommandRegardlessDataObjectTypesProvider.cs" />
     <Compile Include="Events\ConstraintsDisabledEvent.cs" />
     <Compile Include="Events\ViewsDroppedEvent.cs" />
     <Compile Include="Factories\IAccessorTypesProvider.cs" />
-    <Compile Include="Factories\IDataObjectTypesProviderFactory.cs" />
     <Compile Include="Commands\BulkInsertDataObjectsCommand.cs" />
     <Compile Include="Factories\StaticAccessorTypesProvider.cs" />
     <Compile Include="MappingSchemaExtensions.cs" />

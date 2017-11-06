@@ -5,6 +5,7 @@ using LinqToDB.Data;
 
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
+using NuClear.Replication.Core.DataObjects;
 using NuClear.StateInitialization.Core.Factories;
 using NuClear.StateInitialization.Core.Storage;
 
@@ -68,10 +69,14 @@ namespace NuClear.StateInitialization.Core.Actors
                 var accessorTypes = _accessorTypesProvider.GetAccessorsFor(dataObjectType);
                 foreach (var accessorType in accessorTypes)
                 {
-                    var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
-                    var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
-                    var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, targetDataConnection);
-                    yield return replaceDataObjectsActor;
+                    var storageAccessorType = typeof(IStorageBasedDataObjectAccessor<>).MakeGenericType(dataObjectType);
+                    if (storageAccessorType.IsAssignableFrom(accessorType))
+                    {
+                        var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
+                        var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
+                        var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, targetDataConnection);
+                        yield return replaceDataObjectsActor;
+                    }
                 }
             }
         }

@@ -9,44 +9,17 @@ namespace NuClear.StateInitialization.Core.Factories
 {
     public sealed class StaticAccessorTypesProvider : IAccessorTypesProvider
     {
-        private static readonly Dictionary<Type, List<Type>> StorageAccessorTypes = new Dictionary<Type, List<Type>>();
-        private static readonly Dictionary<Type, List<Type>> MemoryAccessorTypes = new Dictionary<Type, List<Type>>();
+        private static readonly Lazy<IReadOnlyDictionary<Type, Type[]>> AccessorTypes = new Lazy<IReadOnlyDictionary<Type, Type[]>>(LoadAccessorTypes);
 
-        static StaticAccessorTypesProvider()
-        {
-            var tuples = AppDomain.CurrentDomain.GetAssemblies()
-                     .Where(x => !x.IsDynamic)
-                     .SelectMany(SafeGetAssemblyExportedTypes)
-                     .SelectMany(type => type.GetInterfaces(), (type, @interface) => new { type, @interface })
-                     .Where(x => !x.type.IsAbstract && x.@interface.IsGenericType);
-
-            foreach (var tuple in tuples)
-            {
-                var interfaceDefinition = tuple.@interface.GetGenericTypeDefinition();
-
-                if (interfaceDefinition == typeof(IStorageBasedDataObjectAccessor<>))
-                {
-                    var key = tuple.@interface.GetGenericArguments()[0];
-                    if (!StorageAccessorTypes.TryGetValue(key, out var list))
-                    {
-                        list = new List<Type>();
-                        StorageAccessorTypes.Add(key, list);
-                    }
-                    list.Add(tuple.type);
-                }
-
-                if (interfaceDefinition == typeof(IMemoryBasedDataObjectAccessor<>))
-                {
-                    var key = tuple.@interface.GetGenericArguments()[0];
-                    if (!MemoryAccessorTypes.TryGetValue(key, out var list))
-                    {
-                        list = new List<Type>();
-                        MemoryAccessorTypes.Add(key, list);
-                    }
-                    list.Add(tuple.type);
-                }
-            }
-        }
+        private static IReadOnlyDictionary<Type, Type[]> LoadAccessorTypes()
+            => AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(x => !x.IsDynamic)
+                        .SelectMany(SafeGetAssemblyExportedTypes)
+                        .SelectMany(type => type.GetInterfaces(), (type, @interface) => new { type, @interface })
+                        .Where(x => !x.type.IsAbstract && IsAccessor(x.@interface))
+                        .Select(x => new { GenericArgument = x.@interface.GetGenericArguments()[0], Type = x.type })
+                        .GroupBy(x => x.GenericArgument, x => x.Type)
+                        .ToDictionary(x => x.Key, x => x.ToArray());
 
         private static IEnumerable<Type> SafeGetAssemblyExportedTypes(Assembly assembly)
         {
@@ -60,24 +33,15 @@ namespace NuClear.StateInitialization.Core.Factories
             }
         }
 
-        public IReadOnlyCollection<Type> GetStorageAccessorTypes(Type dataObjectType)
+        private static bool IsAccessor(Type interfaceType)
+            => interfaceType.IsGenericType &&
+               (interfaceType.GetGenericTypeDefinition() == typeof(IStorageBasedDataObjectAccessor<>) ||
+                interfaceType.GetGenericTypeDefinition() == typeof(IMemoryBasedDataObjectAccessor<>));
+
+        public IReadOnlyCollection<Type> GetAccessorsFor(Type dataObjectType)
         {
-            if (StorageAccessorTypes.TryGetValue(dataObjectType, out var result))
-            {
-                return result;
-            }
-
-            return Array.Empty<Type>();
-        }
-
-        public IReadOnlyCollection<Type> GetMemoryAccessorTypes(Type dataObjectType)
-        {
-            if (MemoryAccessorTypes.TryGetValue(dataObjectType, out var result))
-            {
-                return result;
-            }
-
-            return Array.Empty<Type>();
+            Type[] result;
+            return AccessorTypes.Value.TryGetValue(dataObjectType, out result) ? result : Array.Empty<Type>();
         }
     }
 }

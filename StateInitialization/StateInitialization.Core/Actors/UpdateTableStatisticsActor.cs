@@ -7,6 +7,7 @@ using System.Linq;
 using NuClear.Replication.Core;
 using NuClear.Replication.Core.Actors;
 using NuClear.StateInitialization.Core.Commands;
+using NuClear.StateInitialization.Core.Storage;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
@@ -21,23 +22,25 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var command = commands.OfType<UpdateTableStatisticsCommand>().SingleOrDefault();
-            if (command == null)
+            foreach (var command in commands.OfType<UpdateTableStatisticsCommand>())
             {
-                return Array.Empty<IEvent>();
+                UpdateTableStatistics(command.Table);
             }
 
+            return Array.Empty<IEvent>();
+        }
+
+        private void UpdateTableStatistics(TableName tableName)
+        {
             try
             {
                 var database = _sqlConnection.GetDatabase();
-                var table = database.GetTable(command.Table);
+                var table = database.GetTable(tableName);
                 table.UpdateStatistics();
-
-                return Array.Empty<IEvent>();
             }
             catch (Exception ex)
             {
-                throw new DataException($"Error occured while statistics updating for table {command.Table}", ex);
+                throw new DataException($"Error occured while statistics updating for table {tableName}", ex);
             }
         }
     }

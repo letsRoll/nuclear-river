@@ -12,6 +12,7 @@ using NuClear.Storage.API.ConnectionStrings;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
+    [Obsolete("Похоже, что этот тип не используется. Не нужно тратить время на его актуализацию, проще удалить.")]
     public sealed class CopyTablesActor : IActor
     {
         private readonly IDataObjectTypesProvider _dataObjectTypesProvider;
@@ -27,7 +28,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            foreach (var command in commands.Cast<ReplicateInBulkCommandBase>())
+            foreach (var command in commands.Cast<ReplicateInBulkCommand>())
             {
                 using (var db = CreateSqlConnection(command.TargetStorageDescriptor))
                 {
@@ -39,7 +40,7 @@ namespace NuClear.StateInitialization.Core.Actors
             return Array.Empty<IEvent>();
         }
 
-        private IReadOnlyCollection<CreateTableCopyCommand> CreateCopyTableCommands(ReplicateInBulkCommandBase command)
+        private IReadOnlyCollection<CreateTableCopyCommand> CreateCopyTableCommands(ReplicateInBulkCommand command)
             => _dataObjectTypesProvider.Get(command)
                 .Select(t => command.TargetStorageDescriptor.MappingSchema.GetTableName(t))
                 .Distinct(TableNameComparer.Instance)

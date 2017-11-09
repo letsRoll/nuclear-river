@@ -20,8 +20,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var enableCommand = commands.OfType<EnableIndexesCommand>().SingleOrDefault();
-            if (enableCommand != null)
+            foreach (var enableCommand in commands.OfType<EnableIndexesCommand>())
             {
                 _indexManager.EnableIndexes(enableCommand.Table);
             }

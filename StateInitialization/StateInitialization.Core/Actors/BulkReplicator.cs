@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using LinqToDB.Data;
 
@@ -9,8 +8,6 @@ using NuClear.Replication.Core.Actors;
 using NuClear.Replication.Core.DataObjects;
 using NuClear.StateInitialization.Core.Factories;
 using NuClear.StateInitialization.Core.Storage;
-using NuClear.Storage.API.Readings;
-using NuClear.Storage.API.Specifications;
 
 namespace NuClear.StateInitialization.Core.Actors
 {
@@ -23,104 +20,65 @@ namespace NuClear.StateInitialization.Core.Actors
             _accessorTypesProvider = accessorTypesProvider;
         }
 
-        public void ReplicateStorage(IReadOnlyCollection<Type> dataObjectTypes,
-                              DataConnection sourceConnection,
-                              DataConnection targetConnection,
-                              IReadOnlyCollection<ICommand> replicationCommands)
+        public void Replicate(IReadOnlyCollection<Type> dataObjectTypes, DataConnection sourceConnection, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
         {
-            var actors = CreateStorageActors(dataObjectTypes, sourceConnection, targetConnection);
-            Replicate(actors, targetConnection, replicationCommands);
-        }
+            var actors = CreateActors(dataObjectTypes, sourceConnection, targetConnection);
 
-        public void ReplicateMemory(IReadOnlyCollection<Type> dataObjectTypes,
-                                    IEnumerable<ICommand> memoryReplicationCommands,
-                                    DataConnection targetConnection,
-                                    IReadOnlyCollection<ICommand> replicationCommands)
-        {
-            var actors = CreateMemoryActors(dataObjectTypes, memoryReplicationCommands, targetConnection);
-            Replicate(actors, targetConnection, replicationCommands);
-        }
-
-        private IEnumerable<IActor> CreateStorageActors(
-            IReadOnlyCollection<Type> dataObjectTypes,
-            DataConnection sourceDataConnection,
-            DataConnection targetDataConnection)
-        {
-            return dataObjectTypes.SelectMany(x =>
-            {
-                var accessorTypes = _accessorTypesProvider.GetStorageAccessorTypes(x);
-
-                return accessorTypes.Select(y =>
-                {
-                    var accessor = Activator.CreateInstance(y, new LinqToDbQuery(sourceDataConnection));
-                    var actorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(x);
-                    return (IActor)Activator.CreateInstance(actorType, accessor, targetDataConnection);
-                });
-            });
-        }
-
-        private static void Replicate(IEnumerable<IActor> actors, DataConnection targetConnection, IReadOnlyCollection<ICommand> replicationCommands)
-        {
-            var allActors = CreateBeforeActors(targetConnection).Concat(actors).Concat(CreateAfterActors(targetConnection));
-            foreach (var actor in allActors)
+            foreach (var actor in actors)
             {
                 actor.ExecuteCommands(replicationCommands);
             }
         }
 
-        private IEnumerable<IActor> CreateMemoryActors(
+        private IReadOnlyCollection<IActor> CreateActors(
             IReadOnlyCollection<Type> dataObjectTypes,
-            IEnumerable<ICommand> commands,
+            DataConnection sourceDataConnection,
             DataConnection targetDataConnection)
         {
-            return dataObjectTypes.SelectMany(x =>
-            {
-                var accessorTypes = _accessorTypesProvider.GetMemoryAccessorTypes(x);
+            var actors = new List<IActor>();
 
-                return accessorTypes.Select(y =>
+            var createTableCopyActorType = typeof(CreateTableCopyActor);
+            var createTableCopyActor = (IActor)Activator.CreateInstance(createTableCopyActorType, targetDataConnection.Connection);
+            actors.Add(createTableCopyActor);
+
+            var disableIndexesActorType = typeof(DisableIndexesActor);
+            var disableIndexesActor = (IActor)Activator.CreateInstance(disableIndexesActorType, targetDataConnection.Connection);
+            actors.Add(disableIndexesActor);
+
+            var truncateTableActorType = typeof(TruncateTableActor);
+            var truncateTableActor = (IActor)Activator.CreateInstance(truncateTableActorType, targetDataConnection);
+            actors.Add(truncateTableActor);
+
+            actors.AddRange(CreateBulkInsertDataObjectsActors(dataObjectTypes, sourceDataConnection, targetDataConnection));
+
+            var enableIndexesActorType = typeof(EnableIndexesActor);
+            var enableIndexesActor = (IActor)Activator.CreateInstance(enableIndexesActorType, targetDataConnection.Connection);
+            actors.Add(enableIndexesActor);
+
+            var updateStatisticsActorType = typeof(UpdateTableStatisticsActor);
+            var updateStatisticsActor = (IActor)Activator.CreateInstance(updateStatisticsActorType, targetDataConnection.Connection);
+            actors.Add(updateStatisticsActor);
+
+            return actors;
+        }
+
+        private IEnumerable<IActor> CreateBulkInsertDataObjectsActors(IReadOnlyCollection<Type> dataObjectTypes, DataConnection sourceDataConnection, DataConnection targetDataConnection)
+        {
+            foreach (var dataObjectType in dataObjectTypes)
+            {
+                var accessorTypes = _accessorTypesProvider.GetAccessorsFor(dataObjectType);
+                foreach (var accessorType in accessorTypes)
                 {
-                    var accessor = Activator.CreateInstance(y, (IQuery)null);
-                    var accessorAdapterType = typeof(MemoryToStorageAccessorAdapter<>).MakeGenericType(x);
-                    var accessorAdapter = Activator.CreateInstance(accessorAdapterType, accessor, commands);
-                    var actorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(x);
-                    return (IActor)Activator.CreateInstance(actorType, accessorAdapter, targetDataConnection);
-                });
-            });
-        }
-
-        private static IEnumerable<IActor> CreateBeforeActors(DataConnection targetDataConnection)
-        {
-            return new []
-            {
-                (IActor)Activator.CreateInstance(typeof(CreateTableCopyActor), targetDataConnection.Connection),
-                (IActor)Activator.CreateInstance(typeof(DisableIndexesActor), targetDataConnection.Connection),
-                (IActor)Activator.CreateInstance(typeof(TruncateTableActor), targetDataConnection)
-            };
-        }
-
-        private static IEnumerable<IActor> CreateAfterActors(DataConnection targetDataConnection)
-        {
-            return new[]
-            {
-                (IActor)Activator.CreateInstance(typeof(EnableIndexesActor), targetDataConnection.Connection),
-                (IActor)Activator.CreateInstance(typeof(UpdateTableStatisticsActor), targetDataConnection.Connection),
-            };
-        }
-
-        private sealed class MemoryToStorageAccessorAdapter<TDataObject> : IStorageBasedDataObjectAccessor<TDataObject>
-        {
-            private readonly IMemoryBasedDataObjectAccessor<TDataObject> _accessor;
-            private readonly IEnumerable<ICommand> _commands;
-
-            public MemoryToStorageAccessorAdapter(IMemoryBasedDataObjectAccessor<TDataObject> accessor, IEnumerable<ICommand> commands)
-            {
-                _accessor = accessor;
-                _commands = commands;
+                    var storageAccessorType = typeof(IStorageBasedDataObjectAccessor<>).MakeGenericType(dataObjectType);
+                    if (storageAccessorType.IsAssignableFrom(accessorType))
+                    {
+                        var accessorInstance = Activator.CreateInstance(accessorType, new LinqToDbQuery(sourceDataConnection));
+                        var replaceDataObjectsActorType = typeof(BulkInsertDataObjectsActor<>).MakeGenericType(dataObjectType);
+                        var replaceDataObjectsActor = (IActor)Activator.CreateInstance(replaceDataObjectsActorType, accessorInstance, targetDataConnection);
+                        yield return replaceDataObjectsActor;
+                    }
+                }
             }
-
-            public IQueryable<TDataObject> GetSource() => _commands.SelectMany(x => _accessor.GetDataObjects(x)).AsQueryable();
-
-            public FindSpecification<TDataObject> GetFindSpecification(IReadOnlyCollection<ICommand> commands) => throw new NotSupportedException();
         }
     }
 }

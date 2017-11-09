@@ -84,6 +84,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\FlowReplicator.cs" />
     <Compile Include="Actors\BulkReplicator.cs" />
     <Compile Include="Actors\CopyTablesActor.cs" />
     <Compile Include="Actors\BulkReplicationActor.cs" />

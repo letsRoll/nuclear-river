@@ -8,7 +8,6 @@ namespace NuClear.StateInitialization.Core.Factories
     /// </summary>
     public interface IAccessorTypesProvider
     {
-        IReadOnlyCollection<Type> GetStorageAccessorTypes(Type dataObjectType);
-        IReadOnlyCollection<Type> GetMemoryAccessorTypes(Type dataObjectType);
+        IReadOnlyCollection<Type> GetAccessorsFor(Type dataObjectType);
     }
 }

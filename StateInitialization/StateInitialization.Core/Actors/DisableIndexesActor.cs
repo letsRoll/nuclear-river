@@ -20,8 +20,7 @@ namespace NuClear.StateInitialization.Core.Actors
 
         public IReadOnlyCollection<IEvent> ExecuteCommands(IReadOnlyCollection<ICommand> commands)
         {
-            var disableCommand = commands.OfType<DisableIndexesCommand>().SingleOrDefault();
-            if (disableCommand != null)
+            foreach(var disableCommand in commands.OfType<DisableIndexesCommand>())
             {
                 _indexManager.DisableIndexes(disableCommand.Table);
             }

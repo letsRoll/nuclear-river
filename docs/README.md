@@ -5,7 +5,7 @@
 
 **NuClear River** is a customizable platform to build [Read Model](http://codebetter.com/gregyoung/2010/02/15/cqrs-is-more-work-because-of-the-read-model/) in sense of [CQRS (Command Query Responsibility Segregation)](https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf).
 
-Did you ever had following issues?
+Have you ever had following issues?
 
 * Data of your appication(s) is properly structured for create/update/delete commands, but read queries are (very) complicated
 * You have different sets of read queries for one data structure to solve business tasks in different fields. Or even more, you have different systems solving their own tasks reading the same data
